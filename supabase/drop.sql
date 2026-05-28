@@ -15,7 +15,6 @@ drop policy if exists "Members can delete audio" on storage.objects;
 -- Tables (cascade drops all dependent policies and constraints)
 -- Order matters: dependents before their parents.
 -- ─────────────────────────────────────────────────────────────────────────────
-drop table if exists collaborators        cascade;
 drop table if exists audio_segments       cascade;
 drop table if exists prop_positions       cascade;
 drop table if exists performer_positions  cascade;

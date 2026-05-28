@@ -43,13 +43,10 @@ const DEFAULT_STAGE: StageConfig = {
 
 
 export interface CollaboratorState {
-  id: string;
-  show_id: string;
   user_id: string;
   name: string;
   color: string;
   active_formation_id?: string | null;
-  last_seen: string;
 }
 
 interface ShowState {

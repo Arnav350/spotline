@@ -194,21 +194,6 @@ create table if not exists audio_segments (
 );
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- COLLABORATORS  (presence / heartbeat)
--- Upserted on channel join; deleted on leave; heartbeat updates last_seen every
--- 60 s. Rows older than 2 minutes are ignored by the app.
--- ─────────────────────────────────────────────────────────────────────────────
-create table if not exists collaborators (
-  id         uuid primary key default gen_random_uuid(),
-  show_id    uuid references shows(id) on delete cascade,
-  user_id    text not null,
-  name       text not null,
-  color      text not null default '#7c3aed',
-  last_seen  timestamptz default now(),
-  unique(show_id, user_id)
-);
-
--- ─────────────────────────────────────────────────────────────────────────────
 -- REALTIME
 -- performer_positions and prop_positions are excluded — the app no longer
 -- subscribes to their CDC events (position sync happens via formation broadcasts).
@@ -217,7 +202,6 @@ alter publication supabase_realtime add table shows;
 alter publication supabase_realtime add table formations;
 alter publication supabase_realtime add table performers;
 alter publication supabase_realtime add table props;
-alter publication supabase_realtime add table collaborators;
 alter publication supabase_realtime add table audio_segments;
 alter publication supabase_realtime add table performer_groups;
 
@@ -244,7 +228,6 @@ alter table props               enable row level security;
 alter table performer_positions enable row level security;
 alter table prop_positions      enable row level security;
 alter table audio_segments      enable row level security;
-alter table collaborators       enable row level security;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- SECURITY DEFINER HELPERS
@@ -481,12 +464,6 @@ create policy "Members can access performer_groups"
 -- ─────────────────────────────────────────────────────────────────────────────
 create policy "Members can access audio_segments"
   on audio_segments for all using (is_show_member(show_id));
-
--- ─────────────────────────────────────────────────────────────────────────────
--- RLS POLICIES — collaborators
--- ─────────────────────────────────────────────────────────────────────────────
-create policy "Members can access collaborators"
-  on collaborators for all using (is_show_member(show_id));
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- STORAGE POLICIES — audio bucket

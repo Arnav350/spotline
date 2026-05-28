@@ -160,6 +160,7 @@ export default function App() {
       animFrameRef.current = requestAnimationFrame(animate);
     }
     prevActiveIdRef.current = currentActiveId;
+    return () => { cancelAnimationFrame(animFrameRef.current); };
   }, [activeFormationId, formations, pendingTransitionDuration]); // useLayoutEffect: fires before paint so the initial frame is never visible
 
   function handleOpenShow(showId: string) {

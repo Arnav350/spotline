@@ -27,6 +27,12 @@ interface EphemeralPayload {
   positionUpdates?: PositionUpdate[];
 }
 
+interface PresencePayload {
+  userId: string;
+  name: string;
+  color: string;
+}
+
 export function useRealtimeSync(showId: string | null) {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const knownUserIdsRef = useRef<Set<string>>(new Set());
@@ -88,21 +94,19 @@ export function useRealtimeSync(showId: string | null) {
     knownUserIdsRef.current = new Set();
     wasDisconnectedRef.current = false;
 
-    // Heartbeat: keep last_seen fresh so stale-row detection works
-    const heartbeatInterval = setInterval(async () => {
-      const state = useShowStore.getState();
-      if (!state.localUserId) return;
-      await supabase.from('collaborators').update({ last_seen: new Date().toISOString() })
-        .eq('show_id', showId).eq('user_id', state.localUserId);
-    }, 60_000);
+    // Only process DB events when others are online — avoids echo-processing our own saves when solo
+    function hasPeers(): boolean {
+      const { collaborators, localUserId } = useShowStore.getState();
+      return collaborators.some(c => c.user_id !== localUserId);
+    }
 
-    // ── Postgres changes channel (DB sync) ──────────────────────────────
     const channel = supabase.channel(`show-${showId}`, {
       config: { broadcast: { self: false } },
     });
 
     channel
       .on('postgres_changes', { event: '*', schema: 'public', table: 'shows', filter: `id=eq.${showId}` }, payload => {
+        if (!hasPeers()) return;
         if (payload.eventType === 'UPDATE' && payload.new) {
           const current = useShowStore.getState().show;
           if (current && payload.new.updated_at > (current.updated_at || '')) {
@@ -111,6 +115,7 @@ export function useRealtimeSync(showId: string | null) {
         }
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'formations', filter: `show_id=eq.${showId}` }, payload => {
+        if (!hasPeers()) return;
         const state = useShowStore.getState();
         if (payload.eventType === 'INSERT') {
           if (!state.formations.find(f => f.id === payload.new.id))
@@ -122,6 +127,7 @@ export function useRealtimeSync(showId: string | null) {
         }
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'performers', filter: `show_id=eq.${showId}` }, payload => {
+        if (!hasPeers()) return;
         const state = useShowStore.getState();
         if (payload.eventType === 'INSERT') {
           if (!state.performers.find(p => p.id === payload.new.id))
@@ -133,6 +139,7 @@ export function useRealtimeSync(showId: string | null) {
         }
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'props', filter: `show_id=eq.${showId}` }, payload => {
+        if (!hasPeers()) return;
         const state = useShowStore.getState();
         if (payload.eventType === 'INSERT') {
           if (!state.props.find(p => p.id === payload.new.id))
@@ -143,33 +150,39 @@ export function useRealtimeSync(showId: string | null) {
           useShowStore.setState({ props: state.props.filter(p => p.id !== payload.old.id) });
         }
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'collaborators', filter: `show_id=eq.${showId}` }, payload => {
+      // Presence: who is currently online in this show
+      .on('presence', { event: 'sync' }, () => {
+        const presenceState = channel.presenceState<PresencePayload>();
         const localId = useShowStore.getState().localUserId;
-        if (payload.eventType === 'INSERT') {
-          if (payload.new.user_id === localId) return;
-          if (!knownUserIdsRef.current.has(payload.new.user_id)) {
-            knownUserIdsRef.current.add(payload.new.user_id);
-            useShowStore.getState().addToast(`${payload.new.name} joined the session`, 'info');
+        // Preserve ephemeral active_formation_id values set by broadcast
+        const existingById = new Map(useShowStore.getState().collaborators.map(c => [c.user_id, c]));
+        const collaborators = Object.values(presenceState)
+          .flat()
+          .filter(p => p.userId !== localId)
+          .map(p => ({
+            user_id: p.userId,
+            name: p.name,
+            color: p.color,
+            active_formation_id: existingById.get(p.userId)?.active_formation_id ?? null,
+          }));
+        useShowStore.setState({ collaborators });
+      })
+      .on('presence', { event: 'join' }, ({ newPresences }) => {
+        const localId = useShowStore.getState().localUserId;
+        for (const p of newPresences as unknown as PresencePayload[]) {
+          if (p.userId === localId) continue;
+          if (!knownUserIdsRef.current.has(p.userId)) {
+            knownUserIdsRef.current.add(p.userId);
+            useShowStore.getState().addToast(`${p.name} joined the session`, 'info');
           }
-          useShowStore.setState(s => {
-            if (s.collaborators.find(c => c.user_id === payload.new.user_id)) return s;
-            return { collaborators: [...s.collaborators, payload.new as any] };
-          });
-        } else if (payload.eventType === 'UPDATE') {
-          if (payload.new.user_id === localId) return;
-          useShowStore.setState(s => {
-            if (s.collaborators.find(c => c.user_id === payload.new.user_id)) {
-              return { collaborators: s.collaborators.map(c => c.user_id === payload.new.user_id ? { ...c, ...payload.new } : c) };
-            }
-            return { collaborators: [...s.collaborators, payload.new as any] };
-          });
-        } else if (payload.eventType === 'DELETE') {
-          const leaving = useShowStore.getState().collaborators.find(c => c.user_id === payload.old.user_id);
-          if (leaving) {
-            knownUserIdsRef.current.delete(leaving.user_id);
-            useShowStore.getState().addToast(`${leaving.name} left the session`, 'info');
-          }
-          useShowStore.setState(s => ({ collaborators: s.collaborators.filter(c => c.user_id !== payload.old.user_id) }));
+        }
+      })
+      .on('presence', { event: 'leave' }, ({ leftPresences }) => {
+        const localId = useShowStore.getState().localUserId;
+        for (const p of leftPresences as unknown as PresencePayload[]) {
+          if (p.userId === localId) continue;
+          useShowStore.getState().addToast(`${p.name} left the session`, 'info');
+          knownUserIdsRef.current.delete(p.userId);
         }
       })
       // Receive ephemeral updates from other clients via Broadcast.
@@ -255,7 +268,7 @@ export function useRealtimeSync(showId: string | null) {
           });
         }
       })
-      .subscribe(async (status) => {
+      .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           if (wasDisconnectedRef.current) {
             wasDisconnectedRef.current = false;
@@ -263,36 +276,16 @@ export function useRealtimeSync(showId: string | null) {
           }
           useShowStore.getState().setRealtimeConnected(true);
 
+          // Announce our presence to others
           const state = useShowStore.getState();
-          const color = colorFromUserId(state.localUserId);
-          await supabase.from('collaborators').upsert({
-            show_id: showId,
-            user_id: state.localUserId,
+          channel.track({
+            userId: state.localUserId,
             name: state.localUserName,
-            color,
-            last_seen: new Date().toISOString(),
-          }, { onConflict: 'show_id,user_id' });
-
-          // Fetch current collaborators from DB — only those seen in the last 2 minutes
-          const recentCutoff = new Date(Date.now() - 2 * 60 * 1000).toISOString();
-          const { data } = await supabase
-            .from('collaborators')
-            .select('*')
-            .eq('show_id', showId)
-            .neq('user_id', state.localUserId)
-            .gte('last_seen', recentCutoff);
-          if (data && data.length > 0) {
-            data.forEach((c: any) => knownUserIdsRef.current.add(c.user_id));
-            useShowStore.setState(s => {
-              const existingIds = new Set(s.collaborators.map(c => c.user_id));
-              const newOnes = data.filter((c: any) => !existingIds.has(c.user_id));
-              return newOnes.length > 0 ? { collaborators: [...s.collaborators, ...newOnes] } : s;
-            });
-          }
+            color: colorFromUserId(state.localUserId),
+          });
 
           // Broadcast our current formation so late-joiners see us immediately
-          const fresh = useShowStore.getState();
-          broadcastEphemeral({ activeFormationId: fresh.activeFormationId });
+          broadcastEphemeral({ activeFormationId: useShowStore.getState().activeFormationId });
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
           wasDisconnectedRef.current = true;
           useShowStore.getState().setRealtimeConnected(false);
@@ -302,14 +295,11 @@ export function useRealtimeSync(showId: string | null) {
     channelRef.current = channel;
 
     return () => {
-      clearInterval(heartbeatInterval);
-      const { localUserId } = useShowStore.getState();
-      if (localUserId) {
-        supabase.from('collaborators').delete().eq('show_id', showId).eq('user_id', localUserId);
-      }
+      channel.untrack();
       channel.unsubscribe();
       channelRef.current = null;
       knownUserIdsRef.current = new Set();
+      useShowStore.setState({ collaborators: [] });
     };
   }, [showId, broadcastEphemeral]);
 }
