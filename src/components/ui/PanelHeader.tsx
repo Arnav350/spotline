@@ -1,0 +1,50 @@
+import { X } from 'lucide-react';
+import { colors, fontSize, fontWeight, radius } from '../../lib/theme';
+
+interface PanelHeaderProps {
+  title: string;
+  onClose?: () => void;
+}
+
+export function PanelHeader({ title, onClose }: PanelHeaderProps) {
+  return (
+    <div style={{
+      padding: '10px 12px 8px',
+      borderBottom: `1px solid ${colors.border}`,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      flexShrink: 0,
+    }}>
+      <span style={{
+        fontSize: fontSize.xs,
+        fontWeight: fontWeight.bold,
+        color: colors.textFaint,
+        textTransform: 'uppercase',
+        letterSpacing: '0.1em',
+      }}>
+        {title}
+      </span>
+      {onClose && (
+        <button
+          onClick={onClose}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            color: colors.textGhost,
+            display: 'flex',
+            alignItems: 'center',
+            padding: 2,
+            borderRadius: radius.sm,
+            transition: 'color 0.15s',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.color = colors.textSecondary)}
+          onMouseLeave={e => (e.currentTarget.style.color = colors.textGhost)}
+        >
+          <X size={12} />
+        </button>
+      )}
+    </div>
+  );
+}

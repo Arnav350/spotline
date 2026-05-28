@@ -1,0 +1,44 @@
+import { colors, radius } from '../../lib/theme';
+
+interface Option {
+  value: string;
+  label: string;
+  title: string;
+}
+
+interface SegmentedControlProps {
+  options: Option[];
+  value: string;
+  onChange: (value: string) => void;
+}
+
+export function SegmentedControl({ options, value, onChange }: SegmentedControlProps) {
+  return (
+    <div style={{ display: 'flex', gap: 2 }}>
+      {options.map(opt => {
+        const active = value === opt.value;
+        return (
+          <button
+            key={opt.value}
+            title={opt.title}
+            onClick={() => onChange(opt.value)}
+            style={{
+              flex: 1,
+              padding: '4px 0',
+              fontSize: 13,
+              fontFamily: 'monospace',
+              background: active ? colors.accent : colors.bgCard,
+              color: active ? colors.text : colors.textMuted,
+              border: `1px solid ${active ? colors.accent : colors.borderMed}`,
+              borderRadius: radius.sm,
+              cursor: 'pointer',
+              transition: 'background 0.1s, color 0.1s',
+            }}
+          >
+            {opt.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
