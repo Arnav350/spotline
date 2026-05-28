@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useShowStore } from '../store/showStore';
+import { colorFromUserId } from '../lib/colors';
 
 interface FormationUpsert {
   id: string; show_id: string; name: string; notes: string;
@@ -263,7 +264,7 @@ export function useRealtimeSync(showId: string | null) {
           useShowStore.getState().setRealtimeConnected(true);
 
           const state = useShowStore.getState();
-          const color = '#7c3aed';
+          const color = colorFromUserId(state.localUserId);
           await supabase.from('collaborators').upsert({
             show_id: showId,
             user_id: state.localUserId,

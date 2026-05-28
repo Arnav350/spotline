@@ -5,7 +5,7 @@ import { useAuthStore } from '../store/authStore';
 import { isSupabaseConfigured } from '../lib/supabase';
 import { colors, fontSize, fontWeight, radius } from '../lib/theme';
 import InviteModal from './InviteModal';
-import { getCollaboratorPlayheadColor } from '../lib/collaboratorColors';
+import { colorFromUserId } from '../lib/colors';
 
 function OnlineIndicator({ others, selfName, selfColor }: {
   others: { user_id: string; name: string; color: string }[];
@@ -101,7 +101,7 @@ function OnlineIndicator({ others, selfName, selfColor }: {
   );
 }
 
-function UserMenu({ onSignOut }: { onSignOut: () => void }) {
+function UserMenu({ onSignOut, onShowShortcuts }: { onSignOut: () => void; onShowShortcuts?: () => void }) {
   const { profile } = useAuthStore();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -153,6 +153,20 @@ function UserMenu({ onSignOut }: { onSignOut: () => void }) {
           <div style={{ padding: '10px 12px 8px', borderBottom: `1px solid ${colors.border}` }}>
             <div style={{ fontSize: fontSize.sm, color: colors.text, fontWeight: fontWeight.medium }}>{profile.display_name}</div>
           </div>
+          {onShowShortcuts && (
+            <button
+              onClick={() => { onShowShortcuts(); setOpen(false); }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                padding: '9px 12px', background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: fontSize.sm, color: colors.textSecondary, textAlign: 'left',
+              }}
+              onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = colors.text; el.style.background = colors.bgCard; }}
+              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = colors.textSecondary; el.style.background = 'none'; }}
+            >
+              <Keyboard size={13} /> Keyboard shortcuts
+            </button>
+          )}
           <button
             onClick={() => { onSignOut(); setOpen(false); }}
             style={{
@@ -280,7 +294,16 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
           )}
         </div>
 
-        <div style={{ flex: 1 }} />
+        {/* Undo / redo */}
+        {!isViewer && (
+          <>
+            <div style={{ width: 1, height: 16, background: colors.borderSubtle, marginLeft: 4 }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <button className="btn-icon" onClick={undo} disabled={!canUndo} title="Undo (⌘Z)"><Undo2 size={17} /></button>
+              <button className="btn-icon" onClick={redo} disabled={!canRedo} title="Redo (⌘⇧Z)"><Redo2 size={17} /></button>
+            </div>
+          </>
+        )}
 
         {/* Saving indicator */}
         {isSaving && (
@@ -290,15 +313,7 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
           </div>
         )}
 
-        {/* Undo / redo */}
-        {!isViewer && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <button className="btn-icon" onClick={undo} disabled={!canUndo} title="Undo (⌘Z)"><Undo2 size={17} /></button>
-            <button className="btn-icon" onClick={redo} disabled={!canRedo} title="Redo (⌘⇧Z)"><Redo2 size={17} /></button>
-          </div>
-        )}
-
-        <div style={{ width: 1, height: 16, background: colors.borderSubtle }} />
+        <div style={{ flex: 1 }} />
 
         {/* 2D / 3D toggle */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: colors.bgElevated, border: `1px solid ${colors.borderSubtle}`, borderRadius: radius.sm, padding: 2 }}>
@@ -326,7 +341,7 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
         {/* Online users indicator — only shown when others are present */}
         {isSupabaseConfigured() && show && profile && otherCollaborators.length > 0 && (
           <OnlineIndicator
-            others={otherCollaborators.map(c => ({ ...c, color: getCollaboratorPlayheadColor(c.user_id) }))}
+            others={otherCollaborators.map(c => ({ ...c, color: colorFromUserId(c.user_id) }))}
             selfName={profile.display_name}
             selfColor={localUserColor || '#7c3aed'}
           />
@@ -344,12 +359,8 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
           </button>
         )}
 
-        <button className="btn-icon" onClick={onShowShortcuts} title="Keyboard shortcuts (?)">
-          <Keyboard size={15} />
-        </button>
-
         {/* User menu */}
-        {isSupabaseConfigured() && <UserMenu onSignOut={signOut} />}
+        {isSupabaseConfigured() && <UserMenu onSignOut={signOut} onShowShortcuts={onShowShortcuts} />}
       </div>
     </>
   );

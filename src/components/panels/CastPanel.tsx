@@ -11,7 +11,7 @@ interface CastPanelProps {
 export function CastPanel({ onClose }: CastPanelProps) {
   const {
     performers, props, performerGroups,
-    addPerformer, addProp, deleteProp,
+    addPerformer, addProp,
     addPerformerGroup, deletePerformerGroup, updatePerformerGroup,
     selectedItem, selectedItemIds,
     setSelectedItemIds,
@@ -176,14 +176,6 @@ export function CastPanel({ onClose }: CastPanelProps) {
                 <span style={{ fontSize: fontSize.md, color: colors.textSub, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {p.name}
                 </span>
-              </button>
-              <button
-                style={{ flexShrink: 0, width: 28, height: 28, background: 'transparent', border: 'none', cursor: 'pointer', color: colors.textGhost, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
-                onMouseEnter={e => (e.currentTarget.style.color = colors.danger)}
-                onMouseLeave={e => (e.currentTarget.style.color = colors.textGhost)}
-                onClick={() => { deleteProp(p.id); }}
-              >
-                <X size={10} />
               </button>
             </div>
           );
