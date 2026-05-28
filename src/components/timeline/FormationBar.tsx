@@ -1,6 +1,6 @@
 import type { Formation } from '../../lib/types';
 import { colors } from '../../lib/theme';
-import { HANDLE_WIDTH, BAR_HEIGHT, TRANS_BAR_HEIGHT, PURPLE } from './constants';
+import { HANDLE_WIDTH, BAR_HEIGHT, TRANS_BAR_HEIGHT, PURPLE, BAR_GAP } from './constants';
 import { GripVertical } from 'lucide-react';
 import type { CollaboratorState } from '../../store/showStore';
 
@@ -46,10 +46,9 @@ export function FormationBar({
   onReorderStart,
 }: FormationBarProps) {
   const left = 12 + startTime * effectivePPS; // LEFT_PADDING = 12
-  const width = Math.max(HANDLE_WIDTH * 2 + 32, formation.duration * effectivePPS);
-  // transWidth is measured from bar left (not content div left) so the handle
-  // lands on absolute beat tick positions in the ruler.
-  const transWidth = Math.min(width - HANDLE_WIDTH, Math.max(0, formation.transition_duration * effectivePPS));
+  const width = Math.max(HANDLE_WIDTH * 2 + 32, formation.duration * effectivePPS - BAR_GAP);
+  // transWidth capped at width - HANDLE_WIDTH - 3 so the trans handle never overlaps the dur handle.
+  const transWidth = Math.min(width - HANDLE_WIDTH - 3, Math.max(0, formation.transition_duration * effectivePPS));
 
   const durationLabel = bpm && bpm > 0
     ? `${Math.round(formation.duration * bpm / 60)}ct`
@@ -64,8 +63,7 @@ export function FormationBar({
         width,
         height: BAR_HEIGHT,
         background: colors.bgCard,
-        border: `1px solid ${isActive ? PURPLE : colors.borderMed}`,
-        borderTop: `2px solid ${isActive ? PURPLE : colors.borderStrong}`,
+        border: `2px solid ${isActive ? colors.textSecondary : colors.borderMed}`,
         borderRadius: 3,
         userSelect: 'none',
         cursor: 'pointer',

@@ -108,13 +108,18 @@ export interface AudioSegment {
   color: string;
 }
 
-export interface HistoryEntry {
+export interface HistorySnapshot {
   performers: Performer[];
   props: Prop[];
   formations: Formation[];
   performerPositions: Record<string, PerformerPosition>;
   propPositions: Record<string, PropPosition>;
   performerPaths: Record<string, { cpDx: number; cpDy: number }>;
+}
+
+export interface HistoryEntry extends HistorySnapshot {
+  // State before this action was applied — used for delta-based undo that preserves remote changes.
+  before?: HistorySnapshot;
 }
 
 export interface Profile {

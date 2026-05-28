@@ -36,6 +36,10 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
     formatTime,
   } = usePlayback(audioRef);
 
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [hasSeeked, setHasSeeked] = useState(false);
+  function seek(t: number) { setHasSeeked(true); seekToTime(t); }
+
   // --- Timeline gestures (zoom, resize, reorder, seek) ---
   const {
     timelineZoom, setTimelineZoom,
@@ -46,9 +50,7 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
     handleTransResizeStart,
     handleReorderStart,
     handleRulerMouseDown,
-  } = useTimelineGestures(scrollRef, seekToTime);
-
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  } = useTimelineGestures(scrollRef, seek);
 
   const effectivePPS = BASE_PPS * timelineZoom;
 
@@ -77,12 +79,12 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
         e.preventDefault();
         let cum = 0;
         for (let i = 0; i < activeIdx - 1; i++) cum += fs[i].duration;
-        seekToTime(cum);
+        seek(cum);
       } else if (e.key === 'ArrowRight' && activeIdx < fs.length - 1) {
         e.preventDefault();
         let cum = 0;
         for (let i = 0; i <= activeIdx; i++) cum += fs[i].duration;
-        seekToTime(cum);
+        seek(cum);
       }
     }
     window.addEventListener('keydown', onKeyDown);
@@ -153,7 +155,7 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
           />
 
           {/* Playhead */}
-          {audioTime > 0 && (
+          {(audioTime > 0 || hasSeeked) && (
             <div style={{
               position: 'absolute',
               left: LEFT_PADDING + audioTime * effectivePPS,
@@ -198,7 +200,7 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
                 bpm={bpm}
                 isBeingDragged={reorderDragRef.current?.formationId === f.id}
                 presentCollaborators={collaborators.filter(c => c.user_id !== localUserId && c.active_formation_id === f.id)}
-                onSetActive={(id) => { setActiveFormation(id); seekToTime(startTimes[i]); }}
+                onSetActive={(id) => { setActiveFormation(id); seek(startTimes[i]); }}
                 onHoverChange={setHoveredId}
                 onDurResizeStart={handleDurResizeStart}
                 onTransResizeStart={handleTransResizeStart}

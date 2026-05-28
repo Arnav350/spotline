@@ -3,6 +3,7 @@ export const BAR_HEIGHT = 52;
 export const RULER_HEIGHT = 24;
 export const BEAT_ROW_HEIGHT = 24;
 export const HANDLE_WIDTH = 6;
+export const BAR_GAP = 4;
 export const MIN_DURATION = 0.3;
 export const TRANS_BAR_HEIGHT = 16;
 export const LEFT_PADDING = 12;

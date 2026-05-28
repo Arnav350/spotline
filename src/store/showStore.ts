@@ -10,6 +10,7 @@ import type {
   StageConfig,
   SelectableItem,
   HistoryEntry,
+  HistorySnapshot,
   Shape,
   PerformerGroup,
   AudioSegment,
@@ -168,6 +169,135 @@ function scheduleAutoSave(state: ShowState) {
   saveTimeout = setTimeout(() => {
     useShowStore.getState().persistAll();
   }, 800);
+}
+
+// Delta-based history restore: only revert keys that changed between `from` and `to`,
+// leaving keys that remote users may have changed independently untouched.
+function applyHistoryDelta(
+  from: HistorySnapshot,
+  to: HistorySnapshot,
+  current: ShowState,
+): Partial<ShowState> {
+  const result: Partial<ShowState> = {};
+
+  // Generic array diff helper
+  function diffArrays<T extends { id: string }>(
+    fromArr: T[], toArr: T[], curArr: T[],
+  ): T[] | null {
+    const fromIds = new Set(fromArr.map(x => x.id));
+    const toIds = new Set(toArr.map(x => x.id));
+    const changed =
+      fromArr.length !== toArr.length ||
+      fromArr.some(x => { const t = toArr.find(y => y.id === x.id); return !t || JSON.stringify(x) !== JSON.stringify(t); }) ||
+      toArr.some(x => !fromIds.has(x.id));
+    if (!changed) return null;
+
+    let next = [...curArr];
+    // Remove items added in this action (in from but not to)
+    next = next.filter(x => !fromIds.has(x.id) || toIds.has(x.id));
+    // Restore items removed in this action (in to but missing from current)
+    for (const x of toArr) {
+      if (!next.some(y => y.id === x.id)) next.push(x);
+    }
+    // Apply property updates from `to`
+    next = next.map(x => toArr.find(y => y.id === x.id) ?? x);
+    return next;
+  }
+
+  const performers = diffArrays(from.performers, to.performers, current.performers);
+  if (performers) result.performers = performers;
+
+  const props = diffArrays(from.props, to.props, current.props);
+  if (props) result.props = props;
+
+  const formations = diffArrays(from.formations, to.formations, current.formations);
+  if (formations) result.formations = (formations as Formation[]).sort((a, b) => a.order_index - b.order_index);
+
+  // Position record diff: only touch keys that changed between from→to
+  function diffPositions<T>(
+    fromPos: Record<string, T>,
+    toPos: Record<string, T>,
+    curPos: Record<string, T>,
+  ): Record<string, T> | null {
+    const allKeys = new Set([...Object.keys(fromPos), ...Object.keys(toPos)]);
+    const changedKeys: string[] = [];
+    for (const k of allKeys) {
+      if (JSON.stringify(fromPos[k]) !== JSON.stringify(toPos[k])) changedKeys.push(k);
+    }
+    if (changedKeys.length === 0) return null;
+    const next = { ...curPos };
+    for (const k of changedKeys) {
+      if (toPos[k] !== undefined) next[k] = toPos[k];
+      else delete next[k];
+    }
+    return next;
+  }
+
+  const performerPositions = diffPositions(from.performerPositions, to.performerPositions, current.performerPositions);
+  if (performerPositions) result.performerPositions = performerPositions as Record<string, PerformerPosition>;
+
+  const propPositions = diffPositions(from.propPositions, to.propPositions, current.propPositions);
+  if (propPositions) result.propPositions = propPositions as Record<string, PropPosition>;
+
+  const performerPaths = diffPositions(from.performerPaths, to.performerPaths, current.performerPaths);
+  if (performerPaths) result.performerPaths = performerPaths as Record<string, { cpDx: number; cpDy: number }>;
+
+  return result;
+}
+
+// Broadcast formation/position changes produced by undo/redo so peers see them immediately.
+function broadcastHistoryChanges(
+  prev: ShowState,
+  next: Partial<ShowState>,
+  to: HistorySnapshot,
+) {
+  if (next.formations) {
+    const nextIds = new Set(next.formations.map(f => f.id));
+    for (const f of next.formations) {
+      const old = prev.formations.find(x => x.id === f.id);
+      if (!old || JSON.stringify(old) !== JSON.stringify(f)) {
+        (window as any).__spotlineBroadcastFormationUpsert?.({
+          ...f,
+          performerPositions: Object.values(to.performerPositions)
+            .filter(p => p.formation_id === f.id)
+            .map(p => ({ performerId: p.performer_id, formationId: p.formation_id, x: p.x, y: p.y })),
+          propPositions: Object.values(to.propPositions)
+            .filter(p => p.formation_id === f.id)
+            .map(p => ({ propId: p.prop_id, formationId: p.formation_id, x: p.x, y: p.y })),
+        });
+      }
+    }
+    for (const f of prev.formations) {
+      if (!nextIds.has(f.id)) (window as any).__spotlineBroadcastFormationDelete?.(f.id);
+    }
+    if (next.formations.some(f => {
+      const old = prev.formations.find(x => x.id === f.id);
+      return old && old.order_index !== f.order_index;
+    })) {
+      (window as any).__spotlineBroadcastFormationsReorder?.(
+        next.formations.map(f => ({ id: f.id, order_index: f.order_index })),
+      );
+    }
+  }
+
+  const positionUpdates: { type: 'performer' | 'prop'; id: string; formationId: string; x: number; y: number }[] = [];
+  if (next.performerPositions) {
+    for (const [key, pos] of Object.entries(next.performerPositions)) {
+      const old = prev.performerPositions[key];
+      if (!old || old.x !== pos.x || old.y !== pos.y) {
+        positionUpdates.push({ type: 'performer', id: pos.performer_id, formationId: pos.formation_id, x: pos.x, y: pos.y });
+      }
+    }
+  }
+  if (next.propPositions) {
+    for (const [key, pos] of Object.entries(next.propPositions)) {
+      const old = prev.propPositions[key];
+      if (!old || old.x !== pos.x || old.y !== pos.y) {
+        positionUpdates.push({ type: 'prop', id: pos.prop_id, formationId: pos.formation_id, x: pos.x, y: pos.y });
+      }
+    }
+  }
+  if (positionUpdates.length > 0) (window as any).__spotlineBroadcastPositions?.(positionUpdates);
 }
 
 export const useShowStore = create<ShowState & { persistAll: () => Promise<void> }>((set, get) => ({
@@ -1137,13 +1267,25 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
 
   pushHistory: () => {
     const state = get();
-    const entry: HistoryEntry = {
+    const prevEntry = state.historyIndex >= 0 ? state.history[state.historyIndex] : undefined;
+    const snapshot: HistorySnapshot = {
       performers: JSON.parse(JSON.stringify(state.performers)),
       props: JSON.parse(JSON.stringify(state.props)),
       formations: JSON.parse(JSON.stringify(state.formations)),
       performerPositions: JSON.parse(JSON.stringify(state.performerPositions)),
       propPositions: JSON.parse(JSON.stringify(state.propPositions)),
       performerPaths: JSON.parse(JSON.stringify(state.performerPaths)),
+    };
+    const entry: HistoryEntry = {
+      ...snapshot,
+      before: prevEntry ? {
+        performers: prevEntry.performers,
+        props: prevEntry.props,
+        formations: prevEntry.formations,
+        performerPositions: prevEntry.performerPositions,
+        propPositions: prevEntry.propPositions,
+        performerPaths: prevEntry.performerPaths,
+      } : undefined,
     };
     const newHistory = state.history.slice(0, state.historyIndex + 1);
     newHistory.push(entry);
@@ -1154,32 +1296,22 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
   undo: () => {
     const state = get();
     if (state.historyIndex <= 0) return;
-    const entry = state.history[state.historyIndex - 1];
-    set({
-      performers: entry.performers,
-      props: entry.props,
-      formations: entry.formations,
-      performerPositions: entry.performerPositions,
-      propPositions: entry.propPositions,
-      performerPaths: entry.performerPaths ?? {},
-      historyIndex: state.historyIndex - 1,
-    });
+    const entry = state.history[state.historyIndex];
+    if (!entry.before) return;
+    const changes = applyHistoryDelta(entry, entry.before, state);
+    set({ ...changes, historyIndex: state.historyIndex - 1 });
+    broadcastHistoryChanges(state, changes, entry.before);
     scheduleAutoSave(get());
   },
 
   redo: () => {
     const state = get();
     if (state.historyIndex >= state.history.length - 1) return;
-    const entry = state.history[state.historyIndex + 1];
-    set({
-      performers: entry.performers,
-      props: entry.props,
-      formations: entry.formations,
-      performerPositions: entry.performerPositions,
-      propPositions: entry.propPositions,
-      performerPaths: entry.performerPaths ?? {},
-      historyIndex: state.historyIndex + 1,
-    });
+    const nextEntry = state.history[state.historyIndex + 1];
+    if (!nextEntry.before) return;
+    const changes = applyHistoryDelta(nextEntry.before, nextEntry, state);
+    set({ ...changes, historyIndex: state.historyIndex + 1 });
+    broadcastHistoryChanges(state, changes, nextEntry);
     scheduleAutoSave(get());
   },
 
