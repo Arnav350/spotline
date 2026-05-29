@@ -84,15 +84,6 @@ export interface Show {
   updated_at?: string;
 }
 
-export interface Collaborator {
-  id: string;
-  show_id: string;
-  user_id: string;
-  name: string;
-  color: string;
-  active_formation_id?: string | null; // ephemeral — set via broadcast only, not persisted to DB
-  last_seen: string;
-}
 
 export type SelectableItem =
   | { type: 'performer'; id: string }

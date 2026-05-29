@@ -18,7 +18,7 @@ import type {
 } from '../lib/types';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { hungarian } from '../lib/hungarian';
-import { colorFromUserId, APP_COLORS } from '../lib/colors';
+import { APP_COLORS } from '../lib/colors';
 
 
 interface SpotlineClipboardItem {
@@ -142,9 +142,6 @@ interface ShowState {
   uploadMusic: (file: File) => Promise<void>;
   removeMusic: () => void;
 
-  setCollaborators: (collaborators: CollaboratorState[]) => void;
-  joinAsCollaborator: (name: string) => void;
-  leaveAsCollaborator: () => void;
   addToast: (message: string, type?: 'info' | 'success' | 'warning' | 'error') => void;
   removeToast: (id: string) => void;
   setRealtimeConnected: (connected: boolean) => void;
@@ -1346,30 +1343,6 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       supabase.from('shows').update({ music_url: null, music_filename: null, music_storage_path: null }).eq('id', showId).then(() => {});
     }
     scheduleAutoSave(get());
-  },
-
-  setCollaborators: (collaborators: CollaboratorState[]) => {
-    set({ collaborators });
-  },
-
-  joinAsCollaborator: async (name: string) => {
-    const state = get();
-    if (!state.show || !isSupabaseConfigured()) return;
-    const color = colorFromUserId(state.localUserId);
-    set({ localUserName: name });
-    await supabase.from('collaborators').upsert({
-      show_id: state.show.id,
-      user_id: state.localUserId,
-      name,
-      color,
-      last_seen: new Date().toISOString(),
-    }, { onConflict: 'show_id,user_id' });
-  },
-
-  leaveAsCollaborator: async () => {
-    const state = get();
-    if (!state.show || !isSupabaseConfigured()) return;
-    await supabase.from('collaborators').delete().eq('show_id', state.show.id).eq('user_id', state.localUserId);
   },
 
   addToast: (message, type = 'info') => {
