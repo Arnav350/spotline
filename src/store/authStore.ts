@@ -36,14 +36,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return;
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      set({ session, user: session?.user ?? null });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      set({ session, user: session?.user ?? null, loading: false });
       if (session) {
-        await get().refreshProfile();
+        // Defer profile fetch outside the auth broadcast lock — awaiting Supabase queries
+        // inside onAuthStateChange deadlocks the auth client's internal session lock.
+        setTimeout(() => get().refreshProfile(), 0);
       } else {
         set({ profile: null });
       }
-      set({ loading: false });
     });
 
     // If onAuthStateChange doesn't fire (no session, no stored token), ensure loading clears

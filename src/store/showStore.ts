@@ -1337,10 +1337,14 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
   },
 
   removeMusic: () => {
-    const showId = get().show?.id;
+    const show = get().show;
+    const storagePath = (show as any)?.music_storage_path as string | null | undefined;
     set(s => ({ show: s.show ? { ...s.show, music_url: null, music_filename: null, music_storage_path: null } as any : null }));
-    if (isSupabaseConfigured() && showId) {
-      supabase.from('shows').update({ music_url: null, music_filename: null, music_storage_path: null }).eq('id', showId).then(() => {});
+    if (isSupabaseConfigured() && show?.id) {
+      supabase.from('shows').update({ music_url: null, music_filename: null, music_storage_path: null }).eq('id', show.id).then(() => {});
+      if (storagePath) {
+        supabase.storage.from('audio').remove([storagePath]).then(() => {});
+      }
     }
     scheduleAutoSave(get());
   },
