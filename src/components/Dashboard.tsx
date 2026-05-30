@@ -127,7 +127,7 @@ function ProjectCard({ show, folders, onOpen, onDelete, onLeave, onRename, onMov
         background: colors.bgCard, border: `1px solid ${colors.border}`,
         borderRadius: radius.lg, padding: 20, cursor: 'pointer',
         transition: 'border-color 0.15s, background 0.15s', position: 'relative',
-        display: 'flex', flexDirection: 'column', gap: 12, userSelect: 'none',
+        display: 'flex', flexDirection: 'column', gap: 6, userSelect: 'none',
       }}
       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = colors.borderMed; (e.currentTarget as HTMLElement).style.background = colors.bgCardHover; }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = colors.border; (e.currentTarget as HTMLElement).style.background = colors.bgCard; }}
@@ -148,7 +148,7 @@ function ProjectCard({ show, folders, onOpen, onDelete, onLeave, onRename, onMov
             onClick={e => e.stopPropagation()}
           />
         ) : (
-          <span style={{ flex: 1, fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span style={{ flex: 1, fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {show.title || 'Untitled Show'}
           </span>
         )}
@@ -234,9 +234,11 @@ interface SidebarItemProps {
 
 function SidebarItem({ label, count, icon, active, onClick, onRename, onDelete, onShare, isOwner }: SidebarItemProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });
   const [renaming, setRenaming] = useState(false);
   const [draft, setDraft] = useState(label);
   const menuRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const hasMenu = !!(onRename || onDelete || onShare);
 
@@ -265,7 +267,7 @@ function SidebarItem({ label, count, icon, active, onClick, onRename, onDelete, 
     <div
       style={{
         display: 'flex', alignItems: 'center', gap: 7,
-        padding: '6px 10px', borderRadius: radius.sm, cursor: 'pointer',
+        padding: '4px 10px', borderRadius: radius.sm, cursor: 'pointer',
         background: active ? `${colors.accent}22` : 'transparent',
         border: `1px solid ${active ? `${colors.accent}55` : 'transparent'}`,
         transition: 'background 0.12s',
@@ -288,27 +290,32 @@ function SidebarItem({ label, count, icon, active, onClick, onRename, onDelete, 
             e.stopPropagation();
           }}
           onClick={e => e.stopPropagation()}
-          style={{ flex: 1, background: 'transparent', border: 'none', borderBottom: `1px solid ${colors.accent}`, outline: 'none', fontSize: fontSize.sm, color: colors.text, padding: '0 1px', minWidth: 0, fontFamily: 'inherit' }}
+          style={{ flex: 1, background: 'transparent', border: 'none', borderBottom: `1px solid ${colors.accent}`, outline: 'none', fontSize: fontSize.md, color: colors.text, padding: '0 1px', minWidth: 0, fontFamily: 'inherit' }}
         />
       ) : (
-        <span style={{ flex: 1, fontSize: fontSize.sm, color: active ? colors.text : colors.textSecondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span style={{ flex: 1, fontSize: fontSize.md, color: active ? colors.text : colors.textSecondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {label}
         </span>
       )}
-      <span style={{ fontSize: fontSize.sm, color: colors.textGhost, flexShrink: 0 }}>{count}</span>
+      <span style={{ fontSize: fontSize.md, color: colors.textGhost, flexShrink: 0 }}>{count}</span>
       {hasMenu && (
-        <div ref={menuRef} style={{ position: 'relative', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+        <div style={{ position: 'relative', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
           <button
+            ref={btnRef}
             className="btn-icon"
-            style={{ width: 20, height: 20, opacity: menuOpen ? 1 : 0, transition: 'opacity 0.1s' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
-            onMouseLeave={e => { if (!menuOpen) (e.currentTarget as HTMLElement).style.opacity = '0'; }}
-            onClick={() => setMenuOpen(v => !v)}
+            style={{ width: 24, height: 24 }}
+            onClick={() => {
+              if (!menuOpen && btnRef.current) {
+                const r = btnRef.current.getBoundingClientRect();
+                setMenuPos({ x: r.left, y: r.bottom + 4 });
+              }
+              setMenuOpen(v => !v);
+            }}
           >
-            <MoreHorizontal size={11} />
+            <MoreHorizontal size={20} />
           </button>
           {menuOpen && (
-            <div style={{ position: 'absolute', left: 0, top: '100%', marginTop: 4, zIndex: 100, background: colors.bgPanel, border: `1px solid ${colors.borderMed}`, borderRadius: radius.md, overflow: 'hidden', minWidth: 140, boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
+            <div ref={menuRef} style={{ position: 'fixed', left: menuPos.x, top: menuPos.y, zIndex: 1000, background: colors.bgPanel, border: `1px solid ${colors.borderMed}`, borderRadius: radius.md, overflow: 'hidden', minWidth: 140, boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
               {isOwner && onRename && <button className="menu-item" onClick={() => { setRenaming(true); setMenuOpen(false); }}>Rename</button>}
               {isOwner && onShare && <button className="menu-item" onClick={() => { onShare(); setMenuOpen(false); }}>Share folder</button>}
               {isOwner && onDelete && <button className="menu-item danger" onClick={() => { onDelete(); setMenuOpen(false); }}>Delete folder</button>}
@@ -484,9 +491,9 @@ export default function Dashboard({ onOpenShow }: DashboardProps) {
               <div style={{ width: 30, height: 30, borderRadius: '50%', background: colors.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: fontSize.sm, fontWeight: fontWeight.bold, color: colors.text }}>
                 {profile.display_name.slice(0, 2).toUpperCase()}
               </div>
-              <span style={{ fontSize: fontSize.sm, color: colors.textSecondary }}>{profile.display_name}</span>
+              <span style={{ fontSize: fontSize.md, color: colors.textSecondary }}>{profile.display_name}</span>
             </div>
-            <button className="btn-ghost" style={{ fontSize: fontSize.sm, padding: '5px 10px' }} onClick={signOut}>Sign out</button>
+            <button className="btn-ghost" style={{ fontSize: fontSize.md, padding: '5px 10px' }} onClick={signOut}>Sign out</button>
           </div>
         )}
       </div>
@@ -499,7 +506,6 @@ export default function Dashboard({ onOpenShow }: DashboardProps) {
           width: 220, flexShrink: 0,
           background: colors.bgPanel, borderRight: `1px solid ${colors.border}`,
           display: 'flex', flexDirection: 'column',
-          overflow: 'hidden',
         }}>
           <div style={{ flex: 1, overflowY: 'auto', padding: '16px 10px 8px' }}>
             {/* All Shows */}
@@ -559,7 +565,7 @@ export default function Dashboard({ onOpenShow }: DashboardProps) {
                 onClick={handleCreateFolder}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 6, width: '100%',
-                  padding: '7px 10px', fontSize: fontSize.sm, color: colors.textMuted,
+                  padding: '7px 10px', fontSize: fontSize.md, color: colors.textMuted,
                   background: 'transparent', border: 'none', cursor: 'pointer',
                   borderRadius: radius.sm, transition: 'color 0.12s, background 0.12s',
                   textAlign: 'left',

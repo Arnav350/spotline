@@ -792,6 +792,8 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       shape: shapes[state.performers.length % shapes.length],
     };
     const cfg = state.show!.stage_config;
+    const spawnX = (cfg.width / 8) * (state.performers.length % 8) + cfg.width / 16;
+    const spawnY = -5;
     const newPositions = { ...state.performerPositions };
     state.formations.forEach(f => {
       const key = `${id}-${f.id}`;
@@ -799,8 +801,8 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         id: uuidv4(),
         performer_id: id,
         formation_id: f.id,
-        x: cfg.width / 2 + (Math.random() - 0.5) * 10,
-        y: cfg.height / 2 + (Math.random() - 0.5) * 10,
+        x: spawnX,
+        y: spawnY,
       };
     });
     set(s => ({ performers: [...s.performers, performer], performerPositions: newPositions }));
@@ -855,6 +857,9 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       width: 2,
       depth: 2,
     };
+    const cfg2 = state.show!.stage_config;
+    const propSpawnX = (cfg2.width / 8) * (state.props.length % 8) + cfg2.width / 16;
+    const propSpawnY = cfg2.height + 5;
     const newPositions = { ...state.propPositions };
     state.formations.forEach(f => {
       const key = `${id}-${f.id}`;
@@ -862,8 +867,8 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         id: uuidv4(),
         prop_id: id,
         formation_id: f.id,
-        x: state.show!.stage_config.width / 2,
-        y: state.show!.stage_config.height / 2,
+        x: propSpawnX,
+        y: propSpawnY,
       };
     });
     set(s => ({ props: [...s.props, prop], propPositions: newPositions }));
