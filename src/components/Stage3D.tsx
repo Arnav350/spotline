@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { useShowStore } from '../store/showStore';
 import type { Performer, Prop } from '../lib/types';
 import { colors } from '../lib/theme';
-import { interpolatePosition } from '../lib/stageHelpers.tsx';
+import { interpolatePosition, applyEasing } from '../lib/stageHelpers.tsx';
 
 function PerformerMesh({ performer, x, y, stageWidth, stageHeight, isSelected, onPointerDown }: {
   performer: Performer;
@@ -353,17 +353,17 @@ function SceneContent({ animating, animationProgress, previousFormationId, onDra
   );
 }
 
-export default function Stage3D({ width, height, animating = false, animationProgress = 0, previousFormationId = null }: {
+export default function Stage3D({ width, height }: {
   width: number;
   height: number;
-  animating?: boolean;
-  animationProgress?: number;
-  previousFormationId?: string | null;
 }) {
-  const { show } = useShowStore();
+  const { show, formations, activeFormationId, isAnimating, rawAnimProgress, animFromFormationId } = useShowStore();
   const stageConfig = show?.stage_config || { width: 60, height: 40, divisionsX: 5, divisionsY: 5, subdivisionsX: 2, subdivisionsY: 2, unit: 'ft' };
   const cameraZ = Math.max(stageConfig.width, stageConfig.height) * 0.8;
   const [isDragging, setIsDragging] = useState(false);
+
+  const activeFormation = formations.find(f => f.id === activeFormationId);
+  const animationProgress = applyEasing(rawAnimProgress, activeFormation?.transition_easing);
 
   return (
     <div style={{ width, height, background: colors.bg, cursor: isDragging ? 'grabbing' : 'default' }}>
@@ -378,9 +378,9 @@ export default function Stage3D({ width, height, animating = false, animationPro
         style={{ width: '100%', height: '100%' }}
       >
         <SceneContent
-          animating={animating}
+          animating={isAnimating}
           animationProgress={animationProgress}
-          previousFormationId={previousFormationId}
+          previousFormationId={animFromFormationId}
           onDraggingChange={setIsDragging}
         />
       </Canvas>

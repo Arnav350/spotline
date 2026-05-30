@@ -28,7 +28,7 @@ export function TimelineControls({
   onZoomChange,
   formatTime,
 }: TimelineControlsProps) {
-  const { formations, activeFormationId, setActiveFormation, addFormation, currentUserRole } = useShowStore();
+  const { formations, activeFormationId, addFormation, currentUserRole } = useShowStore();
   const isViewer = currentUserRole === 'viewer';
 
   const activeIdx = formations.findIndex(f => f.id === activeFormationId);
@@ -37,13 +37,11 @@ export function TimelineControls({
 
   function goToPrev() {
     if (!canPrev) return;
-    setActiveFormation(formations[activeIdx - 1].id);
     onSeekToTime(startTimes[activeIdx - 1]);
   }
 
   function goToNext() {
     if (!canNext) return;
-    setActiveFormation(formations[activeIdx + 1].id);
     onSeekToTime(startTimes[activeIdx + 1]);
   }
 

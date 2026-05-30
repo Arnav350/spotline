@@ -20,6 +20,15 @@ export function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
 
+export function applyEasing(t: number, easing?: string | null): number {
+  switch (easing) {
+    case 'ease-in': return t * t * t;
+    case 'ease-out': return 1 - (1 - t) ** 3;
+    case 'ease': return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
+    default: return 1 - (1 - t) ** 3; // ease-out for smooth default
+  }
+}
+
 export function interpolatePosition(
   prev: { x: number; y: number },
   curr: { x: number; y: number },

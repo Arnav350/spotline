@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useShowStore } from '../store/showStore';
 
 export function usePlayback(audioRef: React.RefObject<HTMLAudioElement | null>) {
-  const { show, formations, setActiveFormation, audioVolume, audioMuted } = useShowStore();
+  const { show, formations, setActiveFormation, audioVolume, audioMuted, setIsPlaying: setStoreIsPlaying, setAnimationState, endAnimation } = useShowStore();
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioTime, setAudioTime] = useState(0);
@@ -32,15 +32,27 @@ export function usePlayback(audioRef: React.RefObject<HTMLAudioElement | null>) 
     if (!audioRef.current) return;
     const t = audioRef.current.currentTime;
     setAudioTime(t);
+    const fs = formationsRef.current;
     let cum = 0;
-    for (const f of formationsRef.current) {
-      if (t >= cum && t < cum + f.duration) { setActiveFormation(f.id, f.transition_duration); break; }
+    for (let i = 0; i < fs.length; i++) {
+      const f = fs[i];
+      if (t >= cum && t < cum + f.duration) {
+        setActiveFormation(f.id, f.transition_duration);
+        const transitionDur = f.transition_duration || 0;
+        const timeInFormation = t - cum;
+        if (i > 0 && transitionDur > 0 && timeInFormation < transitionDur) {
+          setAnimationState(fs[i - 1].id, timeInFormation / transitionDur);
+        } else {
+          endAnimation();
+        }
+        break;
+      }
       cum += f.duration;
     }
     if (!audioRef.current.paused) {
       animFrameRef.current = requestAnimationFrame(tick);
     }
-  }, [setActiveFormation, audioRef]);
+  }, [setActiveFormation, setAnimationState, endAnimation, audioRef]);
 
   function handlePlay() {
     if (!audioRef.current || !show?.music_url) return;
@@ -48,9 +60,12 @@ export function usePlayback(audioRef: React.RefObject<HTMLAudioElement | null>) 
       audioRef.current.pause();
       cancelAnimationFrame(animFrameRef.current);
       setIsPlaying(false);
+      setStoreIsPlaying(false);
+      endAnimation();
     } else {
       audioRef.current.currentTime = audioTimeRef.current;
       audioRef.current.play();
+      setStoreIsPlaying(true);
       animFrameRef.current = requestAnimationFrame(tick);
       setIsPlaying(true);
     }
@@ -60,9 +75,10 @@ export function usePlayback(audioRef: React.RefObject<HTMLAudioElement | null>) 
     const clamped = Math.max(0, Math.min(audioDuration || 9999, t));
     if (audioRef.current) audioRef.current.currentTime = clamped;
     setAudioTime(clamped);
+    const paused = !audioRef.current || audioRef.current.paused;
     let cum = 0;
     for (const f of formationsRef.current) {
-      if (clamped >= cum && clamped < cum + f.duration) { setActiveFormation(f.id); break; }
+      if (clamped >= cum && clamped < cum + f.duration) { setActiveFormation(f.id, paused ? 0.3 : f.transition_duration); break; }
       cum += f.duration;
     }
   }

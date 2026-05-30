@@ -97,6 +97,16 @@ interface ShowState {
   pendingTransitionDuration: number | null;
   setActiveFormation: (id: string, transitionDuration?: number) => void;
 
+  // Playback / animation state
+  isPlaying: boolean;
+  isAnimating: boolean;
+  rawAnimProgress: number;
+  animFromFormationId: string | null;
+  setIsPlaying: (playing: boolean) => void;
+  setAnimationState: (fromId: string, progress: number) => void;
+  setRawAnimProgress: (p: number) => void;
+  endAnimation: () => void;
+
   addPerformer: () => void;
   deletePerformer: (id: string) => Promise<void>;
   updatePerformer: (id: string, updates: Partial<Performer>) => void;
@@ -329,6 +339,10 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
   historyIndex: -1,
   isSaving: false,
   pendingTransitionDuration: null,
+  isPlaying: false,
+  isAnimating: false,
+  rawAnimProgress: 0,
+  animFromFormationId: null,
 
   loadShow: async (showId: string) => {
     set({ isLoading: true });
@@ -776,6 +790,13 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
   setActiveFormation: (id: string, transitionDuration?: number) => {
     set({ activeFormationId: id, pendingTransitionDuration: transitionDuration ?? null });
   },
+
+  setIsPlaying: (playing: boolean) => { set({ isPlaying: playing }); },
+  setAnimationState: (fromId: string, progress: number) => {
+    set({ isAnimating: true, animFromFormationId: fromId, rawAnimProgress: progress });
+  },
+  setRawAnimProgress: (p: number) => { set({ rawAnimProgress: p }); },
+  endAnimation: () => { set({ isAnimating: false, animFromFormationId: null, rawAnimProgress: 0 }); },
 
   addPerformer: () => {
     const state = get();

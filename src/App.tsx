@@ -26,31 +26,20 @@ function useWindowSize() {
   return size;
 }
 
-function applyEasing(t: number, easing?: string): number {
-  switch (easing) {
-    case 'ease-in': return t * t * t;
-    case 'ease-out': return 1 - (1 - t) ** 3;
-    case 'ease': return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
-    default: return t;
-  }
-}
 
 export default function App() {
-  const { show, loadShow, isLoading, viewMode, formations, activeFormationId, pendingTransitionDuration, setSelectedAudioSegment, setLocalUser, toasts, removeToast, realtimeConnected } = useShowStore();
+  const { show, loadShow, isLoading, viewMode, formations, activeFormationId, pendingTransitionDuration, setSelectedAudioSegment, setLocalUser, toasts, removeToast, realtimeConnected, setAnimationState, setRawAnimProgress, endAnimation } = useShowStore();
   const { session, loading: authLoading, initialize, user, profile } = useAuthStore();
   const { width, height } = useWindowSize();
-  const [animating, setAnimating] = useState(false);
-  const [animProgress, setAnimProgress] = useState(0);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [sidebarPanel, setSidebarPanel] = useState<NavPanel | null>('formation');
   const [view, setView] = useState<'loading' | 'auth' | 'dashboard' | 'show'>('loading');
   const [currentShowId, setCurrentShowId] = useState<string | null>(null);
 
-  const activeFormation = formations.find(f => f.id === activeFormationId);
-  const easedAnimProgress = applyEasing(animProgress, activeFormation?.transition_easing);
-  const [prevFormationId, setPrevFormationId] = useState<string | null>(null);
   const animFrameRef = useRef<number>(0);
   const prevActiveIdRef = useRef<string | null>(null);
+  const pendingTransitionDurationRef = useRef(pendingTransitionDuration);
+  pendingTransitionDurationRef.current = pendingTransitionDuration;
 
   useKeyboardShortcuts(() => setShowShortcuts(true));
 
@@ -137,31 +126,31 @@ export default function App() {
     const currentActiveId = activeFormationId;
     if (currentActiveId !== prevActiveIdRef.current && prevActiveIdRef.current !== null) {
       const prev = prevActiveIdRef.current;
-      const transDuration = pendingTransitionDuration !== null ? pendingTransitionDuration * 1000 : 500;
+      // When audio is playing, tick drives animation directly — skip wall-clock animation
+      if (!useShowStore.getState().isPlaying) {
+        const transDuration = pendingTransitionDurationRef.current !== null ? pendingTransitionDurationRef.current * 1000 : 200;
 
-      setPrevFormationId(prev);
-      setAnimating(true);
-      setAnimProgress(0);
+        setAnimationState(prev, 0);
 
-      const startTime = performance.now();
-      function animate(now: number) {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / transDuration, 1);
-        setAnimProgress(progress);
-        if (progress < 1) {
-          animFrameRef.current = requestAnimationFrame(animate);
-        } else {
-          setAnimating(false);
-          setPrevFormationId(null);
+        const startTime = performance.now();
+        function animate(now: number) {
+          const elapsed = now - startTime;
+          const progress = Math.min(elapsed / transDuration, 1);
+          setRawAnimProgress(progress);
+          if (progress < 1) {
+            animFrameRef.current = requestAnimationFrame(animate);
+          } else {
+            endAnimation();
+          }
         }
-      }
 
-      cancelAnimationFrame(animFrameRef.current);
-      animFrameRef.current = requestAnimationFrame(animate);
+        cancelAnimationFrame(animFrameRef.current);
+        animFrameRef.current = requestAnimationFrame(animate);
+      }
     }
     prevActiveIdRef.current = currentActiveId;
     return () => { cancelAnimationFrame(animFrameRef.current); };
-  }, [activeFormationId, formations, pendingTransitionDuration]); // useLayoutEffect: fires before paint so the initial frame is never visible
+  }, [activeFormationId]); // useLayoutEffect: fires before paint so the initial frame is never visible
 
   function handleOpenShow(showId: string) {
     setCurrentShowId(showId);
@@ -262,18 +251,12 @@ export default function App() {
               <StageCanvas
                 width={canvasWidth}
                 height={canvasHeight}
-                animating={animating}
-                animationProgress={easedAnimProgress}
-                previousFormationId={prevFormationId}
                 showStageDimensions={sidebarPanel === 'stage'}
               />
             ) : (
               <Stage3D
                 width={canvasWidth}
                 height={canvasHeight}
-                animating={animating}
-                animationProgress={easedAnimProgress}
-                previousFormationId={prevFormationId}
               />
             )}
 

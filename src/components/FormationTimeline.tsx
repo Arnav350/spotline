@@ -261,7 +261,7 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
                 bpm={bpm}
                 isBeingDragged={reorderDragRef.current?.formationId === f.id}
                 presentCollaborators={collaborators.filter(c => c.user_id !== localUserId && c.active_formation_id === f.id)}
-                onSetActive={(id) => { setActiveFormation(id); seek(startTimes[i]); }}
+                onSetActive={() => { seek(startTimes[i]); }}
                 onHoverChange={setHoveredId}
                 onDurResizeStart={handleDurResizeStart}
                 onTransResizeStart={handleTransResizeStart}

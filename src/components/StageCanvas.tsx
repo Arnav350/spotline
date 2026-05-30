@@ -6,7 +6,7 @@ import { Magnet, RotateCw } from 'lucide-react';
 import { colors, fontSize, fontWeight, radius } from '../lib/theme';
 import {
   CANVAS_PADDING, PERFORMER_RADIUS,
-  interpolatePosition, worldToCanvas, canvasToWorld, snapWorld, drawShape,
+  interpolatePosition, worldToCanvas, canvasToWorld, snapWorld, drawShape, applyEasing,
   type AnimatedPosition,
 } from '../lib/stageHelpers.tsx';
 import { useZoomPan } from '../hooks/useZoomPan';
@@ -15,13 +15,10 @@ import { useStageInteraction } from '../hooks/useStageInteraction';
 interface CanvasProps {
   width: number;
   height: number;
-  animating?: boolean;
-  animationProgress?: number;
-  previousFormationId?: string | null;
   showStageDimensions?: boolean;
 }
 
-export default function StageCanvas({ width, height, animating, animationProgress = 0, previousFormationId, showStageDimensions }: CanvasProps) {
+export default function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
   const {
     show,
     formations,
@@ -31,6 +28,9 @@ export default function StageCanvas({ width, height, animating, animationProgres
     propPositions,
     performerPaths,
     activeFormationId,
+    isAnimating,
+    rawAnimProgress,
+    animFromFormationId,
     selectedItemIds,
     setSelectedItemIds,
     toggleItemSelected,
@@ -41,6 +41,11 @@ export default function StageCanvas({ width, height, animating, animationProgres
     clearPerformerPath,
     updateStageConfig,
   } = useShowStore();
+
+  const activeFormation = formations.find(f => f.id === activeFormationId);
+  const animating = isAnimating;
+  const previousFormationId = animFromFormationId;
+  const animationProgress = applyEasing(rawAnimProgress, activeFormation?.transition_easing);
 
   const stageRef = useRef<Konva.Stage>(null);
 
