@@ -8,37 +8,42 @@ export function useZoomPan(
   height: number,
   stageRef: React.RefObject<Konva.Stage | null>,
 ) {
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const zoomRef = useRef(zoom);
-  const panRef = useRef(pan);
-  zoomRef.current = zoom;
-  panRef.current = pan;
-
+  const zoomRef = useRef(1);
+  const panRef = useRef({ x: 0, y: 0 });
   const isPanningRef = useRef(false);
   const panStartRef = useRef({ mouseX: 0, mouseY: 0, panX: 0, panY: 0 });
+
+  // Increments on every transform to trigger DOM overlay re-renders (rotate handle, zoom %, etc.)
+  const [uiTick, setUiTick] = useState(0);
 
   useEffect(() => {
     const container = stageRef.current?.container();
     if (!container) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
+      const stage = stageRef.current;
+      if (!stage) return;
+      let newZoom = zoomRef.current;
+      let newPan = panRef.current;
       if (e.ctrlKey) {
-        const stage = stageRef.current;
-        if (!stage) return;
         const pointer = stage.getPointerPosition();
         if (!pointer) return;
         const oldZoom = zoomRef.current;
-        const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX,
-          e.deltaY < 0 ? oldZoom * ZOOM_FACTOR : oldZoom / ZOOM_FACTOR
+        newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX,
+          e.deltaY < 0 ? oldZoom * ZOOM_FACTOR : oldZoom / ZOOM_FACTOR,
         ));
         const stageX = (pointer.x - panRef.current.x) / oldZoom;
         const stageY = (pointer.y - panRef.current.y) / oldZoom;
-        setZoom(newZoom);
-        setPan({ x: pointer.x - stageX * newZoom, y: pointer.y - stageY * newZoom });
+        newPan = { x: pointer.x - stageX * newZoom, y: pointer.y - stageY * newZoom };
       } else {
-        setPan({ x: panRef.current.x - e.deltaX, y: panRef.current.y - e.deltaY });
+        newPan = { x: panRef.current.x - e.deltaX, y: panRef.current.y - e.deltaY };
       }
+      zoomRef.current = newZoom;
+      panRef.current = newPan;
+      stage.scale({ x: newZoom, y: newZoom });
+      stage.position(newPan);
+      stage.batchDraw();
+      setUiTick(t => t + 1);
     };
     container.addEventListener('wheel', onWheel, { passive: false });
     return () => container.removeEventListener('wheel', onWheel);
@@ -51,8 +56,16 @@ export function useZoomPan(
     const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, oldZoom * factor));
     const stageX = (cx - panRef.current.x) / oldZoom;
     const stageY = (cy - panRef.current.y) / oldZoom;
-    setZoom(newZoom);
-    setPan({ x: cx - stageX * newZoom, y: cy - stageY * newZoom });
+    const newPan = { x: cx - stageX * newZoom, y: cy - stageY * newZoom };
+    zoomRef.current = newZoom;
+    panRef.current = newPan;
+    const stage = stageRef.current;
+    if (stage) {
+      stage.scale({ x: newZoom, y: newZoom });
+      stage.position(newPan);
+      stage.batchDraw();
+    }
+    setUiTick(t => t + 1);
   }
 
   function handleMiddleMouseDown(e: React.MouseEvent) {
@@ -67,19 +80,29 @@ export function useZoomPan(
     if (isPanningRef.current) {
       const dx = e.clientX - panStartRef.current.mouseX;
       const dy = e.clientY - panStartRef.current.mouseY;
-      setPan({ x: panStartRef.current.panX + dx, y: panStartRef.current.panY + dy });
+      const newPan = { x: panStartRef.current.panX + dx, y: panStartRef.current.panY + dy };
+      panRef.current = newPan;
+      const stage = stageRef.current;
+      if (stage) {
+        stage.position(newPan);
+        stage.batchDraw();
+      }
+      setUiTick(t => t + 1);
     }
   }
 
   function handleMiddleMouseUp(e: React.MouseEvent) {
-    if (e.button === 1 || e.button === 2) isPanningRef.current = false;
+    if (e.button === 1 || e.button === 2) {
+      isPanningRef.current = false;
+      setUiTick(t => t + 1);
+    }
   }
 
   return {
-    zoom, setZoom,
-    pan, setPan,
-    zoomRef, panRef,
+    zoomRef,
+    panRef,
     isPanningRef,
+    uiTick,
     zoomToCenter,
     handleMiddleMouseDown,
     handleMiddleMouseMove,

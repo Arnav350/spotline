@@ -15,7 +15,14 @@ export function useTimelineGestures(
 ) {
   const { updateFormation, reorderFormations, updateAudioSegment } = useShowStore();
 
-  const [timelineZoom, setTimelineZoom] = useState(1);
+  const ZOOM_KEY = 'spotline-timeline-zoom';
+
+  const [timelineZoom, setTimelineZoomRaw] = useState(1);
+
+  function setTimelineZoom(zoom: number) {
+    setTimelineZoomRaw(zoom);
+    localStorage.setItem(ZOOM_KEY, String(zoom));
+  }
   const [dropIndicatorIdx, setDropIndicatorIdx] = useState<number | null>(null);
 
   const effectivePPSRef = useRef(BASE_PPS * timelineZoom);
@@ -32,6 +39,26 @@ export function useTimelineGestures(
 
   // Keep formationsRef current on each render
   formationsRef.current = useShowStore.getState().formations;
+
+  // On mount: restore saved zoom, or auto-fit if no saved value
+  useEffect(() => {
+    const saved = localStorage.getItem(ZOOM_KEY);
+    if (saved !== null) {
+      setTimelineZoomRaw(parseFloat(saved));
+      return;
+    }
+    const el = scrollRef.current;
+    if (!el) return;
+    const containerWidth = el.clientWidth;
+    if (containerWidth === 0) return;
+    const formations = useShowStore.getState().formations;
+    const totalDuration = formations.reduce((a, f) => a + f.duration, 0);
+    if (totalDuration === 0) return;
+    const contentSeconds = Math.max(totalDuration + 4, 12);
+    const zoom = (containerWidth - LEFT_PADDING * 2) / (contentSeconds * BASE_PPS);
+    setTimelineZoom(Math.max(0.15, Math.min(5, zoom)));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Pinch-to-zoom on timeline
   useEffect(() => {

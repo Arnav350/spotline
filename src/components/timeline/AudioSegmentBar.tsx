@@ -2,10 +2,11 @@ import { useState } from 'react';
 import type { AudioSegment } from '../../lib/types';
 import { useShowStore } from '../../store/showStore';
 import { colors, fontSize, fontWeight, radius } from '../../lib/theme';
-import { HANDLE_WIDTH, SEGMENT_ROW_HEIGHT, LEFT_PADDING } from './constants';
+import { HANDLE_WIDTH, SEGMENT_ROW_HEIGHT, LEFT_PADDING, BAR_GAP } from './constants';
 
 interface AudioSegmentBarProps {
   segment: AudioSegment;
+  index: number;
   startTime: number;
   effectivePPS: number;
   isSelected: boolean;
@@ -14,12 +15,13 @@ interface AudioSegmentBarProps {
   onResizeStart: (e: React.MouseEvent, segmentId: string, startX: number, startDur: number) => void;
 }
 
-export function AudioSegmentBar({ segment, startTime, effectivePPS, isSelected, isEditable, bpm, onResizeStart }: AudioSegmentBarProps) {
+export function AudioSegmentBar({ segment, index, startTime, effectivePPS, isSelected, isEditable, bpm, onResizeStart }: AudioSegmentBarProps) {
   const { setSelectedAudioSegment } = useShowStore();
   const [hovered, setHovered] = useState(false);
 
-  const left = LEFT_PADDING + startTime * effectivePPS;
-  const width = Math.max(HANDLE_WIDTH + 20, segment.duration * effectivePPS);
+  const gap = index === 0 ? 0 : BAR_GAP;
+  const left = LEFT_PADDING + startTime * effectivePPS + gap;
+  const width = Math.max(HANDLE_WIDTH + 20, segment.duration * effectivePPS - gap);
 
   const durationLabel = bpm && bpm > 0
     ? `${Math.round(segment.duration * bpm / 60)}ct`

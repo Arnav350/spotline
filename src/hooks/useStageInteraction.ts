@@ -21,7 +21,8 @@ export function useStageInteraction({
   // --- Drag state ---
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragCanvasPos, setDragCanvasPos] = useState<{ id: string; x: number; y: number } | null>(null);
-  const [dragWorldOffset, setDragWorldOffset] = useState<{ dx: number; dy: number } | null>(null);
+  // dragWorldOffset is a ref — no React state update on every mouse move
+  const dragWorldOffsetRef = useRef<{ dx: number; dy: number } | null>(null);
   const dragStartPos = useRef<{ x: number; y: number } | null>(null);
   const dragStartWorldPosRef = useRef<{ x: number; y: number } | null>(null);
   const lastDragCanvasPosRef = useRef<{ x: number; y: number } | null>(null);
@@ -36,7 +37,7 @@ export function useStageInteraction({
   const rotateStateRef = useRef(rotateState);
   rotateStateRef.current = rotateState;
 
-  // --- Box selection state ---
+  // --- Box selection state (only updates at start/end, not during mousemove) ---
   const selectionStartRef = useRef<{ x: number; y: number } | null>(null);
   const selectionRectDataRef = useRef<{ x1: number; y1: number; x2: number; y2: number } | null>(null);
   const selectionAdditive = useRef(false);
@@ -55,7 +56,20 @@ export function useStageInteraction({
       const stageY = (screenY - panRef.current.y) / zoomRef.current;
       const rect = { x1: selectionStartRef.current.x, y1: selectionStartRef.current.y, x2: stageX, y2: stageY };
       selectionRectDataRef.current = rect;
-      setSelectionRect(rect);
+
+      // Update Konva Rect imperatively — no React state update on every move
+      const selNode = stage.findOne('#selection-rect') as Konva.Rect | undefined;
+      if (selNode) {
+        const zoom = zoomRef.current;
+        selNode.visible(true);
+        selNode.x(Math.min(rect.x1, rect.x2));
+        selNode.y(Math.min(rect.y1, rect.y2));
+        selNode.width(Math.abs(rect.x2 - rect.x1));
+        selNode.height(Math.abs(rect.y2 - rect.y1));
+        selNode.strokeWidth(1 / zoom);
+        selNode.dash([4 / zoom, 4 / zoom]);
+        selNode.getLayer()?.batchDraw();
+      }
     }
 
     function onMouseUp() {
@@ -92,6 +106,12 @@ export function useStageInteraction({
       }
       selectionStartRef.current = null;
       selectionRectDataRef.current = null;
+      // Hide Konva Rect imperatively, then clear React state (one re-render for cursor restore)
+      const selNode = stageRef.current?.findOne('#selection-rect') as Konva.Rect | undefined;
+      if (selNode) {
+        selNode.visible(false);
+        selNode.getLayer()?.batchDraw();
+      }
       setSelectionRect(null);
     }
 
@@ -168,7 +188,7 @@ export function useStageInteraction({
     // Drag state
     draggingId, setDraggingId,
     dragCanvasPos, setDragCanvasPos,
-    dragWorldOffset, setDragWorldOffset,
+    dragWorldOffsetRef,
     dragStartPos, dragStartWorldPosRef, lastDragCanvasPosRef,
     // Rotation state
     rotateState, setRotateState,

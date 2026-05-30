@@ -344,6 +344,7 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
                 <AudioSegmentBar
                   key={seg.id}
                   segment={seg}
+                  index={i}
                   startTime={segStartTimes[i]}
                   effectivePPS={effectivePPS}
                   isSelected={seg.id === selectedAudioSegmentId}

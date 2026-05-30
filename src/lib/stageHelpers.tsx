@@ -83,7 +83,7 @@ export function drawShape(
   showLabel = true,
   ghostOpacity?: number,
   onDragMove?: (x: number, y: number) => void,
-  depth?: number,  // half-height in canvas pixels; defaults to size for uniform shapes
+  depth?: number,
 ): React.ReactNode {
   const { shape, color, name } = item;
   const d = depth ?? size;
@@ -96,9 +96,7 @@ export function drawShape(
     fill: color,
     stroke,
     strokeWidth,
-    shadowColor: isSelected ? color : 'transparent',
-    shadowBlur: isSelected ? 12 : 0,
-    shadowOpacity: 0.8,
+    shadowEnabled: false,
   };
 
   let shapeEl: React.ReactNode;
@@ -124,6 +122,7 @@ export function drawShape(
 
   return (
     <Group
+      id={key}
       key={key}
       x={x}
       y={y}
