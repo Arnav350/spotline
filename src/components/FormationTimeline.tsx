@@ -1,6 +1,6 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { useShowStore } from '../store/showStore';
-import { colors } from '../lib/theme';
+import { colors, fontSize, radius } from '../lib/theme';
 import { TimelineControls } from './timeline/TimelineControls';
 import { TimelineRuler } from './timeline/TimelineRuler';
 import { FormationBar } from './timeline/FormationBar';
@@ -12,13 +12,24 @@ import { AudioSegmentBar } from './timeline/AudioSegmentBar';
 import { usePlayback } from '../hooks/usePlayback';
 import { useTimelineGestures } from '../hooks/useTimelineGestures';
 
+type PositionClipboard = {
+  performers: Record<string, { x: number; y: number }>;
+  props: Record<string, { x: number; y: number }>;
+};
+
+type ContextMenu = { formationId: string; x: number; y: number } | null;
+
 export default function FormationTimeline({ showAudioSegments = false }: { showAudioSegments?: boolean }) {
   const {
     formations, activeFormationId,
     setActiveFormation, show,
     audioSegments, selectedAudioSegmentId,
     collaborators, localUserId,
+    addFormation, addFormationAfter, deleteFormation,
+    resetFormationToPrev, pastePositionsToFormation,
+    currentUserRole,
   } = useShowStore();
+  const isViewer = currentUserRole === 'viewer';
   const bpm = show?.bpm;
 
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -38,7 +49,40 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
 
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [hasSeeked, setHasSeeked] = useState(false);
+  const [contextMenu, setContextMenu] = useState<ContextMenu>(null);
+  const [clipboard, setClipboard] = useState<PositionClipboard | null>(null);
+  const clipboardRef = useRef<PositionClipboard | null>(null);
+  clipboardRef.current = clipboard;
   function seek(t: number) { setHasSeeked(true); seekToTime(t); }
+
+  const copyFormationPositions = useCallback((formationId: string) => {
+    const state = useShowStore.getState();
+    const cp: PositionClipboard = { performers: {}, props: {} };
+    Object.entries(state.performerPositions).forEach(([key, pos]) => {
+      if (key.endsWith(`-${formationId}`)) cp.performers[pos.performer_id] = { x: pos.x, y: pos.y };
+    });
+    Object.entries(state.propPositions).forEach(([key, pos]) => {
+      if (key.endsWith(`-${formationId}`)) cp.props[pos.prop_id] = { x: pos.x, y: pos.y };
+    });
+    setClipboard(cp);
+  }, []);
+
+  const handleContextMenu = useCallback((e: React.MouseEvent, formationId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({ formationId, x: e.clientX, y: e.clientY });
+  }, []);
+
+  const closeContextMenu = useCallback(() => setContextMenu(null), []);
+
+  useEffect(() => {
+    if (!contextMenu) return;
+    const onDown = () => closeContextMenu();
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeContextMenu(); };
+    window.addEventListener('mousedown', onDown);
+    window.addEventListener('keydown', onKey);
+    return () => { window.removeEventListener('mousedown', onDown); window.removeEventListener('keydown', onKey); };
+  }, [contextMenu, closeContextMenu]);
 
   // --- Timeline gestures (zoom, resize, reorder, seek) ---
   const {
@@ -70,7 +114,24 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
         handlePlayRef.current();
         return;
       }
+      const mod = e.metaKey || e.ctrlKey;
       const state = useShowStore.getState();
+      if (mod && e.key === 'c') {
+        const activeId = state.activeFormationId;
+        if (activeId && state.selectedItemIds.length === 0 && !state.selectedItem) {
+          e.preventDefault();
+          copyFormationPositions(activeId);
+        }
+        return;
+      }
+      if (mod && e.key === 'v') {
+        const activeId = state.activeFormationId;
+        if (activeId && clipboardRef.current) {
+          e.preventDefault();
+          pastePositionsToFormation(activeId, clipboardRef.current);
+        }
+        return;
+      }
       if (state.selectedItemIds.length > 0) return;
       const fs = formationsRef.current;
       const activeId = state.activeFormationId;
@@ -89,7 +150,7 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [setActiveFormation]);
+  }, [setActiveFormation, copyFormationPositions, pastePositionsToFormation]);
 
   // Auto-scroll to keep playhead visible
   useEffect(() => {
@@ -182,9 +243,9 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
               <div style={{
                 position: 'absolute', inset: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: colors.borderStrong, fontSize: 12,
+                color: colors.borderStrong, fontSize: fontSize.md,
               }}>
-                No formations yet — click "Add" to start
+                No formations yet — click + to start
               </div>
             )}
 
@@ -205,8 +266,51 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
                 onDurResizeStart={handleDurResizeStart}
                 onTransResizeStart={handleTransResizeStart}
                 onReorderStart={handleReorderStart}
+                onContextMenu={handleContextMenu}
               />
             ))}
+
+            {/* Add formation button — positioned right after last bar */}
+            {!isViewer && (() => {
+              const x = LEFT_PADDING + totalDuration * effectivePPS;
+              return (
+                <button
+                  onClick={addFormation}
+                  title="Add formation"
+                  style={{
+                    position: 'absolute',
+                    left: x + 4,
+                    top: 0,
+                    width: BAR_HEIGHT,
+                    height: BAR_HEIGHT,
+                    borderRadius: radius.sm,
+                    border: `2px solid ${colors.borderMed}`,
+                    background: colors.bgCard,
+                    color: colors.textMuted,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: fontSize.xl,
+                    lineHeight: 1,
+                    flexShrink: 0,
+                    transition: 'color 0.15s, border-color 0.15s, background 0.15s',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.color = colors.text;
+                    e.currentTarget.style.borderColor = colors.accent;
+                    e.currentTarget.style.background = colors.bgCardHover;
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.color = colors.textMuted;
+                    e.currentTarget.style.borderColor = colors.borderMed;
+                    e.currentTarget.style.background = colors.bgCard;
+                  }}
+                >
+                  +
+                </button>
+              );
+            })()}
 
             {/* Drop indicator */}
             {dropIndicatorIdx !== null && (() => {
@@ -254,6 +358,102 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
           </div>
         </div>
       </div>
+
+      {/* Formation right-click context menu */}
+      {contextMenu && (() => {
+        const idx = formations.findIndex(f => f.id === contextMenu.formationId);
+        const fid = contextMenu.formationId;
+        const canPrev = idx > 0;
+        const isMac = navigator.platform.toUpperCase().includes('MAC');
+        const modKey = isMac ? '⌘' : 'Ctrl';
+
+        const menuItems: { label: string; shortcut?: string; disabled?: boolean; danger?: boolean; action: () => void }[] = [
+          {
+            label: 'New formation after this',
+            action: () => { addFormationAfter(fid); closeContextMenu(); },
+          },
+          {
+            label: 'Reset to previous formation',
+            disabled: !canPrev,
+            action: () => { resetFormationToPrev(fid); closeContextMenu(); },
+          },
+          {
+            label: 'Copy positions',
+            shortcut: `${modKey}C`,
+            action: () => { copyFormationPositions(fid); closeContextMenu(); },
+          },
+          {
+            label: 'Paste positions',
+            shortcut: `${modKey}V`,
+            disabled: !clipboard,
+            action: () => { if (clipboard) { pastePositionsToFormation(fid, clipboard); } closeContextMenu(); },
+          },
+          {
+            label: 'Delete',
+            danger: true,
+            action: () => { deleteFormation(fid); closeContextMenu(); },
+          },
+        ];
+
+        const MENU_HEIGHT = menuItems.length * 34 + 8;
+        const MENU_WIDTH = 220;
+        const menuTop = contextMenu.y + MENU_HEIGHT > window.innerHeight
+          ? contextMenu.y - MENU_HEIGHT
+          : contextMenu.y;
+        const menuLeft = contextMenu.x + MENU_WIDTH > window.innerWidth
+          ? contextMenu.x - MENU_WIDTH
+          : contextMenu.x;
+
+        return (
+          <div
+            onMouseDown={e => e.stopPropagation()}
+            style={{
+              position: 'fixed',
+              left: menuLeft,
+              top: menuTop,
+              zIndex: 1000,
+              background: colors.bgCard,
+              border: `1px solid ${colors.borderMed}`,
+              borderRadius: radius.md,
+              boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+              minWidth: MENU_WIDTH,
+              padding: '4px 0',
+            }}
+          >
+            {menuItems.map(item => (
+              <button
+                key={item.label}
+                disabled={item.disabled}
+                onClick={item.disabled ? undefined : item.action}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  textAlign: 'left',
+                  padding: '7px 14px',
+                  background: 'none',
+                  border: 'none',
+                  fontSize: fontSize.sm,
+                  color: item.disabled ? colors.textGhost : item.danger ? colors.dangerLight : colors.textSecondary,
+                  cursor: item.disabled ? 'default' : 'pointer',
+                  transition: 'background 0.1s, color 0.1s',
+                  gap: 16,
+                }}
+                onMouseEnter={e => { if (!item.disabled) { e.currentTarget.style.background = colors.bgCardHover; if (!item.danger) e.currentTarget.style.color = colors.text; } }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = item.disabled ? colors.textGhost : item.danger ? colors.dangerLight : colors.textSecondary; }}
+              >
+                <span>{item.label}</span>
+                {item.shortcut && (
+                  <span style={{ fontSize: fontSize.sm, color: colors.textGhost, flexShrink: 0 }}>
+                    {item.shortcut}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        );
+      })()}
     </div>
   );
 }

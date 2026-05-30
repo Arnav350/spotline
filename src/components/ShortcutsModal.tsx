@@ -49,7 +49,7 @@ export default function ShortcutsModal({ onClose }: { onClose: () => void }) {
         onClick={e => e.stopPropagation()}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <span style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text, letterSpacing: '0.05em' }}>Keyboard Shortcuts</span>
+          <span style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text, letterSpacing: '0.05em' }}>Keyboard Shortcuts</span>
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: colors.textFaint, display: 'flex', alignItems: 'center' }}>
             <X size={16} />
           </button>
@@ -58,14 +58,14 @@ export default function ShortcutsModal({ onClose }: { onClose: () => void }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {SHORTCUTS.map(group => (
             <div key={group.group}>
-              <div style={{ fontSize: fontSize.xs, fontWeight: fontWeight.bold, color: colors.textFaint, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>{group.group}</div>
+              <div style={{ fontSize: fontSize.sm, fontWeight: fontWeight.bold, color: colors.textFaint, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>{group.group}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {group.items.map(item => (
                   <div key={item.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0' }}>
                     <span style={{ fontSize: fontSize.md, color: colors.textMuted }}>{item.label}</span>
                     <div style={{ display: 'flex', gap: 4 }}>
                       {item.keys.map((k, i) => (
-                        <kbd key={i} style={{ background: colors.bgCardHover, border: `1px solid ${colors.textGhost}`, borderRadius: radius.md, padding: '2px 7px', fontSize: fontSize.sm, color: colors.textLight, fontFamily: 'inherit', whiteSpace: 'nowrap' }}>{k}</kbd>
+                        <kbd key={i} style={{ background: colors.bgCardHover, border: `1px solid ${colors.textGhost}`, borderRadius: radius.md, padding: '2px 7px', fontSize: fontSize.sm, color: colors.textSecondary, fontFamily: 'inherit', whiteSpace: 'nowrap' }}>{k}</kbd>
                       ))}
                     </div>
                   </div>

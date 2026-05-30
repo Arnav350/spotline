@@ -17,7 +17,7 @@ export function PanelHeader({ title, onClose }: PanelHeaderProps) {
       flexShrink: 0,
     }}>
       <span style={{
-        fontSize: fontSize.xs,
+        fontSize: fontSize.sm,
         fontWeight: fontWeight.bold,
         color: colors.textFaint,
         textTransform: 'uppercase',

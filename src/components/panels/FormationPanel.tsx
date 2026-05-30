@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Trash2, Shuffle } from 'lucide-react';
+import { Trash2, Shuffle, Copy } from 'lucide-react';
 import { useShowStore } from '../../store/showStore';
 import type { TransitionEasing } from '../../lib/types';
 import { colors, fontSize, fontWeight, radius } from '../../lib/theme';
@@ -62,7 +62,7 @@ const deleteButtonStyle = {
   alignItems: 'center',
   justifyContent: 'center',
   gap: 6,
-  fontSize: fontSize.base,
+  fontSize: fontSize.md,
   color: colors.danger,
   background: 'transparent',
   border: 'none',
@@ -189,7 +189,7 @@ interface FormationPanelProps {
 
 export function FormationPanel({ onClose }: FormationPanelProps) {
   const {
-    formations, activeFormationId, updateFormation, deleteFormation,
+    formations, activeFormationId, updateFormation, deleteFormation, duplicateFormation,
     setActiveFormation, selectedItem, selectedItemIds, optimizeFormationTransition,
   } = useShowStore();
 
@@ -260,7 +260,7 @@ export function FormationPanel({ onClose }: FormationPanelProps) {
                 value={easing}
                 onChange={v => updateFormation(formation.id, { transition_easing: v as TransitionEasing })}
               />
-              <div style={{ fontSize: fontSize.xs, color: colors.textFaint, marginTop: 3, fontWeight: fontWeight.normal }}>
+              <div style={{ fontSize: fontSize.sm, color: colors.textFaint, marginTop: 3, fontWeight: fontWeight.medium }}>
                 {EASING_OPTIONS.find(o => o.value === easing)?.title}
               </div>
             </div>
@@ -278,23 +278,23 @@ export function FormationPanel({ onClose }: FormationPanelProps) {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 6,
-                  fontSize: fontSize.base,
+                  fontSize: fontSize.md,
                   color: colors.textSecondary,
                   background: 'transparent',
-                  border: `1px solid ${colors.borderMed}`,
+                  border: 'none',
                   padding: '6px 0',
                   cursor: 'pointer',
                   borderRadius: radius.sm,
                   width: '100%',
-                  transition: 'color 0.15s, border-color 0.15s',
+                  transition: 'color 0.15s, background 0.15s',
                 }}
                 onMouseEnter={e => {
                   e.currentTarget.style.color = colors.accentLight;
-                  e.currentTarget.style.borderColor = colors.accent;
+                  e.currentTarget.style.background = colors.bgCard;
                 }}
                 onMouseLeave={e => {
                   e.currentTarget.style.color = colors.textSecondary;
-                  e.currentTarget.style.borderColor = colors.borderMed;
+                  e.currentTarget.style.background = 'transparent';
                 }}
                 onClick={handleOptimize}
                 title={`Minimize travel distance from "${prevFormation.name}"`}
@@ -303,6 +303,21 @@ export function FormationPanel({ onClose }: FormationPanelProps) {
                 Optimize Transition
               </button>
             )}
+            <button
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                gap: 6, fontSize: fontSize.md, color: colors.textSecondary,
+                background: 'transparent', border: 'none',
+                padding: '6px 0', cursor: 'pointer', borderRadius: radius.sm, width: '100%',
+                transition: 'color 0.15s, background 0.15s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = colors.accentLight; e.currentTarget.style.background = colors.bgCard; }}
+              onMouseLeave={e => { e.currentTarget.style.color = colors.textSecondary; e.currentTarget.style.background = 'transparent'; }}
+              onClick={() => duplicateFormation(formation.id)}
+            >
+              <Copy size={12} />
+              Duplicate Formation
+            </button>
             <button
               style={deleteButtonStyle}
               onMouseEnter={e => (e.currentTarget.style.background = colors.dangerBg)}
@@ -315,7 +330,7 @@ export function FormationPanel({ onClose }: FormationPanelProps) {
           </div>
         </>
       ) : (
-        <div style={{ padding: '10px 12px', fontSize: fontSize.base, color: colors.textFaint }}>
+        <div style={{ padding: '10px 12px', fontSize: fontSize.md, color: colors.textFaint }}>
           No formation selected
         </div>
       )}

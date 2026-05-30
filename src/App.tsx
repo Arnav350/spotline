@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useState, useRef } from 'react';
 import { useShowStore } from './store/showStore';
 import { useAuthStore } from './store/authStore';
 import { isSupabaseConfigured, supabase } from './lib/supabase';
-import { colors, fontSize } from './lib/theme';
+import { colors, fontSize, fontWeight, radius } from './lib/theme';
 import { useRealtimeSync } from './hooks/useRealtimeSync';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import TopBar from './components/TopBar';
@@ -61,7 +61,7 @@ export default function App() {
   // Sync auth identity into showStore so collaborator presence uses real user
   useEffect(() => {
     if (user && profile) {
-      setLocalUser(user.id, profile.display_name, '#7c3aed');
+      setLocalUser(user.id, profile.display_name, colors.accent);
     }
   }, [user, profile]);
 
@@ -199,7 +199,7 @@ export default function App() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: colors.bg }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
           <div style={{ width: 32, height: 32, borderRadius: '50%', border: `3px solid ${colors.border}`, borderTopColor: colors.accent, animation: 'spin 0.8s linear infinite' }} />
-          <span style={{ color: colors.textFaint, fontSize: fontSize.base }}>Loading show…</span>
+          <span style={{ color: colors.textFaint, fontSize: fontSize.md }}>Loading show…</span>
         </div>
       </div>
     );
@@ -215,7 +215,7 @@ export default function App() {
           position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000,
           background: '#b45309', color: 'white',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          gap: 8, padding: '6px 16px', fontSize: fontSize.sm, fontWeight: 500,
+          gap: 8, padding: '6px 16px', fontSize: fontSize.sm, fontWeight: fontWeight.medium,
         }}>
           <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'white', animation: 'pulse 1s infinite' }} />
           Reconnecting…
@@ -229,7 +229,7 @@ export default function App() {
             key={toast.id}
             style={{
               background: colors.bgCard, border: `1px solid ${colors.borderMed}`,
-              borderRadius: 6, padding: '8px 14px',
+              borderRadius: radius.lg, padding: '8px 14px',
               fontSize: fontSize.sm, color: colors.text,
               boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
               display: 'flex', alignItems: 'center', gap: 8,
@@ -237,7 +237,7 @@ export default function App() {
               pointerEvents: 'auto',
             }}
           >
-            <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: toast.type === 'error' ? '#ef4444' : toast.type === 'warning' ? '#f59e0b' : toast.type === 'success' ? '#22c55e' : colors.accent }} />
+            <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: toast.type === 'error' ? colors.danger : toast.type === 'warning' ? colors.dangerLight : toast.type === 'success' ? colors.success : colors.accent }} />
             {toast.message}
             <button
               onClick={() => removeToast(toast.id)}

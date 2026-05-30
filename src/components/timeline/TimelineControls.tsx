@@ -1,4 +1,4 @@
-import { Plus, Play, Pause, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Copy } from 'lucide-react';
+import { Plus, Play, Pause, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useShowStore } from '../../store/showStore';
 import { colors, fontSize } from '../../lib/theme';
 import { PURPLE } from './constants';
@@ -28,7 +28,7 @@ export function TimelineControls({
   onZoomChange,
   formatTime,
 }: TimelineControlsProps) {
-  const { formations, activeFormationId, addFormation, duplicateFormation, setActiveFormation, currentUserRole } = useShowStore();
+  const { formations, activeFormationId, setActiveFormation, addFormation, currentUserRole } = useShowStore();
   const isViewer = currentUserRole === 'viewer';
 
   const activeIdx = formations.findIndex(f => f.id === activeFormationId);
@@ -57,54 +57,18 @@ export function TimelineControls({
       height: 44,
       position: 'relative',
     }}>
-      {/* Left: formation actions + zoom */}
+      {/* Left: add formation + zoom controls */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1 }}>
         {!isViewer && (
           <button
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              fontSize: fontSize.base,
-              color: PURPLE,
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '0 4px',
-              flexShrink: 0,
-            }}
+            className="btn-ghost"
+            style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: fontSize.md, color: PURPLE, padding: '3px 6px', flexShrink: 0 }}
             onClick={addFormation}
           >
             <Plus size={14} /> Add
           </button>
         )}
-
-        {!isViewer && activeFormationId && (
-          <button
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              fontSize: fontSize.base,
-              color: colors.textFaint,
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '0 4px',
-              flexShrink: 0,
-              transition: 'color 0.15s',
-            }}
-            onClick={() => duplicateFormation(activeFormationId)}
-            title="Duplicate active formation"
-            onMouseEnter={e => (e.currentTarget.style.color = colors.textSecondary)}
-            onMouseLeave={e => (e.currentTarget.style.color = colors.textFaint)}
-          >
-            <Copy size={13} /> Duplicate
-          </button>
-        )}
-
-        <div style={{ width: 1, height: 16, background: colors.borderMed, margin: '0 2px' }} />
-
+        <div style={{ width: 1, height: 16, background: colors.borderMed, margin: '0 2px', flexShrink: 0 }} />
         <button
           className="btn-icon"
           onClick={() => onZoomChange(Math.min(5, timelineZoom * 1.4))}
@@ -121,15 +85,6 @@ export function TimelineControls({
         >
           <ZoomOut size={14} />
         </button>
-
-        {Math.abs(timelineZoom - 1) > 0.05 && (
-          <span
-            style={{ fontSize: fontSize.xs, color: colors.textFaint, cursor: 'pointer', flexShrink: 0 }}
-            onClick={() => onZoomChange(1)}
-          >
-            {Math.round(timelineZoom * 100)}%
-          </span>
-        )}
       </div>
 
       {/* Center: transport controls — absolutely centered */}
@@ -151,7 +106,7 @@ export function TimelineControls({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: canPrev ? colors.bgCardHover : 'transparent',
+            background: colors.bgCard,
             border: `1px solid ${colors.borderMed}`,
             cursor: canPrev ? 'pointer' : 'default',
             color: canPrev ? colors.textSecondary : colors.textGhost,
@@ -163,6 +118,7 @@ export function TimelineControls({
         <button
           onClick={onPlay}
           disabled={!hasMusic}
+          title={hasMusic ? undefined : 'Upload music to enable playback'}
           style={{
             width: 32,
             height: 32,
@@ -170,10 +126,10 @@ export function TimelineControls({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: hasMusic ? PURPLE : colors.bgCardHover,
+            background: PURPLE,
             border: 'none',
             cursor: hasMusic ? 'pointer' : 'default',
-            opacity: hasMusic ? 1 : 0.4,
+            opacity: hasMusic ? 1 : 0.35,
           }}
         >
           {isPlaying
@@ -191,7 +147,7 @@ export function TimelineControls({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: canNext ? colors.bgCardHover : 'transparent',
+            background: colors.bgCard,
             border: `1px solid ${colors.borderMed}`,
             cursor: canNext ? 'pointer' : 'default',
             color: canNext ? colors.textSecondary : colors.textGhost,
@@ -201,7 +157,7 @@ export function TimelineControls({
         </button>
 
         {hasMusic && (
-          <span style={{ fontSize: fontSize.xs, color: colors.textFaint, whiteSpace: 'nowrap', marginLeft: 2 }}>
+          <span style={{ fontSize: fontSize.sm, color: colors.textFaint, whiteSpace: 'nowrap', marginLeft: 2 }}>
             {formatTime(audioTime)} / {formatTime(audioDuration)}
           </span>
         )}

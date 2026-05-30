@@ -1,5 +1,5 @@
 import type { Formation } from '../../lib/types';
-import { colors } from '../../lib/theme';
+import { colors, fontSize, fontWeight, radius } from '../../lib/theme';
 import { HANDLE_WIDTH, BAR_HEIGHT, TRANS_BAR_HEIGHT, PURPLE, BAR_GAP } from './constants';
 import { GripVertical } from 'lucide-react';
 import type { CollaboratorState } from '../../store/showStore';
@@ -27,6 +27,7 @@ interface FormationBarProps {
   onDurResizeStart: (e: React.MouseEvent, state: DragState) => void;
   onTransResizeStart: (e: React.MouseEvent, state: DragState) => void;
   onReorderStart: (e: React.MouseEvent, formationId: string, origIndex: number) => void;
+  onContextMenu: (e: React.MouseEvent, formationId: string) => void;
 }
 
 export function FormationBar({
@@ -44,9 +45,11 @@ export function FormationBar({
   onDurResizeStart,
   onTransResizeStart,
   onReorderStart,
+  onContextMenu,
 }: FormationBarProps) {
-  const left = 12 + startTime * effectivePPS; // LEFT_PADDING = 12
-  const width = Math.max(HANDLE_WIDTH * 2 + 32, formation.duration * effectivePPS - BAR_GAP);
+  const gap = index === 0 ? 0 : BAR_GAP;
+  const left = 12 + startTime * effectivePPS + gap; // LEFT_PADDING = 12; gap is on the left so right edge aligns with beat line
+  const width = Math.max(HANDLE_WIDTH * 2 + 32, formation.duration * effectivePPS - gap);
   // transWidth capped at width - HANDLE_WIDTH - 3 so the trans handle never overlaps the dur handle.
   const transWidth = Math.min(width - HANDLE_WIDTH - 3, Math.max(0, formation.transition_duration * effectivePPS));
 
@@ -64,13 +67,14 @@ export function FormationBar({
         height: BAR_HEIGHT,
         background: colors.bgCard,
         border: `2px solid ${isActive ? colors.textSecondary : colors.borderMed}`,
-        borderRadius: 3,
+        borderRadius: radius.sm,
         userSelect: 'none',
         cursor: 'pointer',
         boxSizing: 'border-box',
         opacity: isBeingDragged ? 0.4 : 1,
       }}
       onClick={() => onSetActive(formation.id)}
+      onContextMenu={e => onContextMenu(e, formation.id)}
       onMouseEnter={() => onHoverChange(formation.id)}
       onMouseLeave={() => onHoverChange(null)}
     >
@@ -163,9 +167,9 @@ export function FormationBar({
           top: 6,
           left: 4,
           right: 44,
-          color: isActive ? '#ddd' : colors.textSecondary,
-          fontSize: 11,
-          fontWeight: 500,
+          color: isActive ? colors.text : colors.textSecondary,
+          fontSize: fontSize.sm,
+          fontWeight: fontWeight.medium,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
@@ -178,7 +182,7 @@ export function FormationBar({
           top: 7,
           right: 4,
           color: isActive ? colors.textFaint : colors.textGhost,
-          fontSize: 10,
+          fontSize: fontSize.sm,
           whiteSpace: 'nowrap',
           pointerEvents: 'none',
         }}>

@@ -87,10 +87,13 @@ interface ShowState {
   updateStageConfig: (config: Partial<StageConfig>) => void;
 
   addFormation: () => void;
+  addFormationAfter: (id: string) => void;
   duplicateFormation: (id: string) => void;
   deleteFormation: (id: string) => Promise<void>;
   updateFormation: (id: string, updates: Partial<Formation>) => void;
   reorderFormations: (sourceIndex: number, destIndex: number) => void;
+  resetFormationToPrev: (id: string) => void;
+  pastePositionsToFormation: (id: string, positions: { performers: Record<string, { x: number; y: number }>; props: Record<string, { x: number; y: number }> }) => void;
   pendingTransitionDuration: number | null;
   setActiveFormation: (id: string, transitionDuration?: number) => void;
 
@@ -553,6 +556,108 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         .filter(p => p.formation_id === id)
         .map(p => ({ propId: p.prop_id, formationId: p.formation_id, x: p.x, y: p.y })),
     });
+    get().pushHistory();
+    scheduleAutoSave(get());
+  },
+
+  addFormationAfter: (id: string) => {
+    const state = get();
+    if (!state.show) return;
+    const srcIdx = state.formations.findIndex(f => f.id === id);
+    if (srcIdx === -1) return;
+    const src = state.formations[srcIdx];
+    const newId = uuidv4();
+    const bpm = state.show.bpm;
+    const defaultDuration = bpm && bpm > 0 ? (60 / bpm) * 8 : 8;
+    const newFormation: Formation = {
+      id: newId,
+      show_id: state.show.id,
+      name: `Formation ${state.formations.length + 1}`,
+      notes: '',
+      duration: defaultDuration,
+      transition_duration: src.transition_duration,
+      transition_easing: src.transition_easing,
+      order_index: srcIdx + 1,
+    };
+    const newPerformerPositions = { ...state.performerPositions };
+    state.performers.forEach(p => {
+      const srcPos = state.performerPositions[`${p.id}-${id}`];
+      newPerformerPositions[`${p.id}-${newId}`] = {
+        id: uuidv4(),
+        performer_id: p.id,
+        formation_id: newId,
+        x: srcPos?.x ?? state.show!.stage_config.width / 2,
+        y: srcPos?.y ?? state.show!.stage_config.height / 2,
+      };
+    });
+    const newPropPositions = { ...state.propPositions };
+    state.props.forEach(p => {
+      const srcPos = state.propPositions[`${p.id}-${id}`];
+      newPropPositions[`${p.id}-${newId}`] = {
+        id: uuidv4(),
+        prop_id: p.id,
+        formation_id: newId,
+        x: srcPos?.x ?? state.show!.stage_config.width / 2,
+        y: srcPos?.y ?? state.show!.stage_config.height / 2,
+      };
+    });
+    const updated = [...state.formations];
+    updated.splice(srcIdx + 1, 0, newFormation);
+    const reindexed = updated.map((f, i) => ({ ...f, order_index: i }));
+    set({ formations: reindexed, activeFormationId: newId, performerPositions: newPerformerPositions, propPositions: newPropPositions });
+    get().pushHistory();
+    scheduleAutoSave(get());
+  },
+
+  resetFormationToPrev: (id: string) => {
+    const state = get();
+    const idx = state.formations.findIndex(f => f.id === id);
+    if (idx <= 0) return;
+    const prevId = state.formations[idx - 1].id;
+    const newPerformerPositions = { ...state.performerPositions };
+    state.performers.forEach(p => {
+      const prevPos = state.performerPositions[`${p.id}-${prevId}`];
+      if (prevPos) {
+        newPerformerPositions[`${p.id}-${id}`] = {
+          ...newPerformerPositions[`${p.id}-${id}`],
+          x: prevPos.x,
+          y: prevPos.y,
+        };
+      }
+    });
+    const newPropPositions = { ...state.propPositions };
+    state.props.forEach(p => {
+      const prevPos = state.propPositions[`${p.id}-${prevId}`];
+      if (prevPos) {
+        newPropPositions[`${p.id}-${id}`] = {
+          ...newPropPositions[`${p.id}-${id}`],
+          x: prevPos.x,
+          y: prevPos.y,
+        };
+      }
+    });
+    set({ performerPositions: newPerformerPositions, propPositions: newPropPositions });
+    get().pushHistory();
+    scheduleAutoSave(get());
+  },
+
+  pastePositionsToFormation: (id: string, positions: { performers: Record<string, { x: number; y: number }>; props: Record<string, { x: number; y: number }> }) => {
+    const state = get();
+    const newPerformerPositions = { ...state.performerPositions };
+    Object.entries(positions.performers).forEach(([performerId, pos]) => {
+      const key = `${performerId}-${id}`;
+      if (newPerformerPositions[key]) {
+        newPerformerPositions[key] = { ...newPerformerPositions[key], x: pos.x, y: pos.y };
+      }
+    });
+    const newPropPositions = { ...state.propPositions };
+    Object.entries(positions.props).forEach(([propId, pos]) => {
+      const key = `${propId}-${id}`;
+      if (newPropPositions[key]) {
+        newPropPositions[key] = { ...newPropPositions[key], x: pos.x, y: pos.y };
+      }
+    });
+    set({ performerPositions: newPerformerPositions, propPositions: newPropPositions });
     get().pushHistory();
     scheduleAutoSave(get());
   },

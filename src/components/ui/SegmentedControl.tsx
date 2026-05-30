@@ -1,4 +1,4 @@
-import { colors, radius } from '../../lib/theme';
+import { colors, fontSize, radius } from '../../lib/theme';
 
 interface Option {
   value: string;
@@ -25,7 +25,7 @@ export function SegmentedControl({ options, value, onChange }: SegmentedControlP
             style={{
               flex: 1,
               padding: '4px 0',
-              fontSize: 13,
+              fontSize: fontSize.md,
               fontFamily: 'monospace',
               background: active ? colors.accent : colors.bgCard,
               color: active ? colors.text : colors.textMuted,

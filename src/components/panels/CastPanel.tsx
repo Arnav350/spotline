@@ -25,9 +25,9 @@ export function CastPanel({ onClose }: CastPanelProps) {
 
         {/* Performers */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-          <span style={{ fontSize: fontSize.base, color: colors.textMuted }}>Performers</span>
+          <span style={{ fontSize: fontSize.md, color: colors.textMuted }}>Performers</span>
           <button
-            style={{ fontSize: fontSize.base, color: colors.accentLight, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 2 }}
+            style={{ fontSize: fontSize.md, color: colors.accentLight, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 2 }}
             onClick={addPerformer}
           >
             <Plus size={13} /> Add
@@ -54,7 +54,7 @@ export function CastPanel({ onClose }: CastPanelProps) {
                 borderRadius: p.shape === 'circle' ? '50%' : radius.xs,
                 clipPath: p.shape === 'triangle' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : 'none',
               }} />
-              <span style={{ fontSize: fontSize.md, color: colors.textSub, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+              <span style={{ fontSize: fontSize.md, color: colors.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                 {p.name}
               </span>
               {group && <div style={{ width: 7, height: 7, borderRadius: '50%', background: group.color, flexShrink: 0 }} />}
@@ -63,14 +63,14 @@ export function CastPanel({ onClose }: CastPanelProps) {
         })}
 
         {performers.length === 0 && (
-          <div style={{ fontSize: fontSize.base, color: colors.textFaint, paddingLeft: 4 }}>No performers yet</div>
+          <div style={{ fontSize: fontSize.md, color: colors.textFaint, paddingLeft: 4 }}>No performers yet</div>
         )}
 
         {/* Groups */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, marginBottom: 2 }}>
-          <span style={{ fontSize: fontSize.base, color: colors.textMuted }}>Groups</span>
+          <span style={{ fontSize: fontSize.md, color: colors.textMuted }}>Groups</span>
           <button
-            style={{ fontSize: fontSize.base, color: colors.accentLight, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 2 }}
+            style={{ fontSize: fontSize.md, color: colors.accentLight, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 2 }}
             onClick={addPerformerGroup}
           >
             <Plus size={13} /> Add
@@ -127,14 +127,14 @@ export function CastPanel({ onClose }: CastPanelProps) {
         })}
 
         {performerGroups.length === 0 && (
-          <div style={{ fontSize: fontSize.base, color: colors.textFaint, paddingLeft: 4 }}>No groups yet</div>
+          <div style={{ fontSize: fontSize.md, color: colors.textFaint, paddingLeft: 4 }}>No groups yet</div>
         )}
 
         {/* Props */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, marginBottom: 2 }}>
-          <span style={{ fontSize: fontSize.base, color: colors.textMuted }}>Props</span>
+          <span style={{ fontSize: fontSize.md, color: colors.textMuted }}>Props</span>
           <button
-            style={{ fontSize: fontSize.base, color: colors.accentLight, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 2 }}
+            style={{ fontSize: fontSize.md, color: colors.accentLight, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 2 }}
             onClick={addProp}
           >
             <Plus size={13} /> Add
@@ -173,7 +173,7 @@ export function CastPanel({ onClose }: CastPanelProps) {
                     ? 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)'
                     : 'none',
                 }} />
-                <span style={{ fontSize: fontSize.md, color: colors.textSub, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: fontSize.md, color: colors.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {p.name}
                 </span>
               </button>
@@ -182,7 +182,7 @@ export function CastPanel({ onClose }: CastPanelProps) {
         })}
 
         {props.length === 0 && (
-          <div style={{ fontSize: fontSize.base, color: colors.textFaint, paddingLeft: 4 }}>No props yet</div>
+          <div style={{ fontSize: fontSize.md, color: colors.textFaint, paddingLeft: 4 }}>No props yet</div>
         )}
       </div>
     </div>

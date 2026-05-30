@@ -3,7 +3,7 @@ import {
   FlipHorizontal2, FlipVertical2, RotateCw, RotateCcw, RefreshCw,
 } from 'lucide-react';
 import { useShowStore } from '../../store/showStore';
-import { colors, fontSize, radius } from '../../lib/theme';
+import { colors, fontSize, fontWeight, radius } from '../../lib/theme';
 
 function ABtn({
   onClick, title, disabled, children,
@@ -44,7 +44,7 @@ function ABtn({
 
 function SectionLabel({ children }: { children: string }) {
   return (
-    <div style={{ fontSize: fontSize.xs, color: colors.textFaint, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+    <div style={{ fontSize: fontSize.sm, color: colors.textFaint, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
       {children}
     </div>
   );
@@ -78,16 +78,16 @@ export function ArrangeTools() {
         <SectionLabel>Shape</SectionLabel>
         <div style={rowStyle}>
           <ABtn onClick={() => arrangeSelectedPerformers('line-h')} title="Horizontal line" disabled={!canArrange}>
-            <span style={{ fontSize: 11, lineHeight: 1, fontWeight: 600 }}>—</span>
+            <span style={{ fontSize: fontSize.sm, lineHeight: 1, fontWeight: fontWeight.bold }}>—</span>
           </ABtn>
           <ABtn onClick={() => arrangeSelectedPerformers('line-v')} title="Vertical line" disabled={!canArrange}>
-            <span style={{ fontSize: 13, lineHeight: 1, fontWeight: 300 }}>|</span>
+            <span style={{ fontSize: fontSize.md, lineHeight: 1, fontWeight: 300 }}>|</span>
           </ABtn>
           <ABtn onClick={() => arrangeSelectedPerformers('circle')} title="Circle" disabled={!canArrange}>
-            <span style={{ fontSize: 11, lineHeight: 1 }}>○</span>
+            <span style={{ fontSize: fontSize.sm, lineHeight: 1 }}>○</span>
           </ABtn>
           <ABtn onClick={() => arrangeSelectedPerformers('grid')} title="Grid" disabled={!canArrange}>
-            <span style={{ fontSize: 11, lineHeight: 1 }}>⊞</span>
+            <span style={{ fontSize: fontSize.sm, lineHeight: 1 }}>⊞</span>
           </ABtn>
         </div>
       </div>

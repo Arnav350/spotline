@@ -114,7 +114,7 @@ function ProjectCard({ show, folders, onOpen, onDelete, onLeave, onRename, onMov
   }
 
   const isOwner = show.role === 'owner';
-  const roleColor = show.role === 'owner' ? colors.accent : show.role === 'editor' ? '#22c55e' : colors.textSecondary;
+  const roleColor = show.role === 'owner' ? colors.accent : show.role === 'editor' ? colors.success : colors.textSecondary;
   const ownedFolders = folders.filter(f => f.role === 'owner');
 
   return (
@@ -140,7 +140,7 @@ function ProjectCard({ show, folders, onOpen, onDelete, onLeave, onRename, onMov
         {renaming ? (
           <input
             ref={inputRef}
-            style={{ flex: 1, background: 'transparent', border: 'none', borderBottom: `1px solid ${colors.accent}`, outline: 'none', fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.text, padding: '2px 0' }}
+            style={{ flex: 1, background: 'transparent', border: 'none', borderBottom: `1px solid ${colors.accent}`, outline: 'none', fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, padding: '2px 0' }}
             value={titleDraft}
             onChange={e => setTitleDraft(e.target.value)}
             onBlur={commitRename}
@@ -148,11 +148,11 @@ function ProjectCard({ show, folders, onOpen, onDelete, onLeave, onRename, onMov
             onClick={e => e.stopPropagation()}
           />
         ) : (
-          <span style={{ flex: 1, fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span style={{ flex: 1, fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {show.title || 'Untitled Show'}
           </span>
         )}
-        <span style={{ fontSize: fontSize.xs, color: roleColor, border: `1px solid ${roleColor}`, borderRadius: radius.sm, padding: '1px 5px', flexShrink: 0, opacity: 0.8 }}>
+        <span style={{ fontSize: fontSize.sm, color: roleColor, border: `1px solid ${roleColor}`, borderRadius: radius.sm, padding: '1px 5px', flexShrink: 0, opacity: 0.8 }}>
           {show.role}
         </span>
         <div ref={menuRef} style={{ position: 'relative', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
@@ -188,7 +188,7 @@ function ProjectCard({ show, folders, onOpen, onDelete, onLeave, onRename, onMov
                 </>
               ) : (
                 <>
-                  <div style={{ padding: '6px 12px 4px', fontSize: fontSize.xs, color: colors.textFaint, borderBottom: `1px solid ${colors.border}` }}>Move to folder</div>
+                  <div style={{ padding: '6px 12px 4px', fontSize: fontSize.sm, color: colors.textFaint, borderBottom: `1px solid ${colors.border}` }}>Move to folder</div>
                   {show.folder_id && (
                     <button className="menu-item" onClick={() => { onMoveToFolder(null); setMenuOpen(false); }}>
                       Remove from folder
@@ -206,7 +206,7 @@ function ProjectCard({ show, folders, onOpen, onDelete, onLeave, onRename, onMov
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: fontSize.xs, color: colors.textMuted }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: fontSize.sm, color: colors.textMuted }}>
         {show.updated_at && (
           <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={11} />{timeAgo(show.updated_at)}</span>
         )}
@@ -295,7 +295,7 @@ function SidebarItem({ label, count, icon, active, onClick, onRename, onDelete, 
           {label}
         </span>
       )}
-      <span style={{ fontSize: fontSize.xs, color: colors.textGhost, flexShrink: 0 }}>{count}</span>
+      <span style={{ fontSize: fontSize.sm, color: colors.textGhost, flexShrink: 0 }}>{count}</span>
       {hasMenu && (
         <div ref={menuRef} style={{ position: 'relative', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
           <button
@@ -312,7 +312,7 @@ function SidebarItem({ label, count, icon, active, onClick, onRename, onDelete, 
               {isOwner && onRename && <button className="menu-item" onClick={() => { setRenaming(true); setMenuOpen(false); }}>Rename</button>}
               {isOwner && onShare && <button className="menu-item" onClick={() => { onShare(); setMenuOpen(false); }}>Share folder</button>}
               {isOwner && onDelete && <button className="menu-item danger" onClick={() => { onDelete(); setMenuOpen(false); }}>Delete folder</button>}
-              {!isOwner && <span style={{ padding: '8px 12px', fontSize: fontSize.xs, color: colors.textFaint, display: 'block' }}>Shared with you</span>}
+              {!isOwner && <span style={{ padding: '8px 12px', fontSize: fontSize.sm, color: colors.textFaint, display: 'block' }}>Shared with you</span>}
             </div>
           )}
         </div>
@@ -474,14 +474,14 @@ export default function Dashboard({ onOpenShow }: DashboardProps) {
       <div style={{ height: 52, padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${colors.border}`, background: colors.bgPanel, flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 24, height: 24, borderRadius: radius.md, background: colors.accent, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ width: 9, height: 9, borderRadius: 2, background: 'rgba(255,255,255,0.9)' }} />
+            <div style={{ width: 9, height: 9, borderRadius: radius.xs, background: 'rgba(255,255,255,0.9)' }} />
           </div>
           <span style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, letterSpacing: '0.12em', color: colors.text, textTransform: 'uppercase' }}>SPOTLINE</span>
         </div>
         {profile && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: fontSize.sm, fontWeight: fontWeight.bold, color: 'white' }}>
+              <div style={{ width: 30, height: 30, borderRadius: '50%', background: colors.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: fontSize.sm, fontWeight: fontWeight.bold, color: colors.text }}>
                 {profile.display_name.slice(0, 2).toUpperCase()}
               </div>
               <span style={{ fontSize: fontSize.sm, color: colors.textSecondary }}>{profile.display_name}</span>
@@ -527,7 +527,7 @@ export default function Dashboard({ onOpenShow }: DashboardProps) {
             {/* Folders */}
             {folders.length > 0 && (
               <div style={{ marginTop: 12 }}>
-                <div style={{ fontSize: fontSize.xs, color: colors.textGhost, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 10px', marginBottom: 4 }}>
+                <div style={{ fontSize: fontSize.sm, color: colors.textGhost, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 10px', marginBottom: 4 }}>
                   Folders
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -583,7 +583,7 @@ export default function Dashboard({ onOpenShow }: DashboardProps) {
                 {selectedFolder && (
                   <FolderOpen size={18} style={{ color: colors.accent, flexShrink: 0 }} />
                 )}
-                <h1 style={{ margin: 0, fontSize: 20, fontWeight: fontWeight.bold, color: colors.text }}>
+                <h1 style={{ margin: 0, fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text }}>
                   {sectionTitle}
                 </h1>
                 <span style={{ fontSize: fontSize.sm, color: colors.textGhost }}>{visibleShows.length} show{visibleShows.length !== 1 ? 's' : ''}</span>

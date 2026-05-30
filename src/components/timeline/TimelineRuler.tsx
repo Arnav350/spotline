@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { colors } from '../../lib/theme';
+import { colors, fontSize, fontWeight } from '../../lib/theme';
 import { RULER_HEIGHT, BEAT_ROW_HEIGHT, LEFT_PADDING } from './constants';
 
 interface TimelineRulerProps {
@@ -39,7 +39,7 @@ export function TimelineRuler({
         }}
       >
         {isMajor && (
-          <span style={{ fontSize: 8, color: colors.textFaint, marginBottom: 2, whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: fontSize.xs, color: colors.textFaint, marginBottom: 2, whiteSpace: 'nowrap' }}>
             {t}s
           </span>
         )}
@@ -72,7 +72,7 @@ export function TimelineRuler({
           }}
         >
           {isMeasure && (
-            <span style={{ fontSize: 8, color: colors.accentLight, marginBottom: 2, whiteSpace: 'nowrap', fontWeight: 600 }}>
+            <span style={{ fontSize: fontSize.xs, color: colors.accentLight, marginBottom: 2, whiteSpace: 'nowrap', fontWeight: fontWeight.bold }}>
               {b / 4 + 1}
             </span>
           )}

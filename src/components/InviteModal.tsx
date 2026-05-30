@@ -150,7 +150,7 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
   }
 
   const roleColor = (r: ShowMemberRole) =>
-    r === 'owner' ? colors.accent : r === 'editor' ? '#22c55e' : colors.textSecondary;
+    r === 'owner' ? colors.accent : r === 'editor' ? colors.success : colors.textSecondary;
 
   const displayMembers = isFolder ? folderMembers : members;
 
@@ -164,7 +164,7 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: `1px solid ${colors.border}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {isFolder && <Folder size={15} style={{ color: colors.accent }} />}
-            <span style={{ fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.text }}>
+            <span style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text }}>
               {isFolder ? `Share "${folderTitle || 'Folder'}"` : 'Share Show'}
             </span>
           </div>
@@ -172,7 +172,7 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
         </div>
 
         {isFolder && (
-          <div style={{ padding: '10px 20px', background: 'rgba(124,58,237,0.08)', borderBottom: `1px solid ${colors.border}`, fontSize: fontSize.xs, color: colors.textSecondary }}>
+          <div style={{ padding: '10px 20px', background: 'rgba(124,58,237,0.08)', borderBottom: `1px solid ${colors.border}`, fontSize: fontSize.sm, color: colors.textSecondary }}>
             Sharing this folder grants access to all current and future shows inside it.
           </div>
         )}
@@ -209,7 +209,7 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
                 </button>
               </form>
               {error && <div style={{ marginTop: 6, fontSize: fontSize.sm, color: colors.danger }}>{error}</div>}
-              {info && <div style={{ marginTop: 6, fontSize: fontSize.sm, color: '#22c55e' }}>{info}</div>}
+              {info && <div style={{ marginTop: 6, fontSize: fontSize.sm, color: colors.success }}>{info}</div>}
             </div>
           )}
 
@@ -222,12 +222,12 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
                   <div key={inv.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: colors.bgCard, borderRadius: radius.sm, border: `1px solid ${colors.border}` }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: fontSize.sm, color: colors.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{inv.invitee_email}</div>
-                      <div style={{ fontSize: fontSize.xs, color: colors.textMuted, marginTop: 1 }}>
+                      <div style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: 1 }}>
                         <span style={{ color: roleColor(inv.role as ShowMemberRole) }}>{inv.role}</span>
                         {' · expires '}{new Date(inv.expires_at).toLocaleDateString()}
                       </div>
                     </div>
-                    <button className="btn-icon" onClick={() => copyLink(inv.token)} title="Copy invite link" style={{ color: copied === inv.token ? '#22c55e' : colors.textSecondary }}>
+                    <button className="btn-icon" onClick={() => copyLink(inv.token)} title="Copy invite link" style={{ color: copied === inv.token ? colors.success : colors.textSecondary }}>
                       {copied === inv.token ? <Check size={14} /> : <Copy size={14} />}
                     </button>
                     {isOwner && (
@@ -254,12 +254,12 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
                 const isMemberOwner = m.role === 'owner';
                 return (
                   <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: radius.sm, background: isMe ? 'rgba(124,58,237,0.06)' : 'transparent' }}>
-                    <div style={{ width: 30, height: 30, borderRadius: '50%', flexShrink: 0, background: isMe ? '#7c3aed' : (p ? colorFromUserId(p.id) : colors.borderMed), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: fontSize.xs, fontWeight: fontWeight.bold, color: 'white' }}>
+                    <div style={{ width: 30, height: 30, borderRadius: '50%', flexShrink: 0, background: isMe ? colors.accent : (p ? colorFromUserId(p.id) : colors.borderMed), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: fontSize.sm, fontWeight: fontWeight.bold, color: colors.text }}>
                       {name.slice(0, 2).toUpperCase()}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: fontSize.sm, color: colors.text }}>
-                        {name}{isMe && <span style={{ marginLeft: 6, fontSize: fontSize.xs, color: colors.textMuted }}>(you)</span>}
+                        {name}{isMe && <span style={{ marginLeft: 6, fontSize: fontSize.sm, color: colors.textMuted }}>(you)</span>}
                       </div>
                     </div>
                     {isOwner && !isMe && !isMemberOwner ? (
@@ -267,13 +267,13 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
                         className="panel-input"
                         value={m.role}
                         onChange={e => handleChangeRole(m.id, e.target.value as ShowMemberRole)}
-                        style={{ width: 90, padding: '3px 6px', fontSize: fontSize.xs }}
+                        style={{ width: 90, padding: '3px 6px', fontSize: fontSize.sm }}
                       >
                         <option value="editor">Editor</option>
                         <option value="viewer">Viewer</option>
                       </select>
                     ) : (
-                      <span style={{ fontSize: fontSize.xs, color: roleColor(m.role), border: `1px solid ${roleColor(m.role)}`, borderRadius: radius.xs, padding: '1px 5px', opacity: 0.8 }}>
+                      <span style={{ fontSize: fontSize.sm, color: roleColor(m.role), border: `1px solid ${roleColor(m.role)}`, borderRadius: radius.xs, padding: '1px 5px', opacity: 0.8 }}>
                         {m.role}
                       </span>
                     )}

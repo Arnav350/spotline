@@ -3,7 +3,7 @@ import { Stage, Layer, Rect, Line, Circle, Text } from 'react-konva';
 import { useShowStore } from '../store/showStore';
 import Konva from 'konva';
 import { Magnet, RotateCw } from 'lucide-react';
-import { colors, radius, fontSize } from '../lib/theme';
+import { colors, fontSize, fontWeight, radius } from '../lib/theme';
 import {
   CANVAS_PADDING, PERFORMER_RADIUS,
   interpolatePosition, worldToCanvas, canvasToWorld, snapWorld, drawShape,
@@ -542,15 +542,15 @@ export default function StageCanvas({ width, height, animating, animationProgres
       <div style={{ position: 'absolute', bottom: 14, right: 14, display: 'flex', flexDirection: 'column', gap: 3 }}>
         <button
           onClick={() => zoomToCenter(1.25)}
-          style={{ width: 26, height: 26, background: colors.bgCard, border: `1px solid ${colors.borderMed}`, borderRadius: radius.md, color: colors.textSecondary, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
+          style={{ width: 26, height: 26, background: colors.bgCard, border: `1px solid ${colors.borderMed}`, borderRadius: radius.md, color: colors.textSecondary, fontSize: fontSize.lg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
         >+</button>
         <button
           onClick={() => zoomToCenter(1 / 1.25)}
-          style={{ width: 26, height: 26, background: colors.bgCard, border: `1px solid ${colors.borderMed}`, borderRadius: radius.md, color: colors.textSecondary, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
+          style={{ width: 26, height: 26, background: colors.bgCard, border: `1px solid ${colors.borderMed}`, borderRadius: radius.md, color: colors.textSecondary, fontSize: fontSize.lg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
         >−</button>
         <button
           onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}
-          style={{ width: 26, height: 26, background: colors.bgCard, border: `1px solid ${colors.borderMed}`, borderRadius: radius.md, color: colors.textDim, fontSize: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', letterSpacing: '0.05em' }}
+          style={{ width: 26, height: 26, background: colors.bgCard, border: `1px solid ${colors.borderMed}`, borderRadius: radius.md, color: colors.textFaint, fontSize: fontSize.xs, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', letterSpacing: '0.05em' }}
         >FIT</button>
         <button
           onClick={() => updateStageConfig({ snapToGrid: !stageConfig.snapToGrid })}
@@ -563,7 +563,7 @@ export default function StageCanvas({ width, height, animating, animationProgres
 
       {/* Zoom level indicator */}
       {Math.abs(zoom - 1) > 0.05 && (
-        <div style={{ position: 'absolute', bottom: 14, left: 14, fontSize: 9, color: colors.textFaint, background: colors.bgPanel, padding: '3px 6px', borderRadius: radius.sm, border: `1px solid ${colors.bgCardHover}` }}>
+        <div style={{ position: 'absolute', bottom: 14, left: 14, fontSize: fontSize.xs, color: colors.textFaint, background: colors.bgPanel, padding: '3px 6px', borderRadius: radius.sm, border: `1px solid ${colors.bgCardHover}` }}>
           {Math.round(zoom * 100)}%
         </div>
       )}
@@ -584,10 +584,10 @@ export default function StageCanvas({ width, height, animating, animationProgres
             pointerEvents: 'none',
             backdropFilter: 'blur(8px)',
           }}>
-            <div style={{ fontSize: 18, fontWeight: 700, color: colors.text, letterSpacing: '0.02em', lineHeight: 1.2 }}>
-              {stageConfig.width} × {stageConfig.height} <span style={{ fontSize: 13, fontWeight: 500, color: colors.textSecondary }}>{stageConfig.unit}</span>
+            <div style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text, letterSpacing: '0.02em', lineHeight: 1.2 }}>
+              {stageConfig.width} × {stageConfig.height} <span style={{ fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.textSecondary }}>{stageConfig.unit}</span>
             </div>
-            <div style={{ fontSize: fontSize.xs, color: colors.textMuted, marginTop: 5, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <div style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: 5, display: 'flex', flexDirection: 'column', gap: 2 }}>
               <span>
                 1 div&nbsp;=&nbsp;
                 <span style={{ color: colors.textSecondary }}>
@@ -604,7 +604,7 @@ export default function StageCanvas({ width, height, animating, animationProgres
 
       {/* Multi-select indicator */}
       {selectedItemIds.length > 1 && (
-        <div style={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', fontSize: 11, color: colors.textSecondary, background: `${colors.bgPanel}d9`, padding: '3px 10px', borderRadius: radius.pill, border: `1px solid ${colors.borderMed}`, pointerEvents: 'none' }}>
+        <div style={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', fontSize: fontSize.sm, color: colors.textSecondary, background: `${colors.bgPanel}d9`, padding: '3px 10px', borderRadius: radius.pill, border: `1px solid ${colors.borderMed}`, pointerEvents: 'none' }}>
           {selectedItemIds.length} selected
         </div>
       )}

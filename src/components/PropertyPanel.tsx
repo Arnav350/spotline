@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Layers, Music, Users, Settings } from 'lucide-react';
 import { useShowStore } from '../store/showStore';
 import { colors, fontSize, fontWeight, radius } from '../lib/theme';
@@ -26,6 +26,7 @@ interface PropertyPanelProps {
 
 export default function PropertyPanel({ activePanel, onPanelChange }: PropertyPanelProps) {
   const { selectedItem, selectedItemIds } = useShowStore();
+  const [hoveredPanel, setHoveredPanel] = useState<NavPanel | null>(null);
 
   useEffect(() => {
     if (selectedItem?.type === 'performer') onPanelChange('formation');
@@ -53,10 +54,13 @@ export default function PropertyPanel({ activePanel, onPanelChange }: PropertyPa
       }}>
         {NAV_ITEMS.map(item => {
           const isActive = activePanel === item.id;
+          const isHovered = hoveredPanel === item.id && !isActive;
           return (
             <button
               key={item.id}
               onClick={() => onPanelChange(activePanel === item.id ? null : item.id)}
+              onMouseEnter={() => setHoveredPanel(item.id)}
+              onMouseLeave={() => setHoveredPanel(null)}
               style={{
                 width: NAV_WIDTH - 16,
                 padding: 8,
@@ -67,17 +71,15 @@ export default function PropertyPanel({ activePanel, onPanelChange }: PropertyPa
                 borderRadius: radius.lg,
                 border: 'none',
                 cursor: 'pointer',
-                background: 'transparent',
-                color: isActive ? colors.accentLight : colors.textFaint,
-                transition: 'color 0.15s',
+                background: isActive ? colors.bgCard : isHovered ? colors.bgCard : 'transparent',
+                color: isActive ? colors.accentLight : isHovered ? colors.textSecondary : colors.textMuted,
+                transition: 'color 0.15s, background 0.15s',
               }}
-              onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = colors.textMuted; }}
-              onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = colors.textFaint; }}
             >
               {item.icon}
               <span style={{
-                fontSize: fontSize.xs,
-                fontWeight: fontWeight.semibold,
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.bold,
                 letterSpacing: '0.05em',
                 lineHeight: 1,
                 textTransform: 'uppercase',

@@ -52,7 +52,7 @@ function SegmentRow({ segmentId, isSelected }: { segmentId: string; isSelected: 
       onClick={() => setSelectedAudioSegment(isSelected ? null : seg.id)}
     >
       {/* Color swatch */}
-      <div style={{ width: 3, height: 22, borderRadius: 2, background: seg.color, flexShrink: 0 }} />
+      <div style={{ width: 3, height: 22, borderRadius: radius.xs, background: seg.color, flexShrink: 0 }} />
 
       {/* Name + duration */}
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -74,9 +74,9 @@ function SegmentRow({ segmentId, isSelected }: { segmentId: string; isSelected: 
               background: 'transparent',
               border: 'none',
               outline: `1px solid ${seg.color}`,
-              borderRadius: 2,
+              borderRadius: radius.xs,
               color: colors.text,
-              fontSize: fontSize.base,
+              fontSize: fontSize.md,
               padding: '0 2px',
               fontFamily: 'inherit',
             }}
@@ -84,7 +84,7 @@ function SegmentRow({ segmentId, isSelected }: { segmentId: string; isSelected: 
         ) : (
           <div
             style={{
-              fontSize: fontSize.base,
+              fontSize: fontSize.md,
               color: isSelected ? colors.textSecondary : colors.textMuted,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -96,7 +96,7 @@ function SegmentRow({ segmentId, isSelected }: { segmentId: string; isSelected: 
             {seg.name}
           </div>
         )}
-        <div style={{ fontSize: fontSize.xs, color: colors.textFaint }}>{durationLabel}</div>
+        <div style={{ fontSize: fontSize.sm, color: colors.textFaint }}>{durationLabel}</div>
       </div>
 
       {/* Delete button */}
@@ -191,7 +191,7 @@ export function AudioPanel({ onClose }: AudioPanelProps) {
                     style={{ width: '100%', opacity: audioMuted ? 0.4 : 1, ['--vol-pct' as string]: `${audioVolume * 100}%` } as React.CSSProperties}
                   />
                 </div>
-                <span style={{ fontSize: fontSize.xs, color: colors.textFaint, minWidth: 28, textAlign: 'right', flexShrink: 0 }}>
+                <span style={{ fontSize: fontSize.sm, color: colors.textFaint, minWidth: 28, textAlign: 'right', flexShrink: 0 }}>
                   {Math.round(audioVolume * 100)}%
                 </span>
               </div>
@@ -201,7 +201,7 @@ export function AudioPanel({ onClose }: AudioPanelProps) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <button
               className="btn-ghost"
-              style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: fontSize.base, border: `1px solid ${colors.bgCardHover}`, width: '100%', justifyContent: 'center' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: fontSize.md, border: `1px solid ${colors.bgCardHover}`, width: '100%', justifyContent: 'center' }}
               onClick={() => fileInputRef.current?.click()}
               disabled={loadingMusic}
             >
@@ -209,16 +209,16 @@ export function AudioPanel({ onClose }: AudioPanelProps) {
               {loadingMusic ? 'Uploading…' : 'Upload Music'}
             </button>
             {loadingMusic && (
-              <div style={{ width: '100%', height: 3, background: colors.bgCard, borderRadius: 2, overflow: 'hidden' }}>
+              <div style={{ width: '100%', height: 3, background: colors.bgCard, borderRadius: radius.xs, overflow: 'hidden' }}>
                 <div style={{
                   height: '100%', width: '40%',
-                  background: colors.accent, borderRadius: 2,
+                  background: colors.accent, borderRadius: radius.xs,
                   animation: 'progressSlide 1.2s ease-in-out infinite',
                 }} />
               </div>
             )}
             {uploadError && (
-              <div style={{ fontSize: fontSize.xs, color: colors.danger, padding: '2px 0' }}>
+              <div style={{ fontSize: fontSize.sm, color: colors.danger, padding: '2px 0' }}>
                 {uploadError}
               </div>
             )}
@@ -229,13 +229,13 @@ export function AudioPanel({ onClose }: AudioPanelProps) {
       {/* Segments section */}
       <div style={{ borderTop: `1px solid ${colors.border}` }}>
         <div style={{ padding: '8px 12px 6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: fontSize.xs, color: colors.textFaint, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <span style={{ fontSize: fontSize.sm, color: colors.textFaint, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Segments
           </span>
           <button
             style={{
               display: 'flex', alignItems: 'center', gap: 3,
-              fontSize: fontSize.base, color: colors.accentLight,
+              fontSize: fontSize.md, color: colors.accentLight,
               background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0',
             }}
             onMouseEnter={e => (e.currentTarget.style.color = colors.text)}
@@ -248,7 +248,7 @@ export function AudioPanel({ onClose }: AudioPanelProps) {
 
         <div style={{ padding: '0 12px 12px', display: 'flex', flexDirection: 'column', gap: 3 }}>
           {sortedSegments.length === 0 ? (
-            <div style={{ fontSize: fontSize.base, color: colors.textGhost, paddingTop: 2 }}>No segments yet</div>
+            <div style={{ fontSize: fontSize.md, color: colors.textGhost, paddingTop: 2 }}>No segments yet</div>
           ) : (
             sortedSegments.map(seg => (
               <SegmentRow

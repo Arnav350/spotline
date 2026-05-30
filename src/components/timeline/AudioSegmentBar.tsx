@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { AudioSegment } from '../../lib/types';
 import { useShowStore } from '../../store/showStore';
-import { fontSize, radius } from '../../lib/theme';
+import { colors, fontSize, fontWeight, radius } from '../../lib/theme';
 import { HANDLE_WIDTH, SEGMENT_ROW_HEIGHT, LEFT_PADDING } from './constants';
 
 interface AudioSegmentBarProps {
@@ -52,15 +52,15 @@ export function AudioSegmentBar({ segment, startTime, effectivePPS, isSelected, 
       <div style={{ flex: 1, minWidth: 0, paddingLeft: 6, paddingRight: isEditable ? HANDLE_WIDTH + 4 : 4, display: 'flex', alignItems: 'center', gap: 5 }}>
         <span style={{
           fontSize: fontSize.sm,
-          color: '#fff',
+          color: colors.text,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
-          fontWeight: 500,
+          fontWeight: fontWeight.medium,
         }}>
           {segment.name}
         </span>
-        <span style={{ fontSize: fontSize.xs, color: 'rgba(255,255,255,0.7)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+        <span style={{ fontSize: fontSize.sm, color: 'rgba(255,255,255,0.7)', whiteSpace: 'nowrap', flexShrink: 0 }}>
           {durationLabel}
         </span>
       </div>
@@ -88,7 +88,7 @@ export function AudioSegmentBar({ segment, startTime, effectivePPS, isSelected, 
           <div style={{
             width: 2,
             height: 12,
-            background: hovered ? '#fff' : 'rgba(255,255,255,0.5)',
+            background: hovered ? colors.text : 'rgba(255,255,255,0.5)',
             borderRadius: 1,
           }} />
         </div>

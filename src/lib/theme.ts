@@ -2,7 +2,6 @@ export const colors = {
   bg: '#141414',
   bgPanel: '#1a1a1a',
   bgNav: '#161616',
-  bgElevated: '#1c1c1c',
   bgCard: '#202020',
   bgCardHover: '#272727',
   border: '#242424',
@@ -12,32 +11,27 @@ export const colors = {
   accent: '#7c3aed',
   accentLight: '#9d6fff',
   accentDark: '#6d28d9',
-  accentPurple: '#8b5cf6',
   text: '#ffffff',
-  textSub: '#e5e5e5',
-  textLight: '#ccc',
   textSecondary: '#aaa',
   textMuted: '#777',
-  textDim: '#666',
   textFaint: '#666',
   textGhost: '#444',
   danger: '#ef4444',
+  dangerLight: '#f87171',
   dangerBg: '#1a1010',
+  success: '#22c55e',
 } as const;
 
 export const fontSize = {
-  '2xs': 8,
-  xs: 10,
-  sm: 11,
-  base: 12,
-  md: 13,
+  xs: 8,
+  sm: 10,
+  md: 12,
   lg: 14,
+  xl: 18,
 } as const;
 
 export const fontWeight = {
-  normal: 400,
   medium: 500,
-  semibold: 600,
   bold: 700,
 } as const;
 
@@ -51,11 +45,11 @@ export const radius = {
 } as const;
 
 export const spacing = {
-  '2xs': 2,
+  xxs: 2,
   xs: 4,
   sm: 6,
   md: 8,
   lg: 12,
   xl: 16,
-  '2xl': 24,
+  xxl: 24,
 } as const;

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Undo2, Redo2, Monitor, Box, Keyboard, ChevronLeft, UserPlus, LogOut } from 'lucide-react';
+import { Undo2, Redo2, Monitor, Box, Keyboard, ChevronLeft, UserPlus, LogOut, Pencil } from 'lucide-react';
 import { useShowStore } from '../store/showStore';
 import { useAuthStore } from '../store/authStore';
 import { isSupabaseConfigured } from '../lib/supabase';
@@ -46,10 +46,10 @@ function OnlineIndicator({ others, selfName, selfColor }: {
         onMouseLeave={e => { if (!open) { const el = e.currentTarget as HTMLElement; el.style.background = 'transparent'; el.style.borderColor = 'transparent'; } }}
       >
         <div style={{ position: 'relative', width: 8, height: 8 }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e' }} />
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: colors.success }} />
           {total > 1 && (
             <div style={{
-              position: 'absolute', inset: 0, borderRadius: '50%', background: '#22c55e',
+              position: 'absolute', inset: 0, borderRadius: '50%', background: colors.success,
               animation: 'online-ping 2s cubic-bezier(0,0,0.2,1) infinite',
             }} />
           )}
@@ -60,13 +60,13 @@ function OnlineIndicator({ others, selfName, selfColor }: {
             width: 20, height: 20, borderRadius: '50%', background: c.color,
             border: `2px solid ${colors.bgPanel}`, marginLeft: i === 0 ? 2 : -6,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 9, fontWeight: fontWeight.bold, color: 'white', flexShrink: 0,
+            fontSize: fontSize.xs, fontWeight: fontWeight.bold, color: 'white', flexShrink: 0,
           }}>
             {c.name.slice(0, 2).toUpperCase()}
           </div>
         ))}
         {others.length > 3 && (
-          <span style={{ fontSize: fontSize.xs, color: colors.textFaint, marginLeft: 2 }}>+{others.length - 3}</span>
+          <span style={{ fontSize: fontSize.sm, color: colors.textFaint, marginLeft: 2 }}>+{others.length - 3}</span>
         )}
       </button>
 
@@ -77,7 +77,7 @@ function OnlineIndicator({ others, selfName, selfColor }: {
           borderRadius: radius.md, overflow: 'hidden', minWidth: 180,
           boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
         }}>
-          <div style={{ padding: '8px 12px 6px', borderBottom: `1px solid ${colors.border}`, fontSize: fontSize.xs, color: colors.textFaint, fontWeight: fontWeight.medium, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div style={{ padding: '8px 12px 6px', borderBottom: `1px solid ${colors.border}`, fontSize: fontSize.sm, color: colors.textFaint, fontWeight: fontWeight.medium, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             {total} online
           </div>
           {allUsers.map(u => (
@@ -85,14 +85,14 @@ function OnlineIndicator({ others, selfName, selfColor }: {
               <div style={{
                 width: 26, height: 26, borderRadius: '50%', background: u.color, flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: fontSize.xs, fontWeight: fontWeight.bold, color: 'white',
+                fontSize: fontSize.sm, fontWeight: fontWeight.bold, color: 'white',
               }}>
                 {u.name.slice(0, 2).toUpperCase()}
               </div>
               <span style={{ fontSize: fontSize.sm, color: colors.text, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {u.name}
               </span>
-              {u.isSelf && <span style={{ fontSize: fontSize.xs, color: colors.textFaint }}>(you)</span>}
+              {u.isSelf && <span style={{ fontSize: fontSize.sm, color: colors.textFaint }}>(you)</span>}
             </div>
           ))}
         </div>
@@ -132,9 +132,9 @@ function UserMenu({ onSignOut, onShowShortcuts }: { onSignOut: () => void; onSho
         onMouseLeave={e => { if (!open) { const el = e.currentTarget as HTMLElement; el.style.background = 'transparent'; el.style.borderColor = 'transparent'; } }}
       >
         <div style={{
-          width: 24, height: 24, borderRadius: '50%', background: '#7c3aed',
+          width: 24, height: 24, borderRadius: '50%', background: colors.accent,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: fontSize.xs, fontWeight: fontWeight.bold, color: 'white', flexShrink: 0,
+          fontSize: fontSize.sm, fontWeight: fontWeight.bold, color: 'white', flexShrink: 0,
         }}>
           {profile.display_name.slice(0, 2).toUpperCase()}
         </div>
@@ -275,17 +275,18 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
             />
           ) : (
             <button
-              style={{ fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.textSecondary, background: 'transparent', border: 'none', cursor: isViewer ? 'default' : 'pointer', padding: 0 }}
-              onMouseEnter={e => { if (!isViewer) e.currentTarget.style.color = colors.text; }}
-              onMouseLeave={e => { e.currentTarget.style.color = colors.textSecondary; }}
+              style={{ fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.textSecondary, background: 'transparent', border: 'none', cursor: isViewer ? 'default' : 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}
+              onMouseEnter={e => { if (!isViewer) { e.currentTarget.style.color = colors.text; (e.currentTarget.querySelector('.title-pencil') as HTMLElement | null)?.style.setProperty('opacity', '1'); } }}
+              onMouseLeave={e => { e.currentTarget.style.color = colors.textSecondary; (e.currentTarget.querySelector('.title-pencil') as HTMLElement | null)?.style.setProperty('opacity', '0'); }}
               onClick={isViewer ? undefined : handleTitleClick}
             >
               {show?.title || 'Untitled Show'}
+              {!isViewer && <Pencil size={11} className="title-pencil" style={{ opacity: 0, color: colors.textFaint, transition: 'opacity 0.15s', flexShrink: 0 }} />}
             </button>
           )}
           {isViewer && (
             <span style={{
-              fontSize: fontSize.xs, color: colors.textFaint,
+              fontSize: fontSize.sm, color: colors.textFaint,
               background: colors.bgCard, border: `1px solid ${colors.borderMed}`,
               borderRadius: radius.sm, padding: '2px 6px', marginLeft: 4,
             }}>
@@ -307,7 +308,7 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
 
         {/* Saving indicator */}
         {isSaving && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: fontSize.xs, color: colors.textFaint }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: fontSize.sm, color: colors.textFaint }}>
             <div style={{ width: 4, height: 4, borderRadius: '50%', background: colors.accent, animation: 'pulse 1.5s infinite' }} />
             Saving…
           </div>
@@ -316,7 +317,7 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
         <div style={{ flex: 1 }} />
 
         {/* 2D / 3D toggle */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: colors.bgElevated, border: `1px solid ${colors.borderSubtle}`, borderRadius: radius.sm, padding: 2 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: colors.bgPanel, border: `1px solid ${colors.borderSubtle}`, borderRadius: radius.sm, padding: 2 }}>
           {(['2d', '3d'] as const).map(mode => (
             <button
               key={mode}
@@ -325,7 +326,7 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
                 fontSize: fontSize.md, padding: '4px 10px',
                 borderRadius: radius.xs, border: 'none', cursor: 'pointer',
                 background: viewMode === mode ? colors.accent : 'transparent',
-                color: viewMode === mode ? colors.text : colors.textDim,
+                color: viewMode === mode ? colors.text : colors.textFaint,
                 transition: 'all 0.15s',
               }}
               onClick={() => setViewMode(mode)}
@@ -343,7 +344,7 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
           <OnlineIndicator
             others={otherCollaborators.map(c => ({ ...c, color: colorFromUserId(c.user_id) }))}
             selfName={profile.display_name}
-            selfColor={localUserColor || '#7c3aed'}
+            selfColor={localUserColor || colors.accent}
           />
         )}
 

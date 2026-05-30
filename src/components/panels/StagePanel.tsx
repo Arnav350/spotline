@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useShowStore } from '../../store/showStore';
-import { colors, radius } from '../../lib/theme';
+import { colors, fontSize, radius } from '../../lib/theme';
 import { PanelHeader } from '../ui/PanelHeader';
 
 interface StagePanelProps {
@@ -62,7 +62,7 @@ function NumericInput({ value, onChange, min, max, step = 1, isFloat = false }: 
     padding: 0,
     lineHeight: 1,
     color: colors.textFaint,
-    fontSize: 8,
+    fontSize: fontSize.xs,
   };
 
   return (

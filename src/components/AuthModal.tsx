@@ -108,7 +108,7 @@ export default function AuthModal() {
         <form onSubmit={handleSubmit} style={{ padding: '20px 28px 28px', display: 'flex', flexDirection: 'column', gap: 12 }}>
           {tab === 'forgot' && (
             <div>
-              <h2 style={{ margin: '0 0 4px', fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text }}>Reset Password</h2>
+              <h2 style={{ margin: '0 0 4px', fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text }}>Reset Password</h2>
               <p style={{ margin: 0, fontSize: fontSize.sm, color: colors.textSecondary }}>We'll send a reset link to your email.</p>
             </div>
           )}
@@ -161,7 +161,7 @@ export default function AuthModal() {
             </div>
           )}
           {info && (
-            <div style={{ padding: '8px 12px', background: 'rgba(34,197,94,0.1)', border: '1px solid #22c55e', borderRadius: radius.sm, fontSize: fontSize.sm, color: '#22c55e' }}>
+            <div style={{ padding: '8px 12px', background: 'rgba(34,197,94,0.1)', border: `1px solid ${colors.success}`, borderRadius: radius.sm, fontSize: fontSize.sm, color: colors.success }}>
               {info}
             </div>
           )}
@@ -184,7 +184,7 @@ export default function AuthModal() {
             <>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '2px 0' }}>
                 <div style={{ flex: 1, height: 1, background: colors.border }} />
-                <span style={{ fontSize: fontSize.xs, color: colors.textFaint }}>or</span>
+                <span style={{ fontSize: fontSize.sm, color: colors.textFaint }}>or</span>
                 <div style={{ flex: 1, height: 1, background: colors.border }} />
               </div>
               <button
