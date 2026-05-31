@@ -507,9 +507,27 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
   },
 
   updateStageConfig: (config: Partial<StageConfig>) => {
-    set(s => ({
-      show: s.show ? { ...s.show, stage_config: { ...s.show.stage_config, ...config } } : null,
-    }));
+    set(s => {
+      if (!s.show) return {};
+      const oldCfg = s.show.stage_config;
+      const newCfg = { ...oldCfg, ...config };
+      const scaleX = (config.width !== undefined && oldCfg.width > 0) ? newCfg.width / oldCfg.width : 1;
+      const scaleY = (config.height !== undefined && oldCfg.height > 0) ? newCfg.height / oldCfg.height : 1;
+      const rescalePositions = <T extends { x: number; y: number }>(positions: Record<string, T>): Record<string, T> => {
+        if (scaleX === 1 && scaleY === 1) return positions;
+        const result: Record<string, T> = {};
+        for (const key in positions) {
+          result[key] = { ...positions[key], x: positions[key].x * scaleX, y: positions[key].y * scaleY };
+        }
+        return result;
+      };
+      return {
+        show: { ...s.show, stage_config: newCfg },
+        performerPositions: rescalePositions(s.performerPositions),
+        propPositions: rescalePositions(s.propPositions),
+      };
+    });
+    get().pushHistory();
     scheduleAutoSave(get());
   },
 

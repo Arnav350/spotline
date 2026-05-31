@@ -399,9 +399,14 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
             const h = canvasToWorld(e.target.x(), e.target.y(), offsetXRef.current, offsetYRef.current, cellScaleRef.current);
             setPerformerPath(pid, prevFormId, activeFormationId!, 2 * (h.x - mx), 2 * (h.y - my));
           }}
+          onDragEnd={(e: Konva.KonvaEventObject<DragEvent>) => {
+            e.cancelBubble = true;
+            pushHistory();
+          }}
           onDblClick={(e: Konva.KonvaEventObject<MouseEvent>) => {
             e.cancelBubble = true;
             clearPerformerPath(pid, prevFormId, activeFormationId!);
+            pushHistory();
           }}
         />,
       );

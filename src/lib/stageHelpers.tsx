@@ -22,10 +22,11 @@ export function lerp(a: number, b: number, t: number) {
 
 export function applyEasing(t: number, easing?: string | null): number {
   switch (easing) {
+    case 'linear': return t;
     case 'ease-in': return t * t * t;
     case 'ease-out': return 1 - (1 - t) ** 3;
-    case 'ease': return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
-    default: return 1 - (1 - t) ** 3; // ease-out for smooth default
+    case 'ease': return t * t * (3 - 2 * t);
+    default: return 1 - (1 - t) ** 3;
   }
 }
 

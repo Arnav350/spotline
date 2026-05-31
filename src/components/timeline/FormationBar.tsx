@@ -49,9 +49,9 @@ export function FormationBar({
 }: FormationBarProps) {
   const gap = index === 0 ? 0 : BAR_GAP;
   const left = 12 + startTime * effectivePPS + gap; // LEFT_PADDING = 12; gap is on the left so right edge aligns with beat line
-  const width = Math.max(HANDLE_WIDTH * 2 + 32, formation.duration * effectivePPS - gap);
+  const width = Math.max(20, formation.duration * effectivePPS - gap);
   // transWidth capped at width - HANDLE_WIDTH - 3 so the trans handle never overlaps the dur handle.
-  const transWidth = Math.min(width - HANDLE_WIDTH - 3, Math.max(0, formation.transition_duration * effectivePPS));
+  const transWidth = Math.min(width - HANDLE_WIDTH - 3, Math.max(0, formation.transition_duration * effectivePPS - gap));
 
   const durationLabel = bpm && bpm > 0
     ? `${Math.round(formation.duration * bpm / 60)}ct`
@@ -103,8 +103,8 @@ export function FormationBar({
       </div>
 
 
-      {/* Transition strip — anchored at bar left so handle aligns with ruler beat ticks.
-          The grip handle (z-index 4) overlaps the first portion of the strip. */}
+      {/* Transition strip — anchored at bar left. transWidth is reduced by gap so the
+          handle's right edge aligns with the beat line, not 4px past it. */}
       <div style={{
         position: 'absolute',
         bottom: 0,
@@ -166,7 +166,7 @@ export function FormationBar({
           position: 'absolute',
           top: 6,
           left: 4,
-          right: 44,
+          right: 20,
           color: isActive ? colors.text : colors.textSecondary,
           fontSize: fontSize.sm,
           fontWeight: fontWeight.medium,
@@ -179,8 +179,8 @@ export function FormationBar({
         </span>
         <span style={{
           position: 'absolute',
-          top: 7,
-          right: 4,
+          top: 6,
+          right: 2,
           color: isActive ? colors.textFaint : colors.textGhost,
           fontSize: fontSize.sm,
           whiteSpace: 'nowrap',
