@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useShowStore } from '../../store/showStore';
-import { colors, fontSize, radius } from '../../lib/theme';
+import { colors, fontSize, radius, spacing } from '../../lib/theme';
 import { PanelHeader } from '../ui/PanelHeader';
 
 interface StagePanelProps {
@@ -129,9 +129,9 @@ export function StagePanel({ onClose }: StagePanelProps) {
   return (
     <div>
       <PanelHeader title="Stage" onClose={onClose} />
-      <div style={{ padding: '10px 12px 12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ padding: spacing.md, display: 'flex', flexDirection: 'column', gap: spacing.md }}>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.sm }}>
           <div>
             <label className="panel-label">Width</label>
             <NumericInput
@@ -160,7 +160,7 @@ export function StagePanel({ onClose }: StagePanelProps) {
           </select>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.sm }}>
           <div>
             <label className="panel-label">Divs Width</label>
             <NumericInput
@@ -179,7 +179,7 @@ export function StagePanel({ onClose }: StagePanelProps) {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.sm }}>
           <div>
             <label className="panel-label">Subs Width</label>
             <NumericInput
@@ -214,7 +214,7 @@ export function StagePanel({ onClose }: StagePanelProps) {
             style={{
               width: 36,
               height: 20,
-              borderRadius: radius.pill,
+              borderRadius: radius.xl,
               border: 'none',
               cursor: 'pointer',
               transition: 'background 0.2s',

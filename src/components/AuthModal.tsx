@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
-import { colors, fontSize, fontWeight, radius } from '../lib/theme';
+import { colors, fontSize, fontWeight, radius, spacing } from '../lib/theme';
 
 type Tab = 'signin' | 'signup' | 'forgot';
 
@@ -48,7 +48,7 @@ export default function AuthModal() {
     background: colors.bgCard,
     border: `1px solid ${colors.borderMed}`,
     borderRadius: radius.sm,
-    padding: '10px 12px',
+    padding: `${spacing.md}px ${spacing.md}px`,
     fontSize: fontSize.md,
     color: colors.text,
     outline: 'none',
@@ -67,13 +67,13 @@ export default function AuthModal() {
     }}>
       <div style={{
         width: 380, background: colors.bgPanel, border: `1px solid ${colors.border}`,
-        borderRadius: radius.xl, overflow: 'hidden',
+        borderRadius: radius.lg, overflow: 'hidden',
         boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
       }}>
         {/* Logo */}
-        <div style={{ padding: '28px 28px 0', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ padding: `${spacing.xxl}px ${spacing.xxl}px 0`, display: 'flex', alignItems: 'center', gap: spacing.md }}>
           <div style={{
-            width: 32, height: 32, borderRadius: radius.lg,
+            width: 32, height: 32, borderRadius: radius.md,
             background: colors.accent,
             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
@@ -86,13 +86,13 @@ export default function AuthModal() {
 
         {/* Tabs (hidden when on forgot) */}
         {tab !== 'forgot' && (
-          <div style={{ display: 'flex', margin: '20px 28px 0', gap: 2, background: colors.bg, borderRadius: radius.sm, padding: 3 }}>
+          <div style={{ display: 'flex', margin: `${spacing.xl}px ${spacing.xxl}px 0`, gap: spacing.xxs, background: colors.bg, borderRadius: radius.sm, padding: spacing.xs }}>
             {tabs.map(t => (
               <button
                 key={t.key}
                 onClick={() => switchTab(t.key)}
                 style={{
-                  flex: 1, padding: '7px 0', fontSize: fontSize.sm, fontWeight: fontWeight.medium,
+                  flex: 1, padding: `${spacing.sm}px 0`, fontSize: fontSize.sm, fontWeight: fontWeight.medium,
                   border: 'none', borderRadius: radius.xs, cursor: 'pointer', transition: 'all 0.15s',
                   background: tab === t.key ? colors.accent : 'transparent',
                   color: tab === t.key ? colors.text : colors.textSecondary,
@@ -105,17 +105,17 @@ export default function AuthModal() {
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} style={{ padding: '20px 28px 28px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <form onSubmit={handleSubmit} style={{ padding: `${spacing.xl}px ${spacing.xxl}px ${spacing.xxl}px`, display: 'flex', flexDirection: 'column', gap: spacing.md }}>
           {tab === 'forgot' && (
             <div>
-              <h2 style={{ margin: '0 0 4px', fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text }}>Reset Password</h2>
+              <h2 style={{ margin: `0 0 ${spacing.xs}px`, fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text }}>Reset Password</h2>
               <p style={{ margin: 0, fontSize: fontSize.sm, color: colors.textSecondary }}>We'll send a reset link to your email.</p>
             </div>
           )}
 
           {tab === 'signup' && (
             <div>
-              <label style={{ display: 'block', fontSize: fontSize.sm, color: colors.textSecondary, marginBottom: 5 }}>Display Name</label>
+              <label style={{ display: 'block', fontSize: fontSize.sm, color: colors.textSecondary, marginBottom: spacing.xs }}>Display Name</label>
               <input
                 style={inputStyle}
                 placeholder="Your name"
@@ -128,7 +128,7 @@ export default function AuthModal() {
           )}
 
           <div>
-            <label style={{ display: 'block', fontSize: fontSize.sm, color: colors.textSecondary, marginBottom: 5 }}>Email</label>
+            <label style={{ display: 'block', fontSize: fontSize.sm, color: colors.textSecondary, marginBottom: spacing.xs }}>Email</label>
             <input
               style={inputStyle}
               type="email"
@@ -142,7 +142,7 @@ export default function AuthModal() {
 
           {tab !== 'forgot' && (
             <div>
-              <label style={{ display: 'block', fontSize: fontSize.sm, color: colors.textSecondary, marginBottom: 5 }}>Password</label>
+              <label style={{ display: 'block', fontSize: fontSize.sm, color: colors.textSecondary, marginBottom: spacing.xs }}>Password</label>
               <input
                 style={inputStyle}
                 type="password"
@@ -156,12 +156,12 @@ export default function AuthModal() {
           )}
 
           {error && (
-            <div style={{ padding: '8px 12px', background: colors.dangerBg, border: `1px solid ${colors.danger}`, borderRadius: radius.sm, fontSize: fontSize.sm, color: colors.danger }}>
+            <div style={{ padding: `${spacing.sm}px ${spacing.md}px`, background: colors.dangerBg, border: `1px solid ${colors.danger}`, borderRadius: radius.sm, fontSize: fontSize.sm, color: colors.danger }}>
               {error}
             </div>
           )}
           {info && (
-            <div style={{ padding: '8px 12px', background: 'rgba(34,197,94,0.1)', border: `1px solid ${colors.success}`, borderRadius: radius.sm, fontSize: fontSize.sm, color: colors.success }}>
+            <div style={{ padding: `${spacing.sm}px ${spacing.md}px`, background: 'rgba(34,197,94,0.1)', border: `1px solid ${colors.success}`, borderRadius: radius.sm, fontSize: fontSize.sm, color: colors.success }}>
               {info}
             </div>
           )}
@@ -170,10 +170,10 @@ export default function AuthModal() {
             type="submit"
             disabled={loading}
             style={{
-              padding: '10px 0', fontSize: fontSize.md, fontWeight: fontWeight.medium,
+              padding: `${spacing.md}px 0`, fontSize: fontSize.md, fontWeight: fontWeight.medium,
               color: colors.text, border: 'none', borderRadius: radius.sm, cursor: loading ? 'not-allowed' : 'pointer',
               background: loading ? colors.borderMed : `linear-gradient(135deg, ${colors.accent}, ${colors.accentDark})`,
-              transition: 'all 0.15s', marginTop: 4,
+              transition: 'all 0.15s', marginTop: spacing.xs,
               boxShadow: loading ? 'none' : `0 0 20px rgba(124,58,237,0.25)`,
             }}
           >
@@ -182,7 +182,7 @@ export default function AuthModal() {
 
           {tab !== 'forgot' && (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '2px 0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, margin: `${spacing.xxs}px 0` }}>
                 <div style={{ flex: 1, height: 1, background: colors.border }} />
                 <span style={{ fontSize: fontSize.sm, color: colors.textFaint }}>or</span>
                 <div style={{ flex: 1, height: 1, background: colors.border }} />
@@ -196,8 +196,8 @@ export default function AuthModal() {
                   if (err) { setError(err); setLoading(false); }
                 }}
                 style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  padding: '10px 0', fontSize: fontSize.md, fontWeight: fontWeight.medium,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: spacing.sm,
+                  padding: `${spacing.md}px 0`, fontSize: fontSize.md, fontWeight: fontWeight.medium,
                   color: colors.text, border: `1px solid ${colors.borderMed}`, borderRadius: radius.sm,
                   cursor: loading ? 'not-allowed' : 'pointer', background: colors.bgCard,
                   transition: 'all 0.15s', opacity: loading ? 0.6 : 1,
@@ -216,7 +216,7 @@ export default function AuthModal() {
             </>
           )}
 
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 4 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: spacing.lg, marginTop: spacing.xs }}>
             {tab === 'signin' && (
               <button type="button" onClick={() => switchTab('forgot')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: fontSize.sm, color: colors.textSecondary, padding: 0 }}>
                 Forgot password?

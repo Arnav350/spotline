@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { AudioSegment } from '../../lib/types';
 import { useShowStore } from '../../store/showStore';
-import { colors, fontSize, fontWeight, radius } from '../../lib/theme';
+import { colors, fontSize, fontWeight, radius, spacing } from '../../lib/theme';
 import { HANDLE_WIDTH, SEGMENT_ROW_HEIGHT, LEFT_PADDING, BAR_GAP } from './constants';
 
 interface AudioSegmentBarProps {
@@ -36,7 +36,7 @@ export function AudioSegmentBar({ segment, index, startTime, effectivePPS, isSel
         width,
         height: SEGMENT_ROW_HEIGHT - 16,
         background: segment.color,
-        border: isSelected ? '2px solid #fff' : '2px solid transparent',
+        border: isSelected ? `2px solid ${colors.text}` : '2px solid transparent',
         borderRadius: radius.sm,
         boxSizing: 'border-box',
         userSelect: 'none',
@@ -51,7 +51,7 @@ export function AudioSegmentBar({ segment, index, startTime, effectivePPS, isSel
       onMouseLeave={() => setHovered(false)}
     >
       {/* Name + duration */}
-      <div style={{ flex: 1, minWidth: 0, paddingLeft: 6, paddingRight: isEditable ? HANDLE_WIDTH + 4 : 4, display: 'flex', alignItems: 'center', gap: 5 }}>
+      <div style={{ flex: 1, minWidth: 0, paddingLeft: spacing.sm, paddingRight: isEditable ? HANDLE_WIDTH + spacing.xs : spacing.xs, display: 'flex', alignItems: 'center', gap: spacing.xs }}>
         <span style={{
           fontSize: fontSize.sm,
           color: colors.text,
@@ -91,7 +91,7 @@ export function AudioSegmentBar({ segment, index, startTime, effectivePPS, isSel
             width: 2,
             height: 12,
             background: hovered ? colors.text : 'rgba(255,255,255,0.5)',
-            borderRadius: 1,
+            borderRadius: radius.xs,
           }} />
         </div>
       )}

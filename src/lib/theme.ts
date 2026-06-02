@@ -37,19 +37,19 @@ export const fontWeight = {
 
 export const radius = {
   xs: 2,
-  sm: 3,
-  md: 4,
-  lg: 6,
-  xl: 8,
+  sm: 4,
+  md: 6,
+  lg: 8,
+  xl: 10,
   pill: 999,
 } as const;
 
 export const spacing = {
-  xxs: 2,
-  xs: 4,
-  sm: 6,
-  md: 8,
-  lg: 12,
-  xl: 16,
-  xxl: 24,
+  xxs: 2,   // sub-grid — micro offsets, thin dividers
+  xs: 4,    // quarter grid — icon gaps, tight labels
+  sm: 8,    // base unit — button padding, standard gaps
+  md: 12,   // 1.5× — medium sections
+  lg: 16,   // 2× — panel padding, large gaps
+  xl: 24,   // 3× — modal/section spacing
+  xxl: 32,  // 4× — large container padding
 } as const;

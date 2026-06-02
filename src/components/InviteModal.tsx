@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Copy, Check, UserMinus, Folder } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
-import { colors, fontSize, fontWeight, radius } from '../lib/theme';
+import { colors, fontSize, fontWeight, radius, spacing } from '../lib/theme';
 import type { Invitation, ShowMember, Profile, ShowMemberRole, ShowPublicLink } from '../lib/types';
 import { colorFromUserId } from '../lib/colors';
 
@@ -184,10 +184,10 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
       style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.7)', zIndex: 200 }}
       onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div style={{ width: 480, maxHeight: '80vh', display: 'flex', flexDirection: 'column', background: colors.bgPanel, border: `1px solid ${colors.borderMed}`, borderRadius: radius.xl, overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+      <div style={{ width: 480, maxHeight: '80vh', display: 'flex', flexDirection: 'column', background: colors.bgPanel, border: `1px solid ${colors.borderMed}`, borderRadius: radius.lg, overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: `1px solid ${colors.border}` }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: `${spacing.lg}px ${spacing.xl}px`, borderBottom: `1px solid ${colors.border}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
             {isFolder && <Folder size={15} style={{ color: colors.accent }} />}
             <span style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text }}>
               {isFolder ? `Share "${folderTitle || 'Folder'}"` : 'Share Show'}
@@ -197,16 +197,16 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
         </div>
 
         {isFolder && (
-          <div style={{ padding: '10px 20px', background: 'rgba(124,58,237,0.08)', borderBottom: `1px solid ${colors.border}`, fontSize: fontSize.sm, color: colors.textSecondary }}>
+          <div style={{ padding: `${spacing.md}px ${spacing.xl}px`, background: 'rgba(124,58,237,0.08)', borderBottom: `1px solid ${colors.border}`, fontSize: fontSize.sm, color: colors.textSecondary }}>
             Sharing this folder grants access to all current and future shows inside it.
           </div>
         )}
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: `${spacing.lg}px ${spacing.xl}px`, display: 'flex', flexDirection: 'column', gap: spacing.xl }}>
           {/* Public link — show only */}
           {!isFolder && isOwner && (
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: publicLink?.enabled ? 6 : 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, marginBottom: publicLink?.enabled ? spacing.sm : 0 }}>
                 <div>
                   <label className="panel-label" style={{ marginBottom: -4 }}>Public link</label>
                   <span style={{ fontSize: fontSize.sm, color: colors.textSecondary }}>Anyone with the link can view</span>
@@ -215,7 +215,7 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
                   disabled={linkLoading}
                   onClick={() => handleTogglePublicLink(!(publicLink?.enabled ?? false))}
                   style={{
-                    width: 36, height: 20, borderRadius: 10, border: 'none',
+                    width: 36, height: 20, borderRadius: radius.xl, border: 'none',
                     cursor: linkLoading ? 'wait' : 'pointer',
                     background: publicLink?.enabled ? colors.accent : colors.borderMed,
                     position: 'relative', transition: 'background 0.2s', flexShrink: 0,
@@ -229,7 +229,7 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
                 </button>
               </div>
               {publicLink?.enabled && (
-                <div style={{ display: 'flex', gap: 6 }}>
+                <div style={{ display: 'flex', gap: spacing.sm }}>
                   <input
                     readOnly
                     className="panel-input"
@@ -240,7 +240,7 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
                   <button
                     onClick={handleCopyPublicLink}
                     style={{
-                      display: 'flex', alignItems: 'center', gap: 5, padding: '6px 10px',
+                      display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `${spacing.sm}px ${spacing.md}px`,
                       background: colors.bgCard, border: `1px solid ${colors.borderMed}`,
                       borderRadius: radius.sm, cursor: 'pointer', fontSize: fontSize.lg,
                       color: linkCopied ? colors.success : colors.textSecondary, flexShrink: 0,
@@ -259,7 +259,7 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
           {isOwner && (
             <div>
               <label className="panel-label">Invite by email</label>
-              <form onSubmit={handleInvite} style={{ display: 'flex', gap: 6 }}>
+              <form onSubmit={handleInvite} style={{ display: 'flex', gap: spacing.sm }}>
                 <input
                   className="panel-input"
                   type="email"
@@ -280,23 +280,23 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
                 <button
                   type="submit"
                   disabled={sending || !email.trim()}
-                  style={{ padding: '0 14px', fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.text, border: 'none', borderRadius: radius.sm, cursor: sending ? 'not-allowed' : 'pointer', background: sending ? colors.borderMed : colors.accent, flexShrink: 0, whiteSpace: 'nowrap' }}
+                  style={{ padding: `0 ${spacing.md}px`, fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.text, border: 'none', borderRadius: radius.sm, cursor: sending ? 'not-allowed' : 'pointer', background: sending ? colors.borderMed : colors.accent, flexShrink: 0, whiteSpace: 'nowrap' }}
                 >
                   {sending ? '…' : 'Invite'}
                 </button>
               </form>
-              {error && <div style={{ marginTop: 6, fontSize: fontSize.sm, color: colors.danger }}>{error}</div>}
-              {info && <div style={{ marginTop: 6, fontSize: fontSize.sm, color: colors.success }}>{info}</div>}
+              {error && <div style={{ marginTop: spacing.sm, fontSize: fontSize.sm, color: colors.danger }}>{error}</div>}
+              {info && <div style={{ marginTop: spacing.sm, fontSize: fontSize.sm, color: colors.success }}>{info}</div>}
             </div>
           )}
 
           {/* Pending invitations */}
           {invitations.length > 0 && (
             <div>
-              <label className="panel-label" style={{ marginBottom: 8 }}>Pending invitations</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <label className="panel-label" style={{ marginBottom: spacing.sm }}>Pending invitations</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm }}>
                 {invitations.map(inv => (
-                  <div key={inv.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: colors.bgCard, borderRadius: radius.sm, border: `1px solid ${colors.border}` }}>
+                  <div key={inv.id} style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, padding: `${spacing.sm}px ${spacing.md}px`, background: colors.bgCard, borderRadius: radius.sm, border: `1px solid ${colors.border}` }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: fontSize.sm, color: colors.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{inv.invitee_email}</div>
                       <div style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: 1 }}>
@@ -320,23 +320,23 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
 
           {/* Members list */}
           <div>
-            <label className="panel-label" style={{ marginBottom: 8 }}>
+            <label className="panel-label" style={{ marginBottom: spacing.sm }}>
               {isFolder ? 'Folder members' : 'Members'} ({displayMembers.length})
             </label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
               {displayMembers.map(m => {
                 const p = (m as any).profile as Profile | undefined;
                 const name = p?.display_name || 'Unknown';
                 const isMe = m.user_id === user?.id;
                 const isMemberOwner = m.role === 'owner';
                 return (
-                  <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: radius.sm, background: isMe ? 'rgba(124,58,237,0.06)' : 'transparent' }}>
+                  <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: spacing.md, padding: `${spacing.sm}px ${spacing.md}px`, borderRadius: radius.sm, background: isMe ? 'rgba(124,58,237,0.06)' : 'transparent' }}>
                     <div style={{ width: 30, height: 30, borderRadius: '50%', flexShrink: 0, background: isMe ? colors.accent : (p ? colorFromUserId(p.id) : colors.borderMed), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: fontSize.sm, fontWeight: fontWeight.bold, color: colors.text }}>
                       {name.slice(0, 2).toUpperCase()}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: fontSize.sm, color: colors.text }}>
-                        {name}{isMe && <span style={{ marginLeft: 6, fontSize: fontSize.sm, color: colors.textMuted }}>(you)</span>}
+                        {name}{isMe && <span style={{ marginLeft: spacing.sm, fontSize: fontSize.sm, color: colors.textMuted }}>(you)</span>}
                       </div>
                     </div>
                     {isOwner && !isMe && !isMemberOwner ? (
@@ -344,13 +344,13 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
                         className="panel-input"
                         value={m.role}
                         onChange={e => handleChangeRole(m.id, e.target.value as ShowMemberRole)}
-                        style={{ width: 90, padding: '3px 6px', fontSize: fontSize.sm }}
+                        style={{ width: 90, padding: `${spacing.xs}px ${spacing.sm}px`, fontSize: fontSize.sm }}
                       >
                         <option value="editor">Editor</option>
                         <option value="viewer">Viewer</option>
                       </select>
                     ) : (
-                      <span style={{ fontSize: fontSize.sm, color: roleColor(m.role), border: `1px solid ${roleColor(m.role)}`, borderRadius: radius.xs, padding: '1px 5px', opacity: 0.8 }}>
+                      <span style={{ fontSize: fontSize.sm, color: roleColor(m.role), border: `1px solid ${roleColor(m.role)}`, borderRadius: radius.xs, padding: `1px ${spacing.xs}px`, opacity: 0.8 }}>
                         {m.role}
                       </span>
                     )}

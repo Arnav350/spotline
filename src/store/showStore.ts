@@ -18,6 +18,7 @@ import type {
 } from '../lib/types';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { hungarian } from '../lib/hungarian';
+import { colors } from '../lib/theme';
 import { APP_COLORS } from '../lib/colors';
 
 
@@ -334,7 +335,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
   collaborators: [],
   localUserId: uuidv4(),
   localUserName: 'Anonymous',
-  localUserColor: '#7c3aed',
+  localUserColor: colors.accent,
   currentUserRole: null,
   toasts: [],
   realtimeConnected: true,
@@ -960,7 +961,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       id,
       show_id: state.show.id,
       name: `Prop ${state.props.length + 1}`,
-      color: '#888888',
+      color: colors.textMuted,
       shape: 'square',
       width: 2,
       depth: 2,

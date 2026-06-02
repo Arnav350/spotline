@@ -3,7 +3,7 @@ import {
   FlipHorizontal2, FlipVertical2, RotateCw, RotateCcw, RefreshCw,
 } from 'lucide-react';
 import { useShowStore } from '../../store/showStore';
-import { colors, fontSize, fontWeight, radius } from '../../lib/theme';
+import { colors, fontSize, fontWeight, radius, spacing } from '../../lib/theme';
 
 function ABtn({
   onClick, title, disabled, children,
@@ -44,7 +44,7 @@ function ABtn({
 
 function SectionLabel({ children }: { children: string }) {
   return (
-    <div style={{ fontSize: fontSize.sm, color: colors.textFaint, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+    <div style={{ fontSize: fontSize.sm, color: colors.textFaint, marginBottom: spacing.xs, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
       {children}
     </div>
   );
@@ -62,15 +62,15 @@ export function ArrangeTools() {
   const canArrange = sel >= 2;
   const canTransform = sel >= 1;
 
-  const rowStyle = { display: 'flex', gap: 3, flexWrap: 'wrap' as const };
+  const rowStyle = { display: 'flex', gap: spacing.xs, flexWrap: 'wrap' as const };
 
   return (
     <div style={{
-      padding: '8px 12px 10px',
+      padding: `${spacing.sm}px ${spacing.md}px`,
       borderBottom: `1px solid ${colors.border}`,
       display: 'flex',
       flexDirection: 'column',
-      gap: 8,
+      gap: spacing.sm,
     }}>
 
       {/* Shape presets */}

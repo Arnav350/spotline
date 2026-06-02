@@ -76,7 +76,7 @@ export function TimelineRuler({
               {b / 4 + 1}
             </span>
           )}
-          <div style={{ width: 1, height: isMeasure ? 8 : 4, background: isMeasure ? colors.accent : '#4a2a7a' }} />
+          <div style={{ width: 1, height: isMeasure ? 8 : 4, background: isMeasure ? colors.accent : colors.accentDark }} />
         </div>
       );
     }

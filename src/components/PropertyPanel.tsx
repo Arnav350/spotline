@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Layers, Music, Users, Settings } from 'lucide-react';
 import { useShowStore } from '../store/showStore';
-import { colors, fontSize, fontWeight, radius } from '../lib/theme';
+import { colors, fontSize, fontWeight, radius, spacing } from '../lib/theme';
 import { FormationPanel } from './panels/FormationPanel';
 import { AudioPanel } from './panels/AudioPanel';
 import { CastPanel } from './panels/CastPanel';
@@ -48,8 +48,8 @@ export default function PropertyPanel({ activePanel, onPanelChange }: PropertyPa
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        paddingTop: 8,
-        gap: 8,
+        paddingTop: spacing.sm,
+        gap: spacing.sm,
         background: colors.bgNav,
       }}>
         {NAV_ITEMS.map(item => {
@@ -63,12 +63,12 @@ export default function PropertyPanel({ activePanel, onPanelChange }: PropertyPa
               onMouseLeave={() => setHoveredPanel(null)}
               style={{
                 width: NAV_WIDTH - 16,
-                padding: 8,
+                padding: spacing.sm,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: 4,
-                borderRadius: radius.lg,
+                gap: spacing.xs,
+                borderRadius: radius.md,
                 border: 'none',
                 cursor: 'pointer',
                 background: isActive ? colors.bgCard : isHovered ? colors.bgCard : 'transparent',

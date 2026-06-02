@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Trash2, Shuffle, Copy } from 'lucide-react';
 import { useShowStore } from '../../store/showStore';
 import type { TransitionEasing } from '../../lib/types';
-import { colors, fontSize, fontWeight, radius } from '../../lib/theme';
+import { colors, fontSize, fontWeight, radius, spacing } from '../../lib/theme';
 import { PanelHeader } from '../ui/PanelHeader';
 import { ColorPicker } from '../ui/ColorPicker';
 import { SegmentedControl } from '../ui/SegmentedControl';
@@ -61,12 +61,12 @@ const deleteButtonStyle = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  gap: 6,
+  gap: spacing.sm,
   fontSize: fontSize.md,
   color: colors.danger,
   background: 'transparent',
   border: 'none',
-  padding: '6px 0',
+  padding: `${spacing.sm}px 0`,
   cursor: 'pointer',
   borderRadius: radius.sm,
   width: '100%',
@@ -85,7 +85,7 @@ function PerformerEditor() {
   return (
     <div style={{ borderBottom: `1px solid ${colors.border}` }}>
       <PanelHeader title="Performer" />
-      <div style={{ padding: '10px 12px 12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ padding: spacing.md, display: 'flex', flexDirection: 'column', gap: spacing.md }}>
         <div>
           <label className="panel-label">Name</label>
           <input
@@ -144,7 +144,7 @@ function PropEditor() {
   return (
     <div style={{ borderBottom: `1px solid ${colors.border}` }}>
       <PanelHeader title="Prop" />
-      <div style={{ padding: '10px 12px 12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ padding: spacing.md, display: 'flex', flexDirection: 'column', gap: spacing.md }}>
         <div>
           <label className="panel-label">Name</label>
           <input className="panel-input" value={prop.name} onChange={e => updateProp(prop.id, { name: e.target.value })} />
@@ -159,7 +159,7 @@ function PropEditor() {
             {SHAPES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: spacing.sm }}>
           <div style={{ flex: 1 }}>
             <label className="panel-label">Width</label>
             <NumericInput value={prop.width ?? prop.size ?? 2} min={0.5} step={0.5} onChange={v => updateProp(prop.id, { width: v })} />
@@ -218,7 +218,7 @@ export function FormationPanel({ onClose }: FormationPanelProps) {
       {selectedItem?.type === 'performer' && <PerformerEditor />}
       {selectedItemIds.length > 1 && !selectedItem && (
         <div style={{
-          padding: '10px 12px',
+          padding: `${spacing.md}px ${spacing.md}px`,
           fontSize: fontSize.md,
           color: colors.textMuted,
           borderBottom: `1px solid ${colors.border}`,
@@ -233,7 +233,7 @@ export function FormationPanel({ onClose }: FormationPanelProps) {
       {formation ? (
         <>
           {/* Formation metadata fields */}
-          <div style={{ padding: '10px 12px 12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ padding: spacing.md, display: 'flex', flexDirection: 'column', gap: spacing.md }}>
             <div>
               <label className="panel-label">Name</label>
               <input
@@ -260,7 +260,7 @@ export function FormationPanel({ onClose }: FormationPanelProps) {
                 value={easing}
                 onChange={v => updateFormation(formation.id, { transition_easing: v as TransitionEasing })}
               />
-              <div style={{ fontSize: fontSize.sm, color: colors.textFaint, marginTop: 3, fontWeight: fontWeight.medium }}>
+              <div style={{ fontSize: fontSize.sm, color: colors.textFaint, marginTop: spacing.xs, fontWeight: fontWeight.medium }}>
                 {EASING_OPTIONS.find(o => o.value === easing)?.title}
               </div>
             </div>
@@ -270,19 +270,19 @@ export function FormationPanel({ onClose }: FormationPanelProps) {
           <ArrangeTools />
 
           {/* Action buttons */}
-          <div style={{ padding: '8px 12px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ padding: `${spacing.sm}px ${spacing.md}px ${spacing.md}px`, display: 'flex', flexDirection: 'column', gap: spacing.sm }}>
             {prevFormation && (
               <button
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 6,
+                  gap: spacing.sm,
                   fontSize: fontSize.md,
                   color: colors.textSecondary,
                   background: 'transparent',
                   border: 'none',
-                  padding: '6px 0',
+                  padding: `${spacing.sm}px 0`,
                   cursor: 'pointer',
                   borderRadius: radius.sm,
                   width: '100%',
@@ -306,9 +306,9 @@ export function FormationPanel({ onClose }: FormationPanelProps) {
             <button
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                gap: 6, fontSize: fontSize.md, color: colors.textSecondary,
+                gap: spacing.sm, fontSize: fontSize.md, color: colors.textSecondary,
                 background: 'transparent', border: 'none',
-                padding: '6px 0', cursor: 'pointer', borderRadius: radius.sm, width: '100%',
+                padding: `${spacing.sm}px 0`, cursor: 'pointer', borderRadius: radius.sm, width: '100%',
                 transition: 'color 0.15s, background 0.15s',
               }}
               onMouseEnter={e => { e.currentTarget.style.color = colors.accentLight; e.currentTarget.style.background = colors.bgCard; }}
@@ -330,7 +330,7 @@ export function FormationPanel({ onClose }: FormationPanelProps) {
           </div>
         </>
       ) : (
-        <div style={{ padding: '10px 12px', fontSize: fontSize.md, color: colors.textFaint }}>
+        <div style={{ padding: `${spacing.md}px ${spacing.md}px`, fontSize: fontSize.md, color: colors.textFaint }}>
           No formation selected
         </div>
       )}

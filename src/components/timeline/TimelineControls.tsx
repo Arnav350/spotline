@@ -1,7 +1,6 @@
 import { Plus, Play, Pause, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useShowStore } from '../../store/showStore';
-import { colors, fontSize } from '../../lib/theme';
-import { PURPLE } from './constants';
+import { colors, fontSize, radius, spacing } from '../../lib/theme';
 
 interface TimelineControlsProps {
   isPlaying: boolean;
@@ -49,24 +48,24 @@ export function TimelineControls({
     <div style={{
       display: 'flex',
       alignItems: 'center',
-      padding: '0 10px',
+      padding: `0 ${spacing.md}px`,
       borderBottom: `1px solid ${colors.border}`,
       flexShrink: 0,
       height: 44,
       position: 'relative',
     }}>
       {/* Left: add formation + zoom controls */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, flex: 1 }}>
         {!isViewer && (
           <button
             className="btn-ghost"
-            style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: fontSize.md, color: PURPLE, padding: '3px 6px', flexShrink: 0 }}
+            style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, fontSize: fontSize.md, color: colors.accentLight, padding: `${spacing.xs}px ${spacing.sm}px`, flexShrink: 0 }}
             onClick={addFormation}
           >
             <Plus size={14} /> Add
           </button>
         )}
-        {!isViewer && <div style={{ width: 1, height: 16, background: colors.borderMed, margin: '0 2px', flexShrink: 0 }} />}
+        {!isViewer && <div style={{ width: 1, height: 16, background: colors.borderMed, margin: `0 ${spacing.xxs}px`, flexShrink: 0 }} />}
         <button
           className="btn-icon"
           onClick={() => onZoomChange(Math.min(5, timelineZoom * 1.4))}
@@ -92,7 +91,7 @@ export function TimelineControls({
         transform: 'translateX(-50%)',
         display: 'flex',
         alignItems: 'center',
-        gap: 6,
+        gap: spacing.sm,
       }}>
         <button
           onClick={goToPrev}
@@ -100,7 +99,7 @@ export function TimelineControls({
           style={{
             width: 28,
             height: 28,
-            borderRadius: 6,
+            borderRadius: radius.md,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -124,7 +123,7 @@ export function TimelineControls({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: PURPLE,
+            background: colors.accentLight,
             border: 'none',
             cursor: hasMusic ? 'pointer' : 'default',
             opacity: hasMusic ? 1 : 0.35,
@@ -141,7 +140,7 @@ export function TimelineControls({
           style={{
             width: 28,
             height: 28,
-            borderRadius: 6,
+            borderRadius: radius.md,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -155,7 +154,7 @@ export function TimelineControls({
         </button>
 
         {hasMusic && (
-          <span style={{ fontSize: fontSize.sm, color: colors.textFaint, whiteSpace: 'nowrap', marginLeft: 2 }}>
+          <span style={{ fontSize: fontSize.sm, color: colors.textFaint, whiteSpace: 'nowrap', marginLeft: spacing.xxs }}>
             {formatTime(audioTime)} / {formatTime(audioDuration)}
           </span>
         )}

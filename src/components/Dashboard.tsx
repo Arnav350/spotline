@@ -3,7 +3,7 @@ import { Plus, MoreHorizontal, Trash2, LogOut, Users, Clock, FolderPlus, Folder,
 import { useShowStore } from '../store/showStore';
 import { useAuthStore } from '../store/authStore';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
-import { colors, fontSize, fontWeight, radius } from '../lib/theme';
+import { colors, fontSize, fontWeight, radius, spacing } from '../lib/theme';
 import type { ShowWithRole, ShowFolderWithRole } from '../lib/types';
 import { timeAgo, fetchPreviewItems, fetchShows, fetchFolders, addShowToFolder, duplicateShow, type PreviewItem } from '../lib/dashboardHelpers';
 import InviteModal from './InviteModal';
@@ -56,7 +56,7 @@ function StagePreview({ show, items }: { show: ShowWithRole; items: PreviewItem[
 
   return (
     <svg viewBox={`0 0 ${VW} ${VH}`} style={{ width: '100%', height: '100%', display: 'block' }}>
-      <rect x={stageX} y={stageY} width={stageW} height={stageH} fill="#111118" stroke="rgba(139,92,246,0.35)" strokeWidth={0.75} />
+      <rect x={stageX} y={stageY} width={stageW} height={stageH} fill={colors.bg} stroke={`${colors.accent}59`} strokeWidth={0.75} />
       {gridLines}
       {dots}
       {items.length === 0 && (
@@ -125,22 +125,22 @@ function ProjectCard({ show, folders, onOpen, onDelete, onLeave, onRename, onMov
       }}
       style={{
         background: colors.bgCard, border: `1px solid ${colors.border}`,
-        borderRadius: radius.lg, padding: 20, cursor: 'pointer',
+        borderRadius: radius.md, padding: spacing.xl, cursor: 'pointer',
         transition: 'border-color 0.15s, background 0.15s', position: 'relative',
-        display: 'flex', flexDirection: 'column', gap: 6, userSelect: 'none',
+        display: 'flex', flexDirection: 'column', gap: spacing.sm, userSelect: 'none',
       }}
       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = colors.borderMed; (e.currentTarget as HTMLElement).style.background = colors.bgCardHover; }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = colors.border; (e.currentTarget as HTMLElement).style.background = colors.bgCard; }}
     >
-      <div style={{ width: '100%', aspectRatio: '16/9', background: colors.bg, borderRadius: radius.md, border: `1px solid ${colors.borderSubtle}`, overflow: 'hidden' }}>
+      <div style={{ width: '100%', aspectRatio: '16/9', background: colors.bg, borderRadius: radius.sm, border: `1px solid ${colors.borderSubtle}`, overflow: 'hidden' }}>
         <StagePreview show={show} items={previewItems} />
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
         {renaming ? (
           <input
             ref={inputRef}
-            style={{ flex: 1, background: 'transparent', border: 'none', borderBottom: `1px solid ${colors.accent}`, outline: 'none', fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, padding: '2px 0' }}
+            style={{ flex: 1, background: 'transparent', border: 'none', borderBottom: `1px solid ${colors.accent}`, outline: 'none', fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, padding: `${spacing.xxs}px 0` }}
             value={titleDraft}
             onChange={e => setTitleDraft(e.target.value)}
             onBlur={commitRename}
@@ -152,7 +152,7 @@ function ProjectCard({ show, folders, onOpen, onDelete, onLeave, onRename, onMov
             {show.title || 'Untitled Show'}
           </span>
         )}
-        <span style={{ fontSize: fontSize.sm, color: roleColor, border: `1px solid ${roleColor}`, borderRadius: radius.sm, padding: '1px 5px', flexShrink: 0, opacity: 0.8 }}>
+        <span style={{ fontSize: fontSize.sm, color: roleColor, border: `1px solid ${roleColor}`, borderRadius: radius.sm, padding: `1px ${spacing.xs}px`, flexShrink: 0, opacity: 0.8 }}>
           {show.role}
         </span>
         <div ref={menuRef} style={{ position: 'relative', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
@@ -160,7 +160,7 @@ function ProjectCard({ show, folders, onOpen, onDelete, onLeave, onRename, onMov
             <MoreHorizontal size={14} />
           </button>
           {menuOpen && (
-            <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 4, zIndex: 50, background: colors.bgPanel, border: `1px solid ${colors.borderMed}`, borderRadius: radius.md, overflow: 'hidden', minWidth: 160, boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
+            <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 4, zIndex: 50, background: colors.bgPanel, border: `1px solid ${colors.borderMed}`, borderRadius: radius.sm, overflow: 'hidden', minWidth: 160, boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
               {!movingToFolder ? (
                 <>
                   {isOwner && (
@@ -188,7 +188,7 @@ function ProjectCard({ show, folders, onOpen, onDelete, onLeave, onRename, onMov
                 </>
               ) : (
                 <>
-                  <div style={{ padding: '6px 12px 4px', fontSize: fontSize.sm, color: colors.textFaint, borderBottom: `1px solid ${colors.border}` }}>Move to folder</div>
+                  <div style={{ padding: `${spacing.sm}px ${spacing.md}px ${spacing.xs}px`, fontSize: fontSize.sm, color: colors.textFaint, borderBottom: `1px solid ${colors.border}` }}>Move to folder</div>
                   {show.folder_id && (
                     <button className="menu-item" onClick={() => { onMoveToFolder(null); setMenuOpen(false); }}>
                       Remove from folder
@@ -206,12 +206,12 @@ function ProjectCard({ show, folders, onOpen, onDelete, onLeave, onRename, onMov
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: fontSize.sm, color: colors.textMuted }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: spacing.md, fontSize: fontSize.sm, color: colors.textMuted }}>
         {show.updated_at && (
-          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={11} />{timeAgo(show.updated_at)}</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: spacing.xs }}><Clock size={11} />{timeAgo(show.updated_at)}</span>
         )}
         {(show.member_count ?? 0) > 1 && (
-          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Users size={11} />{show.member_count} members</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: spacing.xs }}><Users size={11} />{show.member_count} members</span>
         )}
       </div>
     </div>
@@ -266,8 +266,8 @@ function SidebarItem({ label, count, icon, active, onClick, onRename, onDelete, 
   return (
     <div
       style={{
-        display: 'flex', alignItems: 'center', gap: 7,
-        padding: '4px 10px', borderRadius: radius.sm, cursor: 'pointer',
+        display: 'flex', alignItems: 'center', gap: spacing.sm,
+        padding: `${spacing.xs}px ${spacing.md}px`, borderRadius: radius.sm, cursor: 'pointer',
         background: active ? `${colors.accent}22` : 'transparent',
         border: `1px solid ${active ? `${colors.accent}55` : 'transparent'}`,
         transition: 'background 0.12s',
@@ -315,7 +315,7 @@ function SidebarItem({ label, count, icon, active, onClick, onRename, onDelete, 
             <MoreHorizontal size={20} />
           </button>
           {menuOpen && (
-            <div ref={menuRef} style={{ position: 'fixed', left: menuPos.x, top: menuPos.y, zIndex: 1000, background: colors.bgPanel, border: `1px solid ${colors.borderMed}`, borderRadius: radius.md, overflow: 'hidden', minWidth: 140, boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
+            <div ref={menuRef} style={{ position: 'fixed', left: menuPos.x, top: menuPos.y, zIndex: 1000, background: colors.bgPanel, border: `1px solid ${colors.borderMed}`, borderRadius: radius.sm, overflow: 'hidden', minWidth: 140, boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
               {isOwner && onRename && <button className="menu-item" onClick={() => { setRenaming(true); setMenuOpen(false); }}>Rename</button>}
               {isOwner && onShare && <button className="menu-item" onClick={() => { onShare(); setMenuOpen(false); }}>Share folder</button>}
               {isOwner && onDelete && <button className="menu-item danger" onClick={() => { onDelete(); setMenuOpen(false); }}>Delete folder</button>}
@@ -478,22 +478,22 @@ export default function Dashboard({ onOpenShow }: DashboardProps) {
       )}
 
       {/* Top bar */}
-      <div style={{ height: 52, padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${colors.border}`, background: colors.bgPanel, flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 24, height: 24, borderRadius: radius.md, background: colors.accent, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ height: 52, padding: `0 ${spacing.xl}px`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${colors.border}`, background: colors.bgPanel, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: spacing.md }}>
+          <div style={{ width: 24, height: 24, borderRadius: radius.sm, background: colors.accent, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ width: 9, height: 9, borderRadius: radius.xs, background: 'rgba(255,255,255,0.9)' }} />
           </div>
           <span style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, letterSpacing: '0.12em', color: colors.text, textTransform: 'uppercase' }}>SPOTLINE</span>
         </div>
         {profile && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: spacing.md }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
               <div style={{ width: 30, height: 30, borderRadius: '50%', background: colors.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: fontSize.sm, fontWeight: fontWeight.bold, color: colors.text }}>
                 {profile.display_name.slice(0, 2).toUpperCase()}
               </div>
               <span style={{ fontSize: fontSize.md, color: colors.textSecondary }}>{profile.display_name}</span>
             </div>
-            <button className="btn-ghost" style={{ fontSize: fontSize.md, padding: '5px 10px' }} onClick={signOut}>Sign out</button>
+            <button className="btn-ghost" style={{ fontSize: fontSize.md, padding: `${spacing.xs}px ${spacing.md}px` }} onClick={signOut}>Sign out</button>
           </div>
         )}
       </div>
@@ -507,7 +507,7 @@ export default function Dashboard({ onOpenShow }: DashboardProps) {
           background: colors.bgPanel, borderRight: `1px solid ${colors.border}`,
           display: 'flex', flexDirection: 'column',
         }}>
-          <div style={{ flex: 1, overflowY: 'auto', padding: '16px 10px 8px' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: `${spacing.lg}px ${spacing.md}px ${spacing.sm}px` }}>
             {/* All Shows */}
             <SidebarItem
               label="All Shows"
@@ -532,11 +532,11 @@ export default function Dashboard({ onOpenShow }: DashboardProps) {
 
             {/* Folders */}
             {folders.length > 0 && (
-              <div style={{ marginTop: 12 }}>
-                <div style={{ fontSize: fontSize.sm, color: colors.textGhost, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 10px', marginBottom: 4 }}>
+              <div style={{ marginTop: spacing.md }}>
+                <div style={{ fontSize: fontSize.sm, color: colors.textGhost, textTransform: 'uppercase', letterSpacing: '0.06em', padding: `0 ${spacing.md}px`, marginBottom: spacing.xs }}>
                   Folders
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xxs }}>
                   {folders.map(folder => (
                     <SidebarItem
                       key={folder.id}
@@ -560,12 +560,12 @@ export default function Dashboard({ onOpenShow }: DashboardProps) {
 
           {/* New folder button */}
           {isSupabaseConfigured() && (
-            <div style={{ padding: '8px 10px', borderTop: `1px solid ${colors.border}` }}>
+            <div style={{ padding: `${spacing.sm}px ${spacing.md}px`, borderTop: `1px solid ${colors.border}` }}>
               <button
                 onClick={handleCreateFolder}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 6, width: '100%',
-                  padding: '7px 10px', fontSize: fontSize.md, color: colors.textMuted,
+                  display: 'flex', alignItems: 'center', gap: spacing.sm, width: '100%',
+                  padding: `${spacing.sm}px ${spacing.md}px`, fontSize: fontSize.md, color: colors.textMuted,
                   background: 'transparent', border: 'none', cursor: 'pointer',
                   borderRadius: radius.sm, transition: 'color 0.12s, background 0.12s',
                   textAlign: 'left',
@@ -584,8 +584,8 @@ export default function Dashboard({ onOpenShow }: DashboardProps) {
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
 
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xxl }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
                 {selectedFolder && (
                   <FolderOpen size={18} style={{ color: colors.accent, flexShrink: 0 }} />
                 )}
@@ -594,11 +594,11 @@ export default function Dashboard({ onOpenShow }: DashboardProps) {
                 </h1>
                 <span style={{ fontSize: fontSize.sm, color: colors.textGhost }}>{visibleShows.length} show{visibleShows.length !== 1 ? 's' : ''}</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
                 {selectedFolder?.role === 'owner' && (
                   <button
                     onClick={() => setShareFolder(selectedFolder)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.text, border: 'none', borderRadius: radius.sm, cursor: 'pointer', background: colors.bgCard, border: `1px solid ${colors.borderMed}`, flexShrink: 0, transition: 'background 0.12s, border-color 0.12s' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, padding: `${spacing.sm}px ${spacing.lg}px`, fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.text, borderRadius: radius.sm, cursor: 'pointer', background: colors.bgCard, border: `1px solid ${colors.borderMed}`, flexShrink: 0, transition: 'background 0.12s, border-color 0.12s' }}
                     onMouseEnter={e => { e.currentTarget.style.background = colors.bgNav; e.currentTarget.style.borderColor = colors.textMuted; }}
                     onMouseLeave={e => { e.currentTarget.style.background = colors.bgCard; e.currentTarget.style.borderColor = colors.borderMed; }}
                   >
@@ -607,7 +607,7 @@ export default function Dashboard({ onOpenShow }: DashboardProps) {
                 )}
                 <button
                   onClick={handleCreate}
-                  style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.text, border: 'none', borderRadius: radius.sm, cursor: 'pointer', background: `linear-gradient(135deg, ${colors.accent}, ${colors.accentDark})`, boxShadow: `0 0 20px rgba(124,58,237,0.2)`, flexShrink: 0, transition: 'opacity 0.12s, box-shadow 0.12s' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, padding: `${spacing.sm}px ${spacing.lg}px`, fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.text, border: 'none', borderRadius: radius.sm, cursor: 'pointer', background: `linear-gradient(135deg, ${colors.accent}, ${colors.accentDark})`, boxShadow: `0 0 20px rgba(124,58,237,0.2)`, flexShrink: 0, transition: 'opacity 0.12s, box-shadow 0.12s' }}
                   onMouseEnter={e => { e.currentTarget.style.opacity = '0.88'; e.currentTarget.style.boxShadow = '0 0 28px rgba(124,58,237,0.38)'; }}
                   onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.boxShadow = '0 0 20px rgba(124,58,237,0.2)'; }}
                   onMouseDown={e => { e.currentTarget.style.opacity = '0.7'; }}
@@ -624,7 +624,7 @@ export default function Dashboard({ onOpenShow }: DashboardProps) {
                 <div style={{ width: 28, height: 28, borderRadius: '50%', border: `3px solid ${colors.border}`, borderTopColor: colors.accent, animation: 'spin 0.8s linear infinite' }} />
               </div>
             ) : visibleShows.length === 0 ? (
-              <div style={{ textAlign: 'center', paddingTop: 80, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+              <div style={{ textAlign: 'center', paddingTop: 80, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: spacing.lg }}>
                 <div style={{ fontSize: 48 }}>
                   {selectedView === 'all' ? '🎭' : selectedView === 'unfiled' ? '📄' : '📁'}
                 </div>
@@ -642,7 +642,7 @@ export default function Dashboard({ onOpenShow }: DashboardProps) {
                 </div>
                 <button
                   onClick={handleCreate}
-                  style={{ marginTop: 8, padding: '10px 24px', fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.text, border: 'none', borderRadius: radius.sm, cursor: 'pointer', background: `linear-gradient(135deg, ${colors.accent}, ${colors.accentDark})`, transition: 'opacity 0.12s, box-shadow 0.12s', boxShadow: '0 0 20px rgba(124,58,237,0.2)' }}
+                  style={{ marginTop: spacing.sm, padding: `${spacing.md}px ${spacing.xl}px`, fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.text, border: 'none', borderRadius: radius.sm, cursor: 'pointer', background: `linear-gradient(135deg, ${colors.accent}, ${colors.accentDark})`, transition: 'opacity 0.12s, box-shadow 0.12s', boxShadow: '0 0 20px rgba(124,58,237,0.2)' }}
                   onMouseEnter={e => { e.currentTarget.style.opacity = '0.88'; e.currentTarget.style.boxShadow = '0 0 28px rgba(124,58,237,0.38)'; }}
                   onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.boxShadow = '0 0 20px rgba(124,58,237,0.2)'; }}
                   onMouseDown={e => { e.currentTarget.style.opacity = '0.7'; }}
@@ -652,7 +652,7 @@ export default function Dashboard({ onOpenShow }: DashboardProps) {
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: spacing.lg }}>
                 {visibleShows.map(show => (
                   <ProjectCard
                     key={show.id}

@@ -1,6 +1,6 @@
 import type { Formation } from '../../lib/types';
-import { colors, fontSize, fontWeight, radius } from '../../lib/theme';
-import { HANDLE_WIDTH, BAR_HEIGHT, TRANS_BAR_HEIGHT, PURPLE, BAR_GAP } from './constants';
+import { colors, fontSize, fontWeight, radius, spacing } from '../../lib/theme';
+import { HANDLE_WIDTH, BAR_HEIGHT, TRANS_BAR_HEIGHT, BAR_GAP } from './constants';
 import { GripVertical } from 'lucide-react';
 import type { CollaboratorState } from '../../store/showStore';
 
@@ -154,8 +154,8 @@ export function FormationBar({
           <div style={{
             width: 1.5,
             height: TRANS_BAR_HEIGHT + 2,
-            background: transWidth > 0 ? PURPLE : '#252525',
-            borderRadius: 1,
+            background: transWidth > 0 ? colors.accentLight : colors.bgCardHover,
+            borderRadius: radius.xs,
           }} />
         </div>
       </div>
@@ -191,10 +191,10 @@ export function FormationBar({
 
         {/* Collaborator presence dots */}
         {presentCollaborators.length > 0 && (
-          <div style={{ position: 'absolute', top: 5, right: 4, display: 'flex', gap: 2, pointerEvents: 'none' }}>
+          <div style={{ position: 'absolute', top: 5, right: spacing.xs, display: 'flex', gap: spacing.xxs, pointerEvents: 'none' }}>
             {presentCollaborators.slice(0, 3).map(c => (
               <div key={c.user_id} title={c.name} style={{
-                width: 8, height: 8, borderRadius: '50%', background: c.color,
+                width: spacing.sm, height: spacing.sm, borderRadius: '50%', background: c.color,
                 boxShadow: `0 0 0 1.5px ${colors.bgCard}`,
               }} />
             ))}
@@ -215,7 +215,7 @@ export function FormationBar({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          borderRadius: '0 3px 3px 0',
+          borderRadius: `0 ${radius.sm}px ${radius.sm}px 0`,
         }}
         onMouseDown={onDurResizeStart ? e => {
           e.preventDefault();
@@ -233,7 +233,7 @@ export function FormationBar({
           width: 1.5,
           height: 12,
           background: isHovered ? colors.textMuted : colors.borderMed,
-          borderRadius: 1,
+          borderRadius: radius.xs,
         }} />
       </div>
     </div>

@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, Volume2, VolumeX, Plus, Music2 } from 'lucide-react';
 import { useShowStore } from '../../store/showStore';
-import { colors, fontSize, radius } from '../../lib/theme';
+import { colors, fontSize, radius, spacing } from '../../lib/theme';
 import { PanelHeader } from '../ui/PanelHeader';
 
 interface AudioPanelProps {
@@ -41,9 +41,9 @@ function SegmentRow({ segmentId, isSelected }: { segmentId: string; isSelected: 
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 6,
-        padding: '5px 8px',
-        borderRadius: radius.md,
+        gap: spacing.sm,
+        padding: `${spacing.xs}px ${spacing.sm}px`,
+        borderRadius: radius.sm,
         background: colors.bgCard,
         border: `1px solid ${isSelected ? seg.color : colors.border}`,
         cursor: 'pointer',
@@ -77,7 +77,7 @@ function SegmentRow({ segmentId, isSelected }: { segmentId: string; isSelected: 
               borderRadius: radius.xs,
               color: colors.text,
               fontSize: fontSize.md,
-              padding: '0 2px',
+              padding: `0 ${spacing.xxs}px`,
               fontFamily: 'inherit',
             }}
           />
@@ -153,14 +153,14 @@ export function AudioPanel({ onClose }: AudioPanelProps) {
   return (
     <div>
       <PanelHeader title="Audio" onClose={onClose} />
-      <div style={{ padding: '10px 12px 12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ padding: spacing.md, display: 'flex', flexDirection: 'column', gap: spacing.md }}>
         <input ref={fileInputRef} type="file" accept="audio/*" style={{ display: 'none' }} onChange={handleFileChange} />
 
         {show?.music_url ? (
           <>
             <div style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              background: colors.bgCard, borderRadius: radius.md, padding: '6px 8px',
+              display: 'flex', alignItems: 'center', gap: spacing.sm,
+              background: colors.bgCard, borderRadius: radius.sm, padding: spacing.sm,
             }}>
               <Music2 size={12} style={{ color: colors.textFaint, flexShrink: 0 }} />
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -180,8 +180,8 @@ export function AudioPanel({ onClose }: AudioPanelProps) {
 
             <div>
               <label className="panel-label">Volume</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <button className="btn-icon" style={{ flexShrink: 0, padding: 4 }} onClick={() => setAudioMuted(!audioMuted)}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
+                <button className="btn-icon" style={{ flexShrink: 0, padding: spacing.xs }} onClick={() => setAudioMuted(!audioMuted)}>
                   {audioMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
                 </button>
                 <div style={{ flex: 1, position: 'relative', height: 20, display: 'flex', alignItems: 'center' }}>
@@ -198,10 +198,10 @@ export function AudioPanel({ onClose }: AudioPanelProps) {
             </div>
           </>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm }}>
             <button
               className="btn-ghost"
-              style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: fontSize.md, border: `1px solid ${colors.bgCardHover}`, width: '100%', justifyContent: 'center' }}
+              style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, fontSize: fontSize.md, border: `1px solid ${colors.bgCardHover}`, width: '100%', justifyContent: 'center' }}
               onClick={() => fileInputRef.current?.click()}
               disabled={loadingMusic}
             >
@@ -218,7 +218,7 @@ export function AudioPanel({ onClose }: AudioPanelProps) {
               </div>
             )}
             {uploadError && (
-              <div style={{ fontSize: fontSize.sm, color: colors.danger, padding: '2px 0' }}>
+              <div style={{ fontSize: fontSize.sm, color: colors.danger, padding: `${spacing.xxs}px 0` }}>
                 {uploadError}
               </div>
             )}
@@ -228,15 +228,15 @@ export function AudioPanel({ onClose }: AudioPanelProps) {
 
       {/* Segments section */}
       <div style={{ borderTop: `1px solid ${colors.border}` }}>
-        <div style={{ padding: '8px 12px 6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ padding: `${spacing.sm}px ${spacing.md}px ${spacing.sm}px`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: fontSize.sm, color: colors.textFaint, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Segments
           </span>
           <button
             style={{
-              display: 'flex', alignItems: 'center', gap: 3,
+              display: 'flex', alignItems: 'center', gap: spacing.xs,
               fontSize: fontSize.md, color: colors.accentLight,
-              background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0',
+              background: 'none', border: 'none', cursor: 'pointer', padding: `${spacing.xxs}px 0`,
             }}
             onMouseEnter={e => (e.currentTarget.style.color = colors.text)}
             onMouseLeave={e => (e.currentTarget.style.color = colors.accentLight)}
@@ -246,7 +246,7 @@ export function AudioPanel({ onClose }: AudioPanelProps) {
           </button>
         </div>
 
-        <div style={{ padding: '0 12px 12px', display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px`, display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
           {sortedSegments.length === 0 ? (
             <div style={{ fontSize: fontSize.md, color: colors.textGhost, paddingTop: 2 }}>No segments yet</div>
           ) : (

@@ -1,4 +1,4 @@
-import { colors, fontSize, radius } from '../../lib/theme';
+import { colors, fontSize, radius, spacing } from '../../lib/theme';
 
 interface Option {
   value: string;
@@ -14,7 +14,7 @@ interface SegmentedControlProps {
 
 export function SegmentedControl({ options, value, onChange }: SegmentedControlProps) {
   return (
-    <div style={{ display: 'flex', gap: 2 }}>
+    <div style={{ display: 'flex', gap: spacing.xxs }}>
       {options.map(opt => {
         const active = value === opt.value;
         return (
@@ -24,7 +24,7 @@ export function SegmentedControl({ options, value, onChange }: SegmentedControlP
             onClick={() => onChange(opt.value)}
             style={{
               flex: 1,
-              padding: '4px 0',
+              padding: `${spacing.xs}px 0`,
               fontSize: fontSize.md,
               fontFamily: 'monospace',
               background: active ? colors.accent : colors.bgCard,

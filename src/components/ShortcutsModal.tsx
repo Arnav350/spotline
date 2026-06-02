@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { X } from 'lucide-react';
-import { colors, fontSize, fontWeight, radius } from '../lib/theme';
+import { colors, fontSize, fontWeight, radius, spacing } from '../lib/theme';
 
 const SHORTCUTS = [
   { group: 'General', items: [
@@ -45,27 +45,27 @@ export default function ShortcutsModal({ onClose }: { onClose: () => void }) {
       onClick={onClose}
     >
       <div
-        style={{ background: colors.bg, border: `1px solid ${colors.borderMed}`, borderRadius: radius.xl, padding: '24px 28px', width: 460, maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}
+        style={{ background: colors.bg, border: `1px solid ${colors.borderMed}`, borderRadius: radius.lg, padding: `${spacing.xl}px ${spacing.xxl}px`, width: 460, maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}
         onClick={e => e.stopPropagation()}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xl }}>
           <span style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text, letterSpacing: '0.05em' }}>Keyboard Shortcuts</span>
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: colors.textFaint, display: 'flex', alignItems: 'center' }}>
             <X size={16} />
           </button>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xl }}>
           {SHORTCUTS.map(group => (
             <div key={group.group}>
-              <div style={{ fontSize: fontSize.sm, fontWeight: fontWeight.bold, color: colors.textFaint, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>{group.group}</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div style={{ fontSize: fontSize.sm, fontWeight: fontWeight.bold, color: colors.textFaint, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: spacing.sm }}>{group.group}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
                 {group.items.map(item => (
-                  <div key={item.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0' }}>
+                  <div key={item.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: `${spacing.xs}px 0` }}>
                     <span style={{ fontSize: fontSize.md, color: colors.textMuted }}>{item.label}</span>
-                    <div style={{ display: 'flex', gap: 4 }}>
+                    <div style={{ display: 'flex', gap: spacing.xs }}>
                       {item.keys.map((k, i) => (
-                        <kbd key={i} style={{ background: colors.bgCardHover, border: `1px solid ${colors.textGhost}`, borderRadius: radius.md, padding: '2px 7px', fontSize: fontSize.sm, color: colors.textSecondary, fontFamily: 'inherit', whiteSpace: 'nowrap' }}>{k}</kbd>
+                        <kbd key={i} style={{ background: colors.bgCardHover, border: `1px solid ${colors.textGhost}`, borderRadius: radius.sm, padding: `${spacing.xxs}px ${spacing.sm}px`, fontSize: fontSize.sm, color: colors.textSecondary, fontFamily: 'inherit', whiteSpace: 'nowrap' }}>{k}</kbd>
                       ))}
                     </div>
                   </div>

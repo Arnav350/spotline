@@ -1,12 +1,12 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { useShowStore } from '../store/showStore';
-import { colors, fontSize, radius } from '../lib/theme';
+import { colors, fontSize, radius, spacing } from '../lib/theme';
 import { TimelineControls } from './timeline/TimelineControls';
 import { TimelineRuler } from './timeline/TimelineRuler';
 import { FormationBar } from './timeline/FormationBar';
 import {
   BASE_PPS, BAR_HEIGHT, RULER_HEIGHT, BEAT_ROW_HEIGHT,
-  LEFT_PADDING, SEGMENT_ROW_HEIGHT, PURPLE,
+  LEFT_PADDING, SEGMENT_ROW_HEIGHT,
 } from './timeline/constants';
 import { AudioSegmentBar } from './timeline/AudioSegmentBar';
 import { usePlayback } from '../hooks/usePlayback';
@@ -223,16 +223,16 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
               top: 0,
               width: 1,
               height: effectiveRulerHeight + 5 + BAR_HEIGHT,
-              background: `${PURPLE}99`,
+              background: `${colors.accentLight}99`,
               pointerEvents: 'none',
               zIndex: 10,
             }}>
               <div style={{
                 width: 7, height: 7,
-                background: PURPLE,
+                background: colors.accentLight,
                 borderRadius: '50%',
                 marginLeft: -3, marginTop: -1,
-                boxShadow: `0 0 6px ${PURPLE}`,
+                boxShadow: `0 0 6px ${colors.accentLight}`,
               }} />
             </div>
           )}
@@ -322,10 +322,10 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
                   position: 'absolute',
                   left: x - 1, top: 0,
                   width: 2, height: BAR_HEIGHT,
-                  background: PURPLE,
+                  background: colors.accentLight,
                   zIndex: 20,
-                  borderRadius: 1,
-                  boxShadow: `0 0 6px ${PURPLE}`,
+                  borderRadius: radius.xs,
+                  boxShadow: `0 0 6px ${colors.accentLight}`,
                 }} />
               );
             })()}
@@ -415,10 +415,10 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
               zIndex: 1000,
               background: colors.bgCard,
               border: `1px solid ${colors.borderMed}`,
-              borderRadius: radius.md,
+              borderRadius: radius.sm,
               boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
               minWidth: MENU_WIDTH,
-              padding: '4px 0',
+              padding: `${spacing.xs}px 0`,
             }}
           >
             {menuItems.map(item => (
@@ -432,14 +432,14 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
                   justifyContent: 'space-between',
                   width: '100%',
                   textAlign: 'left',
-                  padding: '7px 14px',
+                  padding: `${spacing.sm}px ${spacing.lg}px`,
                   background: 'none',
                   border: 'none',
                   fontSize: fontSize.sm,
                   color: item.disabled ? colors.textGhost : item.danger ? colors.dangerLight : colors.textSecondary,
                   cursor: item.disabled ? 'default' : 'pointer',
                   transition: 'background 0.1s, color 0.1s',
-                  gap: 16,
+                  gap: spacing.lg,
                 }}
                 onMouseEnter={e => { if (!item.disabled) { e.currentTarget.style.background = colors.bgCardHover; if (!item.danger) e.currentTarget.style.color = colors.text; } }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = item.disabled ? colors.textGhost : item.danger ? colors.dangerLight : colors.textSecondary; }}

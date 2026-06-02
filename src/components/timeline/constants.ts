@@ -12,4 +12,3 @@ export const SEGMENT_ROW_HEIGHT = 36;
 export const TOPBAR_HEIGHT = 48;
 export const TIMELINE_HEIGHT = 184;
 
-export const PURPLE = '#8b5cf6';

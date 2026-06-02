@@ -3,7 +3,7 @@ import { Undo2, Redo2, Monitor, Box, Keyboard, ChevronLeft, UserPlus, LogOut, Pe
 import { useShowStore } from '../store/showStore';
 import { useAuthStore } from '../store/authStore';
 import { isSupabaseConfigured } from '../lib/supabase';
-import { colors, fontSize, fontWeight, radius } from '../lib/theme';
+import { colors, fontSize, fontWeight, radius, spacing } from '../lib/theme';
 import InviteModal from './InviteModal';
 import { colorFromUserId } from '../lib/colors';
 
@@ -35,11 +35,11 @@ function OnlineIndicator({ others, selfName, selfColor }: {
       <button
         onClick={() => setOpen(v => !v)}
         style={{
-          display: 'flex', alignItems: 'center', gap: 6,
+          display: 'flex', alignItems: 'center', gap: spacing.sm,
           background: open ? colors.bgCard : 'transparent',
           border: `1px solid ${open ? colors.borderMed : 'transparent'}`,
           borderRadius: radius.sm, cursor: 'pointer',
-          padding: '4px 8px', transition: 'all 0.15s',
+          padding: `${spacing.xs}px ${spacing.sm}px`, transition: 'all 0.15s',
           fontSize: fontSize.sm, color: colors.textSecondary,
         }}
         onMouseEnter={e => { if (!open) { const el = e.currentTarget as HTMLElement; el.style.background = colors.bgCard; el.style.borderColor = colors.borderSubtle; } }}
@@ -58,7 +58,7 @@ function OnlineIndicator({ others, selfName, selfColor }: {
         {others.slice(0, 3).map((c, i) => (
           <div key={c.user_id} style={{
             width: 20, height: 20, borderRadius: '50%', background: c.color,
-            border: `2px solid ${colors.bgPanel}`, marginLeft: i === 0 ? 2 : -6,
+            border: `2px solid ${colors.bgPanel}`, marginLeft: i === 0 ? spacing.xxs : -6,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: fontSize.xs, fontWeight: fontWeight.bold, color: 'white', flexShrink: 0,
           }}>
@@ -66,22 +66,22 @@ function OnlineIndicator({ others, selfName, selfColor }: {
           </div>
         ))}
         {others.length > 3 && (
-          <span style={{ fontSize: fontSize.sm, color: colors.textFaint, marginLeft: 2 }}>+{others.length - 3}</span>
+          <span style={{ fontSize: fontSize.sm, color: colors.textFaint, marginLeft: spacing.xxs }}>+{others.length - 3}</span>
         )}
       </button>
 
       {open && (
         <div style={{
-          position: 'absolute', right: 0, top: '100%', marginTop: 4, zIndex: 100,
+          position: 'absolute', right: 0, top: '100%', marginTop: spacing.xs, zIndex: 100,
           background: colors.bgPanel, border: `1px solid ${colors.borderMed}`,
-          borderRadius: radius.md, overflow: 'hidden', minWidth: 180,
+          borderRadius: radius.sm, overflow: 'hidden', minWidth: 180,
           boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
         }}>
-          <div style={{ padding: '8px 12px 6px', borderBottom: `1px solid ${colors.border}`, fontSize: fontSize.sm, color: colors.textFaint, fontWeight: fontWeight.medium, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div style={{ padding: `${spacing.sm}px ${spacing.md}px`, borderBottom: `1px solid ${colors.border}`, fontSize: fontSize.sm, color: colors.textFaint, fontWeight: fontWeight.medium, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             {total} online
           </div>
           {allUsers.map(u => (
-            <div key={u.user_id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px' }}>
+            <div key={u.user_id} style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, padding: `${spacing.sm}px ${spacing.md}px` }}>
               <div style={{
                 width: 26, height: 26, borderRadius: '50%', background: u.color, flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -122,11 +122,11 @@ function UserMenu({ onSignOut, onShowShortcuts }: { onSignOut: () => void; onSho
       <button
         onClick={() => setOpen(v => !v)}
         style={{
-          display: 'flex', alignItems: 'center', gap: 7,
+          display: 'flex', alignItems: 'center', gap: spacing.sm,
           background: open ? colors.bgCard : 'transparent',
           border: `1px solid ${open ? colors.borderMed : 'transparent'}`,
           borderRadius: radius.sm, cursor: 'pointer',
-          padding: '4px 8px 4px 4px', transition: 'all 0.15s',
+          padding: `${spacing.xs}px ${spacing.sm}px ${spacing.xs}px ${spacing.xs}px`, transition: 'all 0.15s',
         }}
         onMouseEnter={e => { if (!open) { const el = e.currentTarget as HTMLElement; el.style.background = colors.bgCard; el.style.borderColor = colors.borderSubtle; } }}
         onMouseLeave={e => { if (!open) { const el = e.currentTarget as HTMLElement; el.style.background = 'transparent'; el.style.borderColor = 'transparent'; } }}
@@ -145,20 +145,20 @@ function UserMenu({ onSignOut, onShowShortcuts }: { onSignOut: () => void; onSho
 
       {open && (
         <div style={{
-          position: 'absolute', right: 0, top: '100%', marginTop: 4, zIndex: 100,
+          position: 'absolute', right: 0, top: '100%', marginTop: spacing.xs, zIndex: 100,
           background: colors.bgPanel, border: `1px solid ${colors.borderMed}`,
-          borderRadius: radius.md, overflow: 'hidden', minWidth: 160,
+          borderRadius: radius.sm, overflow: 'hidden', minWidth: 160,
           boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
         }}>
-          <div style={{ padding: '10px 12px 8px', borderBottom: `1px solid ${colors.border}` }}>
+          <div style={{ padding: `${spacing.md}px ${spacing.md}px ${spacing.sm}px`, borderBottom: `1px solid ${colors.border}` }}>
             <div style={{ fontSize: fontSize.sm, color: colors.text, fontWeight: fontWeight.medium }}>{profile.display_name}</div>
           </div>
           {onShowShortcuts && (
             <button
               onClick={() => { onShowShortcuts(); setOpen(false); }}
               style={{
-                display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-                padding: '9px 12px', background: 'none', border: 'none', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: spacing.sm, width: '100%',
+                padding: `${spacing.sm}px ${spacing.md}px`, background: 'none', border: 'none', cursor: 'pointer',
                 fontSize: fontSize.sm, color: colors.textSecondary, textAlign: 'left',
               }}
               onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = colors.text; el.style.background = colors.bgCard; }}
@@ -170,8 +170,8 @@ function UserMenu({ onSignOut, onShowShortcuts }: { onSignOut: () => void; onSho
           <button
             onClick={() => { onSignOut(); setOpen(false); }}
             style={{
-              display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-              padding: '9px 12px', background: 'none', border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: spacing.sm, width: '100%',
+              padding: `${spacing.sm}px ${spacing.md}px`, background: 'none', border: 'none', cursor: 'pointer',
               fontSize: fontSize.sm, color: colors.textSecondary, textAlign: 'left',
             }}
             onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = colors.text; el.style.background = colors.bgCard; }}
@@ -241,8 +241,8 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
       )}
 
       <div style={{
-        display: 'flex', alignItems: 'center', height: 48, padding: isPublicView ? '0 12px 0 20px' : '0 12px',
-        gap: 8, flexShrink: 0, background: colors.bgPanel,
+        display: 'flex', alignItems: 'center', height: 48, padding: isPublicView ? `0 ${spacing.md}px 0 ${spacing.xl}px` : `0 ${spacing.md}px`,
+        gap: spacing.sm, flexShrink: 0, background: colors.bgPanel,
         borderBottom: `1px solid ${colors.bgCardHover}`,
       }}>
         {/* Back to dashboard — hidden for public viewers */}
@@ -252,7 +252,7 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
               className="btn-icon"
               onClick={handleNavHome}
               title="Back to dashboard (⌘Click to open in new tab)"
-              style={{ gap: 4, display: 'flex', alignItems: 'center' }}
+              style={{ gap: spacing.xs, display: 'flex', alignItems: 'center' }}
             >
               <ChevronLeft size={16} />
             </button>
@@ -261,14 +261,14 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
         )}
 
         {/* Logo + title */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, flexShrink: 0 }}>
           <div
             onClick={handleNavHome}
             title={onBackToDashboard ? 'Go home (⌘Click to open in new tab)' : undefined}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: onBackToDashboard ? 'pointer' : undefined }}
+            style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, cursor: onBackToDashboard ? 'pointer' : undefined }}
           >
             <div style={{
-              width: 20, height: 20, borderRadius: radius.md,
+              width: 20, height: 20, borderRadius: radius.sm,
               background: colors.accent,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
@@ -290,7 +290,7 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
             />
           ) : (
             <button
-              style={{ fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.textSecondary, background: 'transparent', border: 'none', cursor: isViewer ? 'default' : 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}
+              style={{ fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.textSecondary, background: 'transparent', border: 'none', cursor: isViewer ? 'default' : 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: spacing.xs }}
               onMouseEnter={e => { if (!isViewer) { e.currentTarget.style.color = colors.text; (e.currentTarget.querySelector('.title-pencil') as HTMLElement | null)?.style.setProperty('opacity', '1'); } }}
               onMouseLeave={e => { e.currentTarget.style.color = colors.textSecondary; (e.currentTarget.querySelector('.title-pencil') as HTMLElement | null)?.style.setProperty('opacity', '0'); }}
               onClick={isViewer ? undefined : handleTitleClick}
@@ -303,7 +303,7 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
             <span style={{
               fontSize: fontSize.sm, color: colors.textFaint,
               background: colors.bgCard, border: `1px solid ${colors.borderMed}`,
-              borderRadius: radius.sm, padding: '2px 6px', marginLeft: 4,
+              borderRadius: radius.sm, padding: `${spacing.xxs}px ${spacing.sm}px`, marginLeft: spacing.xs,
             }}>
               {isPublicView ? 'Public view' : 'View only'}
             </span>
@@ -313,8 +313,8 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
         {/* Undo / redo */}
         {!isViewer && (
           <>
-            <div style={{ width: 1, height: 16, background: colors.borderSubtle, marginLeft: 4 }} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <div style={{ width: 1, height: 16, background: colors.borderSubtle, marginLeft: spacing.xs }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xxs }}>
               <button className="btn-icon" onClick={undo} disabled={!canUndo} title="Undo (⌘Z)"><Undo2 size={17} /></button>
               <button className="btn-icon" onClick={redo} disabled={!canRedo} title="Redo (⌘⇧Z)"><Redo2 size={17} /></button>
             </div>
@@ -323,7 +323,7 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
 
         {/* Saving indicator */}
         {isSaving && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: fontSize.sm, color: colors.textFaint }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, fontSize: fontSize.sm, color: colors.textFaint }}>
             <div style={{ width: 4, height: 4, borderRadius: '50%', background: colors.accent, animation: 'pulse 1.5s infinite' }} />
             Saving…
           </div>
@@ -332,13 +332,13 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
         <div style={{ flex: 1 }} />
 
         {/* 2D / 3D toggle */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: colors.bgPanel, border: `1px solid ${colors.borderSubtle}`, borderRadius: radius.sm, padding: 2 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xxs, background: colors.bgPanel, border: `1px solid ${colors.borderSubtle}`, borderRadius: radius.sm, padding: spacing.xxs }}>
           {(['2d', '3d'] as const).map(mode => (
             <button
               key={mode}
               style={{
-                display: 'flex', alignItems: 'center', gap: 5,
-                fontSize: fontSize.md, padding: '4px 10px',
+                display: 'flex', alignItems: 'center', gap: spacing.xs,
+                fontSize: fontSize.md, padding: `${spacing.xs}px ${spacing.md}px`,
                 borderRadius: radius.xs, border: 'none', cursor: 'pointer',
                 background: viewMode === mode ? colors.accent : 'transparent',
                 color: viewMode === mode ? colors.text : colors.textFaint,
@@ -367,7 +367,7 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
         {isSupabaseConfigured() && show && !isViewer && !isPublicView && (
           <button
             className="btn-ghost"
-            style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: fontSize.sm }}
+            style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, fontSize: fontSize.sm }}
             onClick={() => setShowInvite(true)}
           >
             <UserPlus size={13} />

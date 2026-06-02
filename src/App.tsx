@@ -209,7 +209,7 @@ export default function App() {
       {!realtimeConnected && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000,
-          background: '#b45309', color: 'white',
+          background: colors.danger, color: 'white',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           gap: 8, padding: '6px 16px', fontSize: fontSize.sm, fontWeight: fontWeight.medium,
         }}>
@@ -225,7 +225,7 @@ export default function App() {
             key={toast.id}
             style={{
               background: colors.bgCard, border: `1px solid ${colors.borderMed}`,
-              borderRadius: radius.lg, padding: '8px 14px',
+              borderRadius: radius.md, padding: '8px 14px',
               fontSize: fontSize.sm, color: colors.text,
               boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
               display: 'flex', alignItems: 'center', gap: 8,

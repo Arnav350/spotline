@@ -4,7 +4,7 @@ import { useShowStore } from '../store/showStore';
 import { useShallow } from 'zustand/shallow';
 import Konva from 'konva';
 import { Magnet, RotateCw } from 'lucide-react';
-import { colors, fontSize, fontWeight, radius } from '../lib/theme';
+import { colors, fontSize, fontWeight, radius, spacing } from '../lib/theme';
 import {
   CANVAS_PADDING, PERFORMER_RADIUS,
   interpolatePosition, worldToCanvas, canvasToWorld, snapWorld, drawShape, applyEasing,
@@ -760,24 +760,24 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
       </Stage>
 
       {/* Zoom controls */}
-      <div style={{ position: 'absolute', bottom: 14, right: 14, display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <div style={{ position: 'absolute', bottom: 14, right: 14, display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
         <button
           onClick={() => zoomToCenter(1.25)}
-          style={{ width: 26, height: 26, background: colors.bgCard, border: `1px solid ${colors.borderMed}`, borderRadius: radius.md, color: colors.textSecondary, fontSize: fontSize.lg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
+          style={{ width: 26, height: 26, background: colors.bgCard, border: `1px solid ${colors.borderMed}`, borderRadius: radius.sm, color: colors.textSecondary, fontSize: fontSize.lg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
         >+</button>
         <button
           onClick={() => zoomToCenter(1 / 1.25)}
-          style={{ width: 26, height: 26, background: colors.bgCard, border: `1px solid ${colors.borderMed}`, borderRadius: radius.md, color: colors.textSecondary, fontSize: fontSize.lg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
+          style={{ width: 26, height: 26, background: colors.bgCard, border: `1px solid ${colors.borderMed}`, borderRadius: radius.sm, color: colors.textSecondary, fontSize: fontSize.lg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
         >−</button>
         <button
           onClick={() => { zoomRef.current = 1; panRef.current = { x: 0, y: 0 }; const stage = stageRef.current; if (stage) { stage.scale({ x: 1, y: 1 }); stage.position({ x: 0, y: 0 }); stage.batchDraw(); } }}
-          style={{ width: 26, height: 26, background: colors.bgCard, border: `1px solid ${colors.borderMed}`, borderRadius: radius.md, color: colors.textFaint, fontSize: fontSize.xs, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', letterSpacing: '0.05em' }}
+          style={{ width: 26, height: 26, background: colors.bgCard, border: `1px solid ${colors.borderMed}`, borderRadius: radius.sm, color: colors.textFaint, fontSize: fontSize.xs, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', letterSpacing: '0.05em' }}
         >FIT</button>
         {!isViewer && (
           <button
             onClick={() => updateStageConfig({ snapToGrid: !stageConfig.snapToGrid })}
             title={stageConfig.snapToGrid ? 'Snap to grid: ON' : 'Snap to grid: OFF'}
-            style={{ width: 26, height: 26, background: stageConfig.snapToGrid ? colors.accent : colors.bgCard, border: `1px solid ${stageConfig.snapToGrid ? colors.accent : colors.borderMed}`, borderRadius: radius.md, color: stageConfig.snapToGrid ? colors.text : colors.textFaint, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ width: 26, height: 26, background: stageConfig.snapToGrid ? colors.accent : colors.bgCard, border: `1px solid ${stageConfig.snapToGrid ? colors.accent : colors.borderMed}`, borderRadius: radius.sm, color: stageConfig.snapToGrid ? colors.text : colors.textFaint, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             <Magnet size={13} />
           </button>
@@ -786,7 +786,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
 
       {/* Zoom level indicator — reads from ref, uiTick keeps it current */}
       {Math.abs(zoomRef.current - 1) > 0.05 && (
-        <div style={{ position: 'absolute', bottom: 14, left: 14, fontSize: fontSize.xs, color: colors.textFaint, background: colors.bgPanel, padding: '3px 6px', borderRadius: radius.sm, border: `1px solid ${colors.bgCardHover}` }}>
+        <div style={{ position: 'absolute', bottom: 14, left: 14, fontSize: fontSize.xs, color: colors.textFaint, background: colors.bgPanel, padding: `${spacing.xs}px ${spacing.sm}px`, borderRadius: radius.sm, border: `1px solid ${colors.bgCardHover}` }}>
           {Math.round(zoomRef.current * 100)}%
         </div>
       )}
@@ -804,15 +804,15 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
             top: Math.max(4, screenTop - 90),
             background: `${colors.bgPanel}f0`,
             border: `1px solid ${colors.borderMed}`,
-            borderRadius: radius.md,
-            padding: '10px 14px',
+            borderRadius: radius.sm,
+            padding: `${spacing.md}px ${spacing.lg}px`,
             pointerEvents: 'none',
             backdropFilter: 'blur(8px)',
           }}>
             <div style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text, letterSpacing: '0.02em', lineHeight: 1.2 }}>
               {stageConfig.width} × {stageConfig.height} <span style={{ fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.textSecondary }}>{stageConfig.unit}</span>
             </div>
-            <div style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: 5, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <div style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.xs, display: 'flex', flexDirection: 'column', gap: spacing.xxs }}>
               <span>
                 1 div&nbsp;=&nbsp;
                 <span style={{ color: colors.textSecondary }}>
@@ -829,7 +829,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
 
       {/* Multi-select indicator */}
       {selectedItemIds.length > 1 && (
-        <div style={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', fontSize: fontSize.sm, color: colors.textSecondary, background: `${colors.bgPanel}d9`, padding: '3px 10px', borderRadius: radius.pill, border: `1px solid ${colors.borderMed}`, pointerEvents: 'none' }}>
+        <div style={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', fontSize: fontSize.sm, color: colors.textSecondary, background: `${colors.bgPanel}d9`, padding: `${spacing.xs}px ${spacing.md}px`, borderRadius: radius.pill, border: `1px solid ${colors.borderMed}`, pointerEvents: 'none' }}>
           {selectedItemIds.length} selected
         </div>
       )}

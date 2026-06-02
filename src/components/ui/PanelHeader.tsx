@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { colors, fontSize, fontWeight, radius } from '../../lib/theme';
+import { colors, fontSize, fontWeight, radius, spacing } from '../../lib/theme';
 
 interface PanelHeaderProps {
   title: string;
@@ -9,7 +9,7 @@ interface PanelHeaderProps {
 export function PanelHeader({ title, onClose }: PanelHeaderProps) {
   return (
     <div style={{
-      padding: '10px 12px 8px',
+      padding: `${spacing.md}px ${spacing.md}px ${spacing.sm}px`,
       borderBottom: `1px solid ${colors.border}`,
       display: 'flex',
       alignItems: 'center',
@@ -35,7 +35,7 @@ export function PanelHeader({ title, onClose }: PanelHeaderProps) {
             color: colors.textGhost,
             display: 'flex',
             alignItems: 'center',
-            padding: 2,
+            padding: spacing.xxs,
             borderRadius: radius.sm,
             transition: 'color 0.15s',
           }}
