@@ -28,7 +28,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
     activeFormationId,
     selectedItemIds, setSelectedItemIds, toggleItemSelected,
     movePerformer, moveProp, pushHistory,
-    setPerformerPath, clearPerformerPath, updateStageConfig,
+    setPerformerPath, clearPerformerPath, updateStageConfig, currentUserRole,
   } = useShowStore(useShallow(state => ({
     show: state.show,
     formations: state.formations,
@@ -47,7 +47,10 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
     setPerformerPath: state.setPerformerPath,
     clearPerformerPath: state.clearPerformerPath,
     updateStageConfig: state.updateStageConfig,
+    currentUserRole: state.currentUserRole,
   })));
+
+  const isViewer = currentUserRole === 'viewer';
 
   const activeFormation = formations.find(f => f.id === activeFormationId);
 
@@ -345,7 +348,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
   const { ghostLines, pathHandles } = useMemo(() => {
     const ghostLines: React.ReactNode[] = [];
     const pathHandles: React.ReactNode[] = [];
-    if (useShowStore.getState().isAnimating || !prevFormId || selectedItemIds.length === 0) {
+    if (useShowStore.getState().isAnimating || !prevFormId || selectedItemIds.length === 0 || isViewer) {
       return { ghostLines, pathHandles };
     }
     selectedItemIds.forEach(pid => {
@@ -467,8 +470,8 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
         style={{ cursor: isPanningRef.current ? 'grabbing' : selectionRect ? 'crosshair' : 'default' }}
         onMouseDown={(e) => {
           if (e.evt.button !== 0) return;
-          // Fix 3: Removed stage-bg check — empty stage space satisfies e.target === Stage
           if (e.target !== e.target.getStage()) return;
+          if (isViewer) return;
           selectionAdditive.current = e.evt.metaKey || e.evt.ctrlKey;
           const pos = stageRef.current!.getRelativePointerPosition()!;
           selectionStartRef.current = pos;
@@ -600,7 +603,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
 
             return drawShape(prop, x, y, Math.max(8, propW), isSelected, isDragging,
               onPropDragStart, onPropDragEnd, onPropClick,
-              `prop-${prop.id}`, true, undefined, onPropDragMove, Math.max(8, propD),
+              `prop-${prop.id}`, true, undefined, onPropDragMove, Math.max(8, propD), isViewer,
             );
           })}
 
@@ -738,7 +741,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
 
             return drawShape(performer, x, y, performerSize, isSelected, isDragging,
               onPerformerDragStart, onPerformerDragEnd, onPerformerClick,
-              `performer-${performer.id}`, true, undefined, onPerformerDragMove,
+              `performer-${performer.id}`, true, undefined, onPerformerDragMove, undefined, isViewer,
             );
           })}
 
@@ -770,13 +773,15 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
           onClick={() => { zoomRef.current = 1; panRef.current = { x: 0, y: 0 }; const stage = stageRef.current; if (stage) { stage.scale({ x: 1, y: 1 }); stage.position({ x: 0, y: 0 }); stage.batchDraw(); } }}
           style={{ width: 26, height: 26, background: colors.bgCard, border: `1px solid ${colors.borderMed}`, borderRadius: radius.md, color: colors.textFaint, fontSize: fontSize.xs, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', letterSpacing: '0.05em' }}
         >FIT</button>
-        <button
-          onClick={() => updateStageConfig({ snapToGrid: !stageConfig.snapToGrid })}
-          title={stageConfig.snapToGrid ? 'Snap to grid: ON' : 'Snap to grid: OFF'}
-          style={{ width: 26, height: 26, background: stageConfig.snapToGrid ? colors.accent : colors.bgCard, border: `1px solid ${stageConfig.snapToGrid ? colors.accent : colors.borderMed}`, borderRadius: radius.md, color: stageConfig.snapToGrid ? colors.text : colors.textFaint, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-        >
-          <Magnet size={13} />
-        </button>
+        {!isViewer && (
+          <button
+            onClick={() => updateStageConfig({ snapToGrid: !stageConfig.snapToGrid })}
+            title={stageConfig.snapToGrid ? 'Snap to grid: ON' : 'Snap to grid: OFF'}
+            style={{ width: 26, height: 26, background: stageConfig.snapToGrid ? colors.accent : colors.bgCard, border: `1px solid ${stageConfig.snapToGrid ? colors.accent : colors.borderMed}`, borderRadius: radius.md, color: stageConfig.snapToGrid ? colors.text : colors.textFaint, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Magnet size={13} />
+          </button>
+        )}
       </div>
 
       {/* Zoom level indicator — reads from ref, uiTick keeps it current */}

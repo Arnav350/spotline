@@ -160,3 +160,11 @@ export interface ShowFolderWithRole extends ShowFolder {
   member_count?: number;
   show_count?: number;
 }
+
+export interface ShowPublicLink {
+  id: string;
+  show_id: string;
+  token: string;
+  enabled: boolean;
+  created_at: string;
+}

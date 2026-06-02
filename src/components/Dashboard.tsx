@@ -594,16 +594,28 @@ export default function Dashboard({ onOpenShow }: DashboardProps) {
                 </h1>
                 <span style={{ fontSize: fontSize.sm, color: colors.textGhost }}>{visibleShows.length} show{visibleShows.length !== 1 ? 's' : ''}</span>
               </div>
-              <button
-                onClick={handleCreate}
-                style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.text, border: 'none', borderRadius: radius.sm, cursor: 'pointer', background: `linear-gradient(135deg, ${colors.accent}, ${colors.accentDark})`, boxShadow: `0 0 20px rgba(124,58,237,0.2)`, flexShrink: 0, transition: 'opacity 0.12s, box-shadow 0.12s' }}
-                onMouseEnter={e => { e.currentTarget.style.opacity = '0.88'; e.currentTarget.style.boxShadow = '0 0 28px rgba(124,58,237,0.38)'; }}
-                onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.boxShadow = '0 0 20px rgba(124,58,237,0.2)'; }}
-                onMouseDown={e => { e.currentTarget.style.opacity = '0.7'; }}
-                onMouseUp={e => { e.currentTarget.style.opacity = '0.88'; }}
-              >
-                <Plus size={15} /> New Show
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {selectedFolder?.role === 'owner' && (
+                  <button
+                    onClick={() => setShareFolder(selectedFolder)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.text, border: 'none', borderRadius: radius.sm, cursor: 'pointer', background: colors.bgCard, border: `1px solid ${colors.borderMed}`, flexShrink: 0, transition: 'background 0.12s, border-color 0.12s' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = colors.bgNav; e.currentTarget.style.borderColor = colors.textMuted; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = colors.bgCard; e.currentTarget.style.borderColor = colors.borderMed; }}
+                  >
+                    <Users size={14} /> Share Folder
+                  </button>
+                )}
+                <button
+                  onClick={handleCreate}
+                  style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.text, border: 'none', borderRadius: radius.sm, cursor: 'pointer', background: `linear-gradient(135deg, ${colors.accent}, ${colors.accentDark})`, boxShadow: `0 0 20px rgba(124,58,237,0.2)`, flexShrink: 0, transition: 'opacity 0.12s, box-shadow 0.12s' }}
+                  onMouseEnter={e => { e.currentTarget.style.opacity = '0.88'; e.currentTarget.style.boxShadow = '0 0 28px rgba(124,58,237,0.38)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.boxShadow = '0 0 20px rgba(124,58,237,0.2)'; }}
+                  onMouseDown={e => { e.currentTarget.style.opacity = '0.7'; }}
+                  onMouseUp={e => { e.currentTarget.style.opacity = '0.88'; }}
+                >
+                  <Plus size={15} /> New Show
+                </button>
+              </div>
             </div>
 
             {/* Content */}

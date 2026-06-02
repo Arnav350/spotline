@@ -85,6 +85,7 @@ export function drawShape(
   ghostOpacity?: number,
   onDragMove?: (x: number, y: number) => void,
   depth?: number,
+  readOnly?: boolean,
 ): React.ReactNode {
   const { shape, color, name } = item;
   const d = depth ?? size;
@@ -128,15 +129,15 @@ export function drawShape(
       x={x}
       y={y}
       opacity={opacity}
-      draggable={!isGhost}
-      onDragStart={isGhost ? undefined : onDragStart}
-      onDragMove={isGhost || !onDragMove ? undefined : (e: Konva.KonvaEventObject<DragEvent>) => {
+      draggable={!isGhost && !readOnly}
+      onDragStart={isGhost || readOnly ? undefined : onDragStart}
+      onDragMove={isGhost || readOnly || !onDragMove ? undefined : (e: Konva.KonvaEventObject<DragEvent>) => {
         onDragMove(e.target.x(), e.target.y());
       }}
-      onDragEnd={isGhost ? undefined : (e: Konva.KonvaEventObject<DragEvent>) => {
+      onDragEnd={isGhost || readOnly ? undefined : (e: Konva.KonvaEventObject<DragEvent>) => {
         onDragEnd(e.target.x(), e.target.y(), e.target);
       }}
-      onClick={isGhost ? undefined : onClick}
+      onClick={isGhost || readOnly ? undefined : onClick}
       listening={!isGhost}
     >
       {shapeEl}

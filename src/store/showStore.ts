@@ -159,6 +159,9 @@ interface ShowState {
   removeToast: (id: string) => void;
   setRealtimeConnected: (connected: boolean) => void;
   setCurrentUserRole: (role: ShowMemberRole | null) => void;
+
+  isPublicView: boolean;
+  loadPublicShow: (token: string) => Promise<void>;
 }
 
 function resolveSelectedItem(performers: Performer[], props: Prop[], ids: string[]): SelectableItem {
@@ -343,6 +346,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
   isAnimating: false,
   rawAnimProgress: 0,
   animFromFormationId: null,
+  isPublicView: false,
 
   loadShow: async (showId: string) => {
     set({ isLoading: true });
@@ -440,6 +444,71 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         audioSegments: (audioSegsData || []).sort((a: any, b: any) => a.order_index - b.order_index),
         activeFormationId: formations?.[0]?.id || null,
         currentUserRole,
+        history: [],
+        historyIndex: -1,
+        isLoading: false,
+      });
+      get().pushHistory();
+    } catch {
+      set({ isLoading: false });
+    }
+  },
+
+  loadPublicShow: async (token: string) => {
+    if (!isSupabaseConfigured()) return;
+    set({ isLoading: true });
+    try {
+      const { data: showId } = await supabase.rpc('get_show_from_public_token', { public_token: token });
+      if (!showId) {
+        set({ isLoading: false });
+        return;
+      }
+
+      const { data: show } = await supabase.from('shows').select('*').eq('id', showId).maybeSingle();
+      const { data: formations } = await supabase.from('formations').select('*').eq('show_id', showId).order('order_index');
+      const { data: performers } = await supabase.from('performers').select('*').eq('show_id', showId);
+      const { data: props } = await supabase.from('props').select('*').eq('show_id', showId);
+      const { data: perfPositions } = await supabase.from('performer_positions').select('*').in('formation_id', (formations || []).map((f: any) => f.id));
+      const { data: propPosData } = await supabase.from('prop_positions').select('*').in('formation_id', (formations || []).map((f: any) => f.id));
+      const { data: audioSegsData } = await supabase.from('audio_segments').select('*').eq('show_id', showId).order('order_index');
+      const { data: performerGroupsData } = await supabase.from('performer_groups').select('*').eq('show_id', showId);
+
+      const performerPositions: Record<string, PerformerPosition> = {};
+      const performerPaths: Record<string, { cpDx: number; cpDy: number }> = {};
+      (perfPositions || []).forEach((p: any) => {
+        performerPositions[`${p.performer_id}-${p.formation_id}`] = p;
+        if (p.cp_dx || p.cp_dy) {
+          performerPaths[`${p.performer_id}-${p.formation_id}`] = { cpDx: p.cp_dx ?? 0, cpDy: p.cp_dy ?? 0 };
+        }
+      });
+
+      const propPositions: Record<string, PropPosition> = {};
+      (propPosData || []).forEach((p: any) => {
+        propPositions[`${p.prop_id}-${p.formation_id}`] = p;
+      });
+
+      let resolvedShow = show;
+      const storagePath = (show as any)?.music_storage_path;
+      if (storagePath) {
+        const { data: signedData } = await supabase.storage.from('audio').createSignedUrl(storagePath, 604800);
+        if (signedData?.signedUrl) {
+          resolvedShow = { ...show, music_url: signedData.signedUrl } as any;
+        }
+      }
+
+      set({
+        show: resolvedShow,
+        formations: formations || [],
+        performers: performers || [],
+        props: props || [],
+        performerPositions,
+        propPositions,
+        performerPaths,
+        performerGroups: performerGroupsData || [],
+        audioSegments: (audioSegsData || []).sort((a: any, b: any) => a.order_index - b.order_index),
+        activeFormationId: (formations as any[])?.[0]?.id || null,
+        currentUserRole: 'viewer',
+        isPublicView: true,
         history: [],
         historyIndex: -1,
         isLoading: false,

@@ -3,7 +3,7 @@ import { X, Copy, Check, UserMinus, Folder } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
 import { colors, fontSize, fontWeight, radius } from '../lib/theme';
-import type { Invitation, ShowMember, Profile, ShowMemberRole } from '../lib/types';
+import type { Invitation, ShowMember, Profile, ShowMemberRole, ShowPublicLink } from '../lib/types';
 import { colorFromUserId } from '../lib/colors';
 
 interface InviteModalProps {
@@ -40,11 +40,21 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
+  const [publicLink, setPublicLink] = useState<ShowPublicLink | null>(null);
+  const [linkLoading, setLinkLoading] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+
   const isOwner = isFolder
     ? true  // only owners can open the folder share modal
     : members.find(m => m.user_id === user?.id)?.role === 'owner';
 
   useEffect(() => { loadData(); }, [showId, folderId]);
+
+  useEffect(() => {
+    if (!showId) return;
+    supabase.from('show_public_links').select('*').eq('show_id', showId).maybeSingle()
+      .then(({ data }) => setPublicLink(data));
+  }, [showId]);
 
   async function loadData() {
     if (isFolder && folderId) {
@@ -139,6 +149,21 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
     }
   }
 
+  async function handleTogglePublicLink(enabled: boolean) {
+    if (!showId) return;
+    setLinkLoading(true);
+    const { data } = await supabase.rpc('upsert_public_link', { p_show_id: showId, p_enabled: enabled });
+    if (data?.[0]) setPublicLink(prev => ({ ...(prev ?? { id: '', show_id: showId, created_at: '' }), ...data[0] }));
+    setLinkLoading(false);
+  }
+
+  async function handleCopyPublicLink() {
+    if (!publicLink?.token) return;
+    await navigator.clipboard.writeText(`${window.location.origin}/?view=${publicLink.token}`);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  }
+
   function getInviteLink(token: string) {
     return `${window.location.origin}/?invite=${token}`;
   }
@@ -178,6 +203,58 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
         )}
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* Public link — show only */}
+          {!isFolder && isOwner && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: publicLink?.enabled ? 6 : 0 }}>
+                <div>
+                  <label className="panel-label" style={{ marginBottom: -4 }}>Public link</label>
+                  <span style={{ fontSize: fontSize.sm, color: colors.textSecondary }}>Anyone with the link can view</span>
+                </div>
+                <button
+                  disabled={linkLoading}
+                  onClick={() => handleTogglePublicLink(!(publicLink?.enabled ?? false))}
+                  style={{
+                    width: 36, height: 20, borderRadius: 10, border: 'none',
+                    cursor: linkLoading ? 'wait' : 'pointer',
+                    background: publicLink?.enabled ? colors.accent : colors.borderMed,
+                    position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+                  }}
+                >
+                  <div style={{
+                    position: 'absolute', top: 2, left: publicLink?.enabled ? 18 : 2,
+                    width: 16, height: 16, borderRadius: '50%', background: 'white',
+                    transition: 'left 0.2s',
+                  }} />
+                </button>
+              </div>
+              {publicLink?.enabled && (
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input
+                    readOnly
+                    className="panel-input"
+                    value={`${window.location.origin}/?view=${publicLink.token}`}
+                    style={{ flex: 1, minWidth: 0, color: colors.textSecondary }}
+                    onFocus={e => e.currentTarget.select()}
+                  />
+                  <button
+                    onClick={handleCopyPublicLink}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 5, padding: '6px 10px',
+                      background: colors.bgCard, border: `1px solid ${colors.borderMed}`,
+                      borderRadius: radius.sm, cursor: 'pointer', fontSize: fontSize.lg,
+                      color: linkCopied ? colors.success : colors.textSecondary, flexShrink: 0,
+                      transition: 'color 0.15s',
+                    }}
+                  >
+                    {linkCopied ? <Check size={13} /> : <Copy size={13} />}
+                    {linkCopied ? 'Copied' : 'Copy'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Invite by email */}
           {isOwner && (
             <div>

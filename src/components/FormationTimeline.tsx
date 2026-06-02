@@ -263,10 +263,10 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
                 presentCollaborators={collaborators.filter(c => c.user_id !== localUserId && c.active_formation_id === f.id)}
                 onSetActive={() => { seek(startTimes[i]); }}
                 onHoverChange={setHoveredId}
-                onDurResizeStart={handleDurResizeStart}
-                onTransResizeStart={handleTransResizeStart}
-                onReorderStart={handleReorderStart}
-                onContextMenu={handleContextMenu}
+                onDurResizeStart={isViewer ? undefined : handleDurResizeStart}
+                onTransResizeStart={isViewer ? undefined : handleTransResizeStart}
+                onReorderStart={isViewer ? undefined : handleReorderStart}
+                onContextMenu={isViewer ? undefined : handleContextMenu}
               />
             ))}
 

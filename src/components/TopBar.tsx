@@ -193,7 +193,7 @@ interface TopBarProps {
 export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarProps) {
   const {
     show, viewMode, setViewMode, undo, redo, history, historyIndex,
-    updateShowTitle, isSaving, collaborators, localUserId, localUserColor, currentUserRole,
+    updateShowTitle, isSaving, collaborators, localUserId, localUserColor, currentUserRole, isPublicView,
   } = useShowStore();
   const isViewer = currentUserRole === 'viewer';
   const { signOut, profile } = useAuthStore();
@@ -223,6 +223,17 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
   const canRedo = historyIndex < history.length - 1;
   const otherCollaborators = collaborators.filter(c => c.user_id !== localUserId);
 
+  function handleNavHome(e: React.MouseEvent) {
+    e.preventDefault();
+    if (e.ctrlKey || e.metaKey) {
+      window.open('/', '_blank');
+    } else if (isPublicView) {
+      window.location.href = '/';
+    } else {
+      onBackToDashboard?.();
+    }
+  }
+
   return (
     <>
       {showInvite && show && (
@@ -230,17 +241,17 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
       )}
 
       <div style={{
-        display: 'flex', alignItems: 'center', height: 48, padding: '0 12px',
+        display: 'flex', alignItems: 'center', height: 48, padding: isPublicView ? '0 12px 0 20px' : '0 12px',
         gap: 8, flexShrink: 0, background: colors.bgPanel,
         borderBottom: `1px solid ${colors.bgCardHover}`,
       }}>
-        {/* Back to dashboard */}
-        {onBackToDashboard && (
+        {/* Back to dashboard — hidden for public viewers */}
+        {onBackToDashboard && !isPublicView && (
           <>
             <button
               className="btn-icon"
-              onClick={onBackToDashboard}
-              title="Back to dashboard"
+              onClick={handleNavHome}
+              title="Back to dashboard (⌘Click to open in new tab)"
               style={{ gap: 4, display: 'flex', alignItems: 'center' }}
             >
               <ChevronLeft size={16} />
@@ -251,7 +262,11 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
 
         {/* Logo + title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div
+            onClick={handleNavHome}
+            title={onBackToDashboard ? 'Go home (⌘Click to open in new tab)' : undefined}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: onBackToDashboard ? 'pointer' : undefined }}
+          >
             <div style={{
               width: 20, height: 20, borderRadius: radius.md,
               background: colors.accent,
@@ -290,7 +305,7 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
               background: colors.bgCard, border: `1px solid ${colors.borderMed}`,
               borderRadius: radius.sm, padding: '2px 6px', marginLeft: 4,
             }}>
-              View only
+              {isPublicView ? 'Public view' : 'View only'}
             </span>
           )}
         </div>
@@ -340,7 +355,7 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
         <div style={{ width: 1, height: 16, background: colors.borderSubtle }} />
 
         {/* Online users indicator — only shown when others are present */}
-        {isSupabaseConfigured() && show && profile && otherCollaborators.length > 0 && (
+        {isSupabaseConfigured() && show && profile && !isPublicView && otherCollaborators.length > 0 && (
           <OnlineIndicator
             others={otherCollaborators.map(c => ({ ...c, color: colorFromUserId(c.user_id) }))}
             selfName={profile.display_name}
@@ -348,20 +363,20 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
           />
         )}
 
-        {/* Share / invite */}
-        {isSupabaseConfigured() && show && (
+        {/* Invite collaborators — owners/editors only, not in public view */}
+        {isSupabaseConfigured() && show && !isViewer && !isPublicView && (
           <button
             className="btn-ghost"
             style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: fontSize.sm }}
             onClick={() => setShowInvite(true)}
           >
             <UserPlus size={13} />
-            Share
+            Invite
           </button>
         )}
 
         {/* User menu */}
-        {isSupabaseConfigured() && <UserMenu onSignOut={signOut} onShowShortcuts={onShowShortcuts} />}
+        {isSupabaseConfigured() && !isPublicView && <UserMenu onSignOut={signOut} onShowShortcuts={onShowShortcuts} />}
       </div>
     </>
   );

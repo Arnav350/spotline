@@ -24,10 +24,10 @@ interface FormationBarProps {
   presentCollaborators?: CollaboratorState[];
   onSetActive: (id: string) => void;
   onHoverChange: (id: string | null) => void;
-  onDurResizeStart: (e: React.MouseEvent, state: DragState) => void;
-  onTransResizeStart: (e: React.MouseEvent, state: DragState) => void;
-  onReorderStart: (e: React.MouseEvent, formationId: string, origIndex: number) => void;
-  onContextMenu: (e: React.MouseEvent, formationId: string) => void;
+  onDurResizeStart?: (e: React.MouseEvent, state: DragState) => void;
+  onTransResizeStart?: (e: React.MouseEvent, state: DragState) => void;
+  onReorderStart?: (e: React.MouseEvent, formationId: string, origIndex: number) => void;
+  onContextMenu?: (e: React.MouseEvent, formationId: string) => void;
 }
 
 export function FormationBar({
@@ -74,7 +74,7 @@ export function FormationBar({
         opacity: isBeingDragged ? 0.4 : 1,
       }}
       onClick={() => onSetActive(formation.id)}
-      onContextMenu={e => onContextMenu(e, formation.id)}
+      onContextMenu={onContextMenu ? e => onContextMenu(e, formation.id) : undefined}
       onMouseEnter={() => onHoverChange(formation.id)}
       onMouseLeave={() => onHoverChange(null)}
     >
@@ -89,15 +89,15 @@ export function FormationBar({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          cursor: 'grab',
+          cursor: onReorderStart ? 'grab' : 'pointer',
           zIndex: 4,
           color: isHovered ? colors.textMuted : 'transparent',
         }}
-        onMouseDown={e => {
+        onMouseDown={onReorderStart ? e => {
           e.preventDefault();
           e.stopPropagation();
           onReorderStart(e, formation.id, index);
-        }}
+        } : undefined}
       >
         <GripVertical size={10} />
       </div>
@@ -133,13 +133,13 @@ export function FormationBar({
             top: -2,
             width: 6,
             height: TRANS_BAR_HEIGHT + 4,
-            cursor: 'ew-resize',
+            cursor: onTransResizeStart ? 'ew-resize' : 'pointer',
             zIndex: 5,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
-          onMouseDown={e => {
+          onMouseDown={onTransResizeStart ? e => {
             e.preventDefault();
             e.stopPropagation();
             onTransResizeStart(e, {
@@ -149,7 +149,7 @@ export function FormationBar({
               startDur: formation.duration,
               startTrans: formation.transition_duration,
             });
-          }}
+          } : undefined}
         >
           <div style={{
             width: 1.5,
@@ -210,14 +210,14 @@ export function FormationBar({
           top: 0,
           width: HANDLE_WIDTH,
           height: '100%',
-          cursor: 'ew-resize',
+          cursor: onDurResizeStart ? 'ew-resize' : 'pointer',
           zIndex: 2,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           borderRadius: '0 3px 3px 0',
         }}
-        onMouseDown={e => {
+        onMouseDown={onDurResizeStart ? e => {
           e.preventDefault();
           e.stopPropagation();
           onDurResizeStart(e, {
@@ -227,7 +227,7 @@ export function FormationBar({
             startDur: formation.duration,
             startTrans: formation.transition_duration,
           });
-        }}
+        } : undefined}
       >
         <div style={{
           width: 1.5,

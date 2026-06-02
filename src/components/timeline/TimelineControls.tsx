@@ -66,7 +66,7 @@ export function TimelineControls({
             <Plus size={14} /> Add
           </button>
         )}
-        <div style={{ width: 1, height: 16, background: colors.borderMed, margin: '0 2px', flexShrink: 0 }} />
+        {!isViewer && <div style={{ width: 1, height: 16, background: colors.borderMed, margin: '0 2px', flexShrink: 0 }} />}
         <button
           className="btn-icon"
           onClick={() => onZoomChange(Math.min(5, timelineZoom * 1.4))}

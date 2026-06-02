@@ -28,7 +28,7 @@ function useWindowSize() {
 
 
 export default function App() {
-  const { show, loadShow, isLoading, viewMode, formations, activeFormationId, pendingTransitionDuration, setSelectedAudioSegment, setLocalUser, toasts, removeToast, realtimeConnected, setAnimationState, setRawAnimProgress, endAnimation } = useShowStore();
+  const { show, loadShow, loadPublicShow, isPublicView, isLoading, viewMode, formations, activeFormationId, pendingTransitionDuration, setSelectedAudioSegment, setLocalUser, toasts, removeToast, realtimeConnected, setAnimationState, setRawAnimProgress, endAnimation } = useShowStore();
   const { session, loading: authLoading, initialize, user, profile } = useAuthStore();
   const { width, height } = useWindowSize();
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -72,6 +72,13 @@ export default function App() {
     const showId = params.get('show');
     const inviteToken = params.get('invite');
 
+    const viewToken = params.get('view');
+    if (viewToken) {
+      loadPublicShow(viewToken);
+      setView('show');
+      return;
+    }
+
     if (inviteToken && isSupabaseConfigured() && !session) {
       setView('auth');
       return;
@@ -113,12 +120,12 @@ export default function App() {
     });
   }, [user]);
 
-  // Load show when entering show view
+  // Load show when entering show view (skip for public view — loadPublicShow handles that)
   useEffect(() => {
-    if (view === 'show' && currentShowId && show?.id !== currentShowId) {
+    if (view === 'show' && currentShowId && show?.id !== currentShowId && !isPublicView) {
       loadShow(currentShowId);
     }
-  }, [view, currentShowId]);
+  }, [view, currentShowId, isPublicView]);
 
   useRealtimeSync(view === 'show' ? currentShowId : null);
 
@@ -163,7 +170,7 @@ export default function App() {
     setView('dashboard');
   }
 
-  const sidebarWidth = NAV_WIDTH + (sidebarPanel !== null ? CONTENT_WIDTH : 0);
+  const sidebarWidth = isPublicView ? 0 : NAV_WIDTH + (sidebarPanel !== null ? CONTENT_WIDTH : 0);
   const canvasWidth = width - sidebarWidth;
   const canvasHeight = height - TOPBAR_HEIGHT - TIMELINE_HEIGHT;
 
@@ -241,9 +248,11 @@ export default function App() {
       <TopBar onShowShortcuts={() => setShowShortcuts(true)} onBackToDashboard={handleBackToDashboard} />
 
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        <div style={{ width: sidebarWidth, flexShrink: 0, borderRight: `1px solid ${colors.border}`, display: 'flex' }}>
-          <PropertyPanel activePanel={sidebarPanel} onPanelChange={setSidebarPanel} />
-        </div>
+        {!isPublicView && (
+          <div style={{ width: sidebarWidth, flexShrink: 0, borderRight: `1px solid ${colors.border}`, display: 'flex' }}>
+            <PropertyPanel activePanel={sidebarPanel} onPanelChange={setSidebarPanel} />
+          </div>
+        )}
 
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
           <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
