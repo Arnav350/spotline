@@ -177,6 +177,20 @@ const MAX_HISTORY = 50;
 
 let saveTimeout: ReturnType<typeof setTimeout> | null = null;
 let nudgeHistoryTimeout: ReturnType<typeof setTimeout> | null = null;
+const pathSaveTimers: Record<string, ReturnType<typeof setTimeout>> = {};
+
+function schedulePathSave(performerId: string, toFormationId: string, cpDx: number, cpDy: number) {
+  const key = `${performerId}-${toFormationId}`;
+  if (pathSaveTimers[key]) clearTimeout(pathSaveTimers[key]);
+  pathSaveTimers[key] = setTimeout(() => {
+    delete pathSaveTimers[key];
+    supabase.from('performer_positions')
+      .update({ cp_dx: cpDx, cp_dy: cpDy })
+      .eq('performer_id', performerId)
+      .eq('formation_id', toFormationId)
+      .then(() => {});
+  }, 400);
+}
 
 function scheduleAutoSave(state: ShowState) {
   if (!state.show) return;
@@ -401,12 +415,17 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       const { data: audioSegsData } = await supabase.from('audio_segments').select('*').eq('show_id', showId).order('order_index');
       const { data: performerGroupsData } = await supabase.from('performer_groups').select('*').eq('show_id', showId);
 
+      const sortedFormations = (formations || []).slice().sort((a, b) => a.order_index - b.order_index);
       const performerPositions: Record<string, PerformerPosition> = {};
       const performerPaths: Record<string, { cpDx: number; cpDy: number }> = {};
       (perfPositions || []).forEach(p => {
         performerPositions[`${p.performer_id}-${p.formation_id}`] = p;
         if (p.cp_dx || p.cp_dy) {
-          performerPaths[`${p.performer_id}-${p.formation_id}`] = { cpDx: p.cp_dx ?? 0, cpDy: p.cp_dy ?? 0 };
+          const toIdx = sortedFormations.findIndex(f => f.id === p.formation_id);
+          if (toIdx > 0) {
+            const fromFormationId = sortedFormations[toIdx - 1].id;
+            performerPaths[`${p.performer_id}-${fromFormationId}-${p.formation_id}`] = { cpDx: p.cp_dx ?? 0, cpDy: p.cp_dy ?? 0 };
+          }
         }
       });
 
@@ -478,12 +497,17 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       const { data: audioSegsData } = await supabase.from('audio_segments').select('*').eq('show_id', showId).order('order_index');
       const { data: performerGroupsData } = await supabase.from('performer_groups').select('*').eq('show_id', showId);
 
+      const sortedFormations = (formations as any[] || []).slice().sort((a: any, b: any) => a.order_index - b.order_index);
       const performerPositions: Record<string, PerformerPosition> = {};
       const performerPaths: Record<string, { cpDx: number; cpDy: number }> = {};
       (perfPositions || []).forEach((p: any) => {
         performerPositions[`${p.performer_id}-${p.formation_id}`] = p;
         if (p.cp_dx || p.cp_dy) {
-          performerPaths[`${p.performer_id}-${p.formation_id}`] = { cpDx: p.cp_dx ?? 0, cpDy: p.cp_dy ?? 0 };
+          const toIdx = sortedFormations.findIndex((f: any) => f.id === p.formation_id);
+          if (toIdx > 0) {
+            const fromFormationId = sortedFormations[toIdx - 1].id;
+            performerPaths[`${p.performer_id}-${fromFormationId}-${p.formation_id}`] = { cpDx: p.cp_dx ?? 0, cpDy: p.cp_dy ?? 0 };
+          }
         }
       });
 
@@ -1058,7 +1082,9 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
   setPerformerPath: (performerId: string, fromFormationId: string, toFormationId: string, cpDx: number, cpDy: number) => {
     const key = `${performerId}-${fromFormationId}-${toFormationId}`;
     set(s => ({ performerPaths: { ...s.performerPaths, [key]: { cpDx, cpDy } } }));
-    scheduleAutoSave(get());
+    if (isSupabaseConfigured()) {
+      schedulePathSave(performerId, toFormationId, cpDx, cpDy);
+    }
   },
 
   clearPerformerPath: (performerId: string, fromFormationId: string, toFormationId: string) => {
@@ -1068,7 +1094,13 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       delete newPaths[key];
       return { performerPaths: newPaths };
     });
-    scheduleAutoSave(get());
+    if (isSupabaseConfigured()) {
+      supabase.from('performer_positions')
+        .update({ cp_dx: 0, cp_dy: 0 })
+        .eq('performer_id', performerId)
+        .eq('formation_id', toFormationId)
+        .then(() => {});
+    }
   },
 
   optimizeFormationTransition: (fromFormationId: string, toFormationId: string) => {
@@ -1620,8 +1652,15 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         updated_at: new Date().toISOString(),
       });
 
+      const pathByDest: Record<string, { cpDx: number; cpDy: number }> = {};
+      Object.entries(state.performerPaths).forEach(([key, path]) => {
+        // key = performerId-fromFormationId-toFormationId, each UUID is 36 chars
+        const performerId = key.substring(0, 36);
+        const toFormationId = key.substring(73);
+        pathByDest[`${performerId}-${toFormationId}`] = path;
+      });
       const perfPositions = Object.entries(state.performerPositions).map(([key, pos]) => {
-        const path = state.performerPaths[key];
+        const path = pathByDest[key];
         return { ...pos, cp_dx: path?.cpDx ?? 0, cp_dy: path?.cpDy ?? 0 };
       });
 
