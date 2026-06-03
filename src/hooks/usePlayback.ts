@@ -72,13 +72,13 @@ export function usePlayback(audioRef: React.RefObject<HTMLAudioElement | null>) 
   }
 
   function seekToTime(t: number) {
-    const clamped = Math.max(0, Math.min(audioDuration || 9999, t));
-    if (audioRef.current) audioRef.current.currentTime = clamped;
-    setAudioTime(clamped);
+    const time = Math.max(0, t);
+    if (audioRef.current) audioRef.current.currentTime = Math.min(audioDuration || time, time);
+    setAudioTime(time);
     const paused = !audioRef.current || audioRef.current.paused;
     let cum = 0;
     for (const f of formationsRef.current) {
-      if (clamped >= cum && clamped < cum + f.duration) { setActiveFormation(f.id, paused ? 0.3 : f.transition_duration); break; }
+      if (time >= cum && time < cum + f.duration) { setActiveFormation(f.id, paused ? 0.3 : f.transition_duration); break; }
       cum += f.duration;
     }
   }

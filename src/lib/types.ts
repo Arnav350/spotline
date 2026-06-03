@@ -106,6 +106,7 @@ export interface HistorySnapshot {
   performerPositions: Record<string, PerformerPosition>;
   propPositions: Record<string, PropPosition>;
   performerPaths: Record<string, { cpDx: number; cpDy: number }>;
+  performerGroups: PerformerGroup[];
 }
 
 export interface HistoryEntry extends HistorySnapshot {

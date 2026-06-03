@@ -121,6 +121,8 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
         if (activeId && state.selectedItemIds.length === 0 && !state.selectedItem) {
           e.preventDefault();
           copyFormationPositions(activeId);
+        } else if (state.selectedItemIds.length > 0 || state.selectedItem) {
+          setClipboard(null);
         }
         return;
       }
@@ -235,6 +237,21 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
                 boxShadow: `0 0 6px ${colors.accentLight}`,
               }} />
             </div>
+          )}
+
+          {/* Song-end marker */}
+          {audioDuration > 0 && audioDuration < totalDuration && (
+            <div style={{
+              position: 'absolute',
+              left: LEFT_PADDING + audioDuration * effectivePPS,
+              top: 0,
+              width: 1,
+              height: effectiveRulerHeight + 5 + BAR_HEIGHT,
+              background: colors.borderStrong,
+              opacity: 0.6,
+              pointerEvents: 'none',
+              zIndex: 9,
+            }} />
           )}
 
           {/* Formation bars */}

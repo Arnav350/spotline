@@ -176,6 +176,7 @@ function resolveSelectedItem(performers: Performer[], props: Prop[], ids: string
 const MAX_HISTORY = 50;
 
 let saveTimeout: ReturnType<typeof setTimeout> | null = null;
+let nudgeHistoryTimeout: ReturnType<typeof setTimeout> | null = null;
 
 function scheduleAutoSave(state: ShowState) {
   if (!state.show) return;
@@ -255,6 +256,9 @@ function applyHistoryDelta(
 
   const performerPaths = diffPositions(from.performerPaths, to.performerPaths, current.performerPaths);
   if (performerPaths) result.performerPaths = performerPaths as Record<string, { cpDx: number; cpDy: number }>;
+
+  const performerGroups = diffArrays(from.performerGroups, to.performerGroups, current.performerGroups);
+  if (performerGroups) result.performerGroups = performerGroups as PerformerGroup[];
 
   return result;
 }
@@ -597,7 +601,6 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         propPositions: rescalePositions(s.propPositions),
       };
     });
-    get().pushHistory();
     scheduleAutoSave(get());
   },
 
@@ -800,6 +803,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     }));
     const updated = get().formations.find(f => f.id === id);
     if (updated) (window as any).__spotlineBroadcastFormationUpsert?.(updated);
+    get().pushHistory();
     scheduleAutoSave(get());
   },
 
@@ -939,6 +943,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
 
   updatePerformer: (id: string, updates: Partial<Performer>) => {
     set(s => ({ performers: s.performers.map(p => p.id === id ? { ...p, ...updates } : p) }));
+    get().pushHistory();
     scheduleAutoSave(get());
   },
 
@@ -1002,6 +1007,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
 
   updateProp: (id: string, updates: Partial<Prop>) => {
     set(s => ({ props: s.props.map(p => p.id === id ? { ...p, ...updates } : p) }));
+    get().pushHistory();
     scheduleAutoSave(get());
   },
 
@@ -1032,7 +1038,8 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       }
     });
     set({ performerPositions: newPerfPositions, propPositions: newPropPositions });
-    get().pushHistory();
+    if (nudgeHistoryTimeout) clearTimeout(nudgeHistoryTimeout);
+    nudgeHistoryTimeout = setTimeout(() => { get().pushHistory(); nudgeHistoryTimeout = null; }, 400);
     scheduleAutoSave(get());
     const afterState = get();
     if (afterState.activeFormationId) {
@@ -1066,8 +1073,6 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
 
   optimizeFormationTransition: (fromFormationId: string, toFormationId: string) => {
     const state = get();
-    get().pushHistory();
-
     const { performers, performerPositions, performerPaths } = state;
     const newPositions = { ...performerPositions };
     const newPaths = { ...performerPaths };
@@ -1141,6 +1146,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     }
 
     set({ performerPositions: newPositions, performerPaths: newPaths });
+    get().pushHistory();
     scheduleAutoSave(get());
   },
 
@@ -1151,7 +1157,6 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     const getPos = (id: string) => performerPositions[`${id}-${activeFormationId}`] ?? propPositions[`${id}-${activeFormationId}`];
     const eligible = selectedItemIds.map(id => ({ id, pos: getPos(id) })).filter((x): x is { id: string; pos: typeof performerPositions[string] } => !!x.pos);
     if (eligible.length < 2) return;
-    get().pushHistory();
     const n = eligible.length;
     const cfg = show.stage_config;
     const snapPos = (x: number, y: number) => {
@@ -1185,6 +1190,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       else if (newPropPositions[key]) newPropPositions[key] = { ...newPropPositions[key], x: targets[i].x, y: targets[i].y };
     });
     set({ performerPositions: newPerfPositions, propPositions: newPropPositions });
+    get().pushHistory();
     scheduleAutoSave(get());
   },
 
@@ -1192,7 +1198,6 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     const state = get();
     const { activeFormationId, selectedItemIds, performerPositions, propPositions, show } = state;
     if (!activeFormationId || selectedItemIds.length === 0 || !show) return;
-    get().pushHistory();
     const cfg = show.stage_config;
     const { width, height } = cfg;
     const snapPos = (x: number, y: number) => {
@@ -1213,6 +1218,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       else newPropPositions[key] = { ...newPropPositions[key], ...snapped };
     });
     set({ performerPositions: newPerfPositions, propPositions: newPropPositions });
+    get().pushHistory();
     scheduleAutoSave(get());
   },
 
@@ -1220,7 +1226,6 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     const state = get();
     const { activeFormationId, selectedItemIds, performerPositions, propPositions, show } = state;
     if (!activeFormationId || selectedItemIds.length === 0 || !show) return;
-    get().pushHistory();
     const cfg = show.stage_config;
     const stageCx = cfg.width / 2;
     const stageCy = cfg.height / 2;
@@ -1247,6 +1252,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       else newPropPositions[key] = { ...newPropPositions[key], ...snapped };
     });
     set({ performerPositions: newPerfPositions, propPositions: newPropPositions });
+    get().pushHistory();
     scheduleAutoSave(get());
   },
 
@@ -1370,6 +1376,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       color: APP_COLORS[state.performerGroups.length % APP_COLORS.length],
     };
     set(s => ({ performerGroups: [...s.performerGroups, group] }));
+    get().pushHistory();
     scheduleAutoSave(get());
   },
 
@@ -1378,6 +1385,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       performerGroups: s.performerGroups.filter(g => g.id !== id),
       performers: s.performers.map(p => p.group_id === id ? { ...p, group_id: undefined } : p),
     }));
+    get().pushHistory();
     if (isSupabaseConfigured()) await supabase.from('performer_groups').delete().eq('id', id);
     scheduleAutoSave(get());
   },
@@ -1391,6 +1399,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     set(s => ({
       performers: s.performers.map(p => p.id === performerId ? { ...p, group_id: groupId ?? undefined } : p),
     }));
+    get().pushHistory();
     scheduleAutoSave(get());
   },
 
@@ -1491,6 +1500,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       performerPositions: JSON.parse(JSON.stringify(state.performerPositions)),
       propPositions: JSON.parse(JSON.stringify(state.propPositions)),
       performerPaths: JSON.parse(JSON.stringify(state.performerPaths)),
+      performerGroups: JSON.parse(JSON.stringify(state.performerGroups)),
     };
     const entry: HistoryEntry = {
       ...snapshot,
@@ -1501,6 +1511,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         performerPositions: prevEntry.performerPositions,
         propPositions: prevEntry.propPositions,
         performerPaths: prevEntry.performerPaths,
+        performerGroups: prevEntry.performerGroups,
       } : undefined,
     };
     const newHistory = state.history.slice(0, state.historyIndex + 1);
