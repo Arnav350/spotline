@@ -199,12 +199,15 @@ export async function duplicateShow(showId: string, userId: string, sourceTitle:
       ])
     : [{ data: [] }, { data: [] }];
 
+  // Insert show and owner membership first so storage RLS (owner check) passes for the audio copy
   const { error: showErr } = await supabase.from('shows').insert({
     ...srcShow,
     id: newShowId,
     title: `Copy of ${sourceTitle}`,
     owner_id: userId,
     folder_id: folderId ?? null,
+    music_storage_path: null,
+    music_url: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   });
@@ -212,14 +215,37 @@ export async function duplicateShow(showId: string, userId: string, sourceTitle:
 
   await supabase.from('show_members').insert({ show_id: newShowId, user_id: userId, role: 'owner' });
 
+  // Copy audio file to a new show-scoped path so deleting one show's audio doesn't affect the other
+  const srcStoragePath = srcShow.music_storage_path as string | null | undefined;
+  if (isSupabaseConfigured() && srcStoragePath) {
+    try {
+      const { data: signedData } = await supabase.storage.from('audio').createSignedUrl(srcStoragePath, 60);
+      if (signedData?.signedUrl) {
+        const res = await fetch(signedData.signedUrl);
+        if (res.ok) {
+          const blob = await res.blob();
+          const filename = srcStoragePath.split('/').pop() ?? 'audio';
+          const destPath = `${newShowId}/${filename}`;
+          const { error: uploadErr } = await supabase.storage.from('audio').upload(destPath, blob, { upsert: true });
+          if (!uploadErr) {
+            const { data: newSigned } = await supabase.storage.from('audio').createSignedUrl(destPath, 604800);
+            await supabase.from('shows').update({ music_storage_path: destPath, music_url: newSigned?.signedUrl ?? null, music_filename: srcShow.music_filename }).eq('id', newShowId);
+          }
+        }
+      }
+    } catch {}
+  }
+
   const newGroups = (performerGroups || []).map((g: any) => ({ ...g, id: groupIdMap[g.id], show_id: newShowId }));
   const newFormations = (formations || []).map((f: any) => ({ ...f, id: formationIdMap[f.id], show_id: newShowId }));
   const newPerformers = (performers || []).map((p: any) => ({ ...p, id: performerIdMap[p.id], show_id: newShowId, group_id: p.group_id ? (groupIdMap[p.group_id] ?? null) : null }));
   const newProps = (props || []).map((p: any) => ({ ...p, id: propIdMap[p.id], show_id: newShowId }));
   const newSegments = (audioSegments || []).map((s: any) => ({ ...s, id: crypto.randomUUID(), show_id: newShowId }));
 
+  // Insert groups first — performers.group_id is a FK referencing performer_groups
+  if (newGroups.length) await supabase.from('performer_groups').insert(newGroups);
+
   await Promise.all([
-    newGroups.length ? supabase.from('performer_groups').insert(newGroups) : Promise.resolve(),
     newFormations.length ? supabase.from('formations').insert(newFormations) : Promise.resolve(),
     newPerformers.length ? supabase.from('performers').insert(newPerformers) : Promise.resolve(),
     newProps.length ? supabase.from('props').insert(newProps) : Promise.resolve(),

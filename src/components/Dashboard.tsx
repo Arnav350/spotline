@@ -382,6 +382,7 @@ export default function Dashboard({ onOpenShow }: DashboardProps) {
       .select()
       .single();
     if (data) {
+      await supabase.from('folder_members').insert({ folder_id: data.id, user_id: user.id, role: 'owner' });
       const newFolder = { ...data, role: 'owner' as const };
       setFolders(prev => [...prev, newFolder]);
       setSelectedView(data.id);

@@ -1655,8 +1655,9 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       const pathByDest: Record<string, { cpDx: number; cpDy: number }> = {};
       Object.entries(state.performerPaths).forEach(([key, path]) => {
         // key = performerId-fromFormationId-toFormationId, each UUID is 36 chars
+        // positions: 0-35 performerId, 36 '-', 37-72 fromFormationId, 73 '-', 74-109 toFormationId
         const performerId = key.substring(0, 36);
-        const toFormationId = key.substring(73);
+        const toFormationId = key.substring(74);
         pathByDest[`${performerId}-${toFormationId}`] = path;
       });
       const perfPositions = Object.entries(state.performerPositions).map(([key, pos]) => {

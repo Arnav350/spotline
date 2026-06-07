@@ -101,6 +101,8 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
     };
     if (isFolder) {
       insertPayload.folder_id = folderId;
+      const already = folderMembers.find(m => (m.profile as any)?.email === trimmedEmail);
+      if (already) { setError('This person is already a member.'); setSending(false); return; }
     } else {
       insertPayload.show_id = showId;
       const already = members.find(m => (m.profile as any)?.email === trimmedEmail);
@@ -132,6 +134,12 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
     if (userId === user?.id) return;
     if (isFolder) {
       await supabase.from('folder_members').delete().eq('id', memberId);
+      // Also remove from all shows in this folder
+      const { data: folderShows } = await supabase.from('shows').select('id').eq('folder_id', folderId);
+      if (folderShows && folderShows.length > 0) {
+        const showIds = folderShows.map((s: any) => s.id);
+        await supabase.from('show_members').delete().eq('user_id', userId).in('show_id', showIds);
+      }
       setFolderMembers(prev => prev.filter(m => m.id !== memberId));
     } else {
       await supabase.from('show_members').delete().eq('id', memberId);
