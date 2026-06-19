@@ -38,30 +38,30 @@ function PerformerMesh({ performer, x, y, stageWidth, stageHeight, isSelected, o
   return (
     <group ref={groupRef} position={[cx, 0, cz]} onPointerDown={onPointerDown}>
       {/* Left leg */}
-      <RoundedBox args={[0.8, 3.2, 0.8]} radius={0.12} smoothness={4} position={[-0.4, 1.6, 0]} castShadow>
+      <RoundedBox args={[0.8, 3.2, 0.8]} radius={0.12} smoothness={4} position={[-0.4, 1.6, 0]}>
         <meshStandardMaterial color={color} emissive={emissive} {...mat} />
       </RoundedBox>
       {/* Right leg */}
-      <RoundedBox args={[0.8, 3.2, 0.8]} radius={0.12} smoothness={4} position={[0.4, 1.6, 0]} castShadow>
+      <RoundedBox args={[0.8, 3.2, 0.8]} radius={0.12} smoothness={4} position={[0.4, 1.6, 0]}>
         <meshStandardMaterial color={color} emissive={emissive} {...mat} />
       </RoundedBox>
 
       {/* Torso */}
-      <RoundedBox args={[1.6, 3.0, 0.8]} radius={0.12} smoothness={4} position={[0, 4.7, 0]} castShadow>
+      <RoundedBox args={[1.6, 3.0, 0.8]} radius={0.12} smoothness={4} position={[0, 4.7, 0]}>
         <meshStandardMaterial color={color} emissive={emissive} {...mat} />
       </RoundedBox>
 
       {/* Left arm */}
-      <RoundedBox args={[0.8, 3.0, 0.8]} radius={0.12} smoothness={4} position={[-1.2, 4.7, 0]} castShadow>
+      <RoundedBox args={[0.8, 3.0, 0.8]} radius={0.12} smoothness={4} position={[-1.2, 4.7, 0]}>
         <meshStandardMaterial color={color} emissive={emissive} {...mat} />
       </RoundedBox>
       {/* Right arm */}
-      <RoundedBox args={[0.8, 3.0, 0.8]} radius={0.12} smoothness={4} position={[1.2, 4.7, 0]} castShadow>
+      <RoundedBox args={[0.8, 3.0, 0.8]} radius={0.12} smoothness={4} position={[1.2, 4.7, 0]}>
         <meshStandardMaterial color={color} emissive={emissive} {...mat} />
       </RoundedBox>
 
       {/* Head */}
-      <RoundedBox args={[1.5, 1.5, 1.5]} radius={0.15} smoothness={4} position={[0, 6.95, 0]} castShadow>
+      <RoundedBox args={[1.5, 1.5, 1.5]} radius={0.15} smoothness={4} position={[0, 6.95, 0]}>
         <meshStandardMaterial color={color} emissive={emissive} {...mat} />
       </RoundedBox>
 
@@ -104,7 +104,7 @@ function PropMesh({ prop, x, y, stageWidth, stageHeight, isSelected }: {
   }, [prop.shape, size]);
 
   return (
-    <mesh geometry={geometry} position={[cx, PROP_HEIGHT / 2, cz]} castShadow receiveShadow>
+    <mesh geometry={geometry} position={[cx, PROP_HEIGHT / 2, cz]}>
       <meshStandardMaterial
         color={propColor}
         roughness={0.6}
@@ -168,7 +168,7 @@ function StageGrid({ width, height, divisionsX, subdivisionsX, divisionsY, subdi
 
 function StageFloor({ width, height }: { width: number; height: number }) {
   return (
-    <mesh receiveShadow position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+    <mesh position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
       <planeGeometry args={[width, height]} />
       <meshStandardMaterial color="#4a4a4a" roughness={0.85} metalness={0.05} />
     </mesh>
@@ -265,9 +265,6 @@ function SceneContent({ animating, animationProgress, previousFormationId, onDra
       <directionalLight
         position={[stageConfig.width * 0.5, stageConfig.height, stageConfig.width * 0.3]}
         intensity={1.2}
-        castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
       />
       <pointLight position={[-stageConfig.width * 0.3, stageConfig.height * 0.5, -stageConfig.height * 0.3]} intensity={0.4} color={colors.accent} />
       <pointLight position={[stageConfig.width * 0.3, stageConfig.height * 0.5, stageConfig.height * 0.3]} intensity={0.4} color="#3b82f6" />
@@ -368,7 +365,6 @@ export default function Stage3D({ width, height }: {
   return (
     <div style={{ width, height, background: colors.bg, cursor: isDragging ? 'grabbing' : 'default' }}>
       <Canvas
-        shadows
         camera={{
           position: [0, cameraZ * 0.6, cameraZ],
           fov: 45,

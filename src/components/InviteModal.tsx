@@ -212,29 +212,31 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
 
         <div style={{ flex: 1, overflowY: 'auto', padding: `${spacing.lg}px ${spacing.xl}px`, display: 'flex', flexDirection: 'column', gap: spacing.xl }}>
           {/* Public link — show only */}
-          {!isFolder && isOwner && (
+          {!isFolder && (isOwner || publicLink?.enabled) && (
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, marginBottom: publicLink?.enabled ? spacing.sm : 0 }}>
                 <div>
                   <label className="panel-label" style={{ marginBottom: -4 }}>Public link</label>
                   <span style={{ fontSize: fontSize.sm, color: colors.textSecondary }}>Anyone with the link can view</span>
                 </div>
-                <button
-                  disabled={linkLoading}
-                  onClick={() => handleTogglePublicLink(!(publicLink?.enabled ?? false))}
-                  style={{
-                    width: 36, height: 20, borderRadius: radius.xl, border: 'none',
-                    cursor: linkLoading ? 'wait' : 'pointer',
-                    background: publicLink?.enabled ? colors.accent : colors.borderMed,
-                    position: 'relative', transition: 'background 0.2s', flexShrink: 0,
-                  }}
-                >
-                  <div style={{
-                    position: 'absolute', top: 2, left: publicLink?.enabled ? 18 : 2,
-                    width: 16, height: 16, borderRadius: '50%', background: 'white',
-                    transition: 'left 0.2s',
-                  }} />
-                </button>
+                {isOwner && (
+                  <button
+                    disabled={linkLoading}
+                    onClick={() => handleTogglePublicLink(!(publicLink?.enabled ?? false))}
+                    style={{
+                      width: 36, height: 20, borderRadius: radius.xl, border: 'none',
+                      cursor: linkLoading ? 'wait' : 'pointer',
+                      background: publicLink?.enabled ? colors.accent : colors.borderMed,
+                      position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+                    }}
+                  >
+                    <div style={{
+                      position: 'absolute', top: 2, left: publicLink?.enabled ? 18 : 2,
+                      width: 16, height: 16, borderRadius: '50%', background: 'white',
+                      transition: 'left 0.2s',
+                    }} />
+                  </button>
+                )}
               </div>
               {publicLink?.enabled && (
                 <div style={{ display: 'flex', gap: spacing.sm }}>

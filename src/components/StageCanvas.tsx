@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useMemo, useEffect, memo } from 'react';
+import React, { useRef, useCallback, useMemo, useEffect, useState, memo } from 'react';
 import { Stage, Layer, Rect, Line, Circle, Text } from 'react-konva';
 import { useShowStore } from '../store/showStore';
 import { useShallow } from 'zustand/shallow';
@@ -51,6 +51,14 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
   })));
 
   const isViewer = currentUserRole === 'viewer';
+
+  const [ctrlHeld, setCtrlHeld] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => setCtrlHeld(e.ctrlKey || e.metaKey);
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('keyup', onKey);
+    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKey); };
+  }, []);
 
   const activeFormation = formations.find(f => f.id === activeFormationId);
 
@@ -418,6 +426,29 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedItemIds, prevFormId, activeFormationId, performers, performerPositions, performerPaths, performerSize, cellScale, offsetX, offsetY, dragCanvasPos]);
 
+  // Mirror indicators: ghost shapes at the horizontally-opposite position, shown when Ctrl is held
+  const mirrorIndicators = useMemo(() => {
+    if (!ctrlHeld || !activeFormationId || selectedItemIds.length === 0) return null;
+    return selectedItemIds.flatMap(pid => {
+      const performer = performers.find(p => p.id === pid);
+      if (!performer) return [];
+      const pos = performerPositions[`${pid}-${activeFormationId}`];
+      if (!pos) return [];
+      const mirrorWorldX = stageConfig.width - pos.x;
+      const { x: mx, y: my } = worldToCanvas(mirrorWorldX, pos.y, offsetX, offsetY, cellScale);
+      return [
+        drawShape(performer, mx, my, performerSize, false, false,
+          () => {}, () => {}, () => {}, `mirror-${pid}`, false, 0.3),
+        <Circle key={`mirror-ring-${pid}`} x={mx} y={my}
+          radius={performerSize + 4} fill="transparent"
+          stroke={performer.color} strokeWidth={1.5}
+          dash={[4, 4]} opacity={0.6} listening={false}
+        />,
+      ];
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ctrlHeld, selectedItemIds, performers, performerPositions, activeFormationId, performerSize, cellScale, offsetX, offsetY, stageConfig.width]);
+
   // --- Fix 8: Memoized rotate handle position (uiTick ensures it updates after pan/zoom) ---
   const rotateHandle = useMemo(() => {
     if (selectedItemIds.length < 2 || !activeFormationId || isAnimatingNow) return null;
@@ -499,11 +530,12 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
           {gridLabels}
         </Layer>
 
-        {/* Layer 1 — ghost lines + ghost shapes. listening={false} skips all hit-detection
+        {/* Layer 1 — ghost lines + ghost shapes + mirror indicators. listening={false} skips all hit-detection
             work on every redraw. Path handles are moved to Layer 2 so they can be interactive
             without forcing Layer 1 to maintain a hit map. */}
         <Layer listening={false}>
           {ghostLines}
+          {mirrorIndicators}
         </Layer>
 
         {/* Layer 2 — path handles + dynamic performers/props. All nodes are bitmap-cached

@@ -30,6 +30,7 @@ interface SpotlineClipboardItem {
   size?: number;
   x: number;
   y: number;
+  departurePath?: { cpDx: number; cpDy: number };
 }
 let _memClipboard: SpotlineClipboardItem[] | null = null;
 
@@ -1315,12 +1316,18 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
   copySelectedPerformers: () => {
     const state = get();
     if (!state.activeFormationId) return;
+    const sortedForms = state.formations.slice().sort((a, b) => a.order_index - b.order_index);
+    const activeIdx = sortedForms.findIndex(f => f.id === state.activeFormationId);
+    const nextFormationId = activeIdx < sortedForms.length - 1 ? sortedForms[activeIdx + 1].id : null;
     const items: SpotlineClipboardItem[] = [];
     state.selectedItemIds.forEach(id => {
       const performer = state.performers.find(p => p.id === id);
       if (performer) {
         const pos = state.performerPositions[`${id}-${state.activeFormationId}`];
-        if (pos) items.push({ type: 'performer', name: performer.name, color: performer.color, shape: performer.shape, x: pos.x, y: pos.y });
+        const departurePath = nextFormationId
+          ? state.performerPaths[`${id}-${state.activeFormationId}-${nextFormationId}`]
+          : undefined;
+        if (pos) items.push({ type: 'performer', name: performer.name, color: performer.color, shape: performer.shape, x: pos.x, y: pos.y, departurePath });
         return;
       }
       const prop = state.props.find(p => p.id === id);
@@ -1392,6 +1399,21 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         performerPositions: newPerfPositions,
         propPositions: newPropPositions,
       }));
+
+      // Apply departure paths to the next formation if present in the clipboard
+      const sortedForms = freshState.formations.slice().sort((a, b) => a.order_index - b.order_index);
+      const activeIdx = sortedForms.findIndex(f => f.id === afId);
+      const nextFormationId = activeIdx < sortedForms.length - 1 ? sortedForms[activeIdx + 1].id : null;
+      if (nextFormationId) {
+        const allPerformers = [...freshState.performers, ...newPerformers];
+        for (const item of items) {
+          if (item.type === 'performer' && item.departurePath) {
+            const p = allPerformers.find(p => p.name.toLowerCase() === item.name.toLowerCase());
+            if (p) get().setPerformerPath(p.id, afId, nextFormationId, item.departurePath.cpDx, item.departurePath.cpDy);
+          }
+        }
+      }
+
       get().pushHistory();
       scheduleAutoSave(get());
     })();

@@ -15,6 +15,8 @@ import { useTimelineGestures } from '../hooks/useTimelineGestures';
 type PositionClipboard = {
   performers: Record<string, { x: number; y: number }>;
   props: Record<string, { x: number; y: number }>;
+  arrivalPaths: Record<string, { cpDx: number; cpDy: number }>;
+  departurePaths: Record<string, { cpDx: number; cpDy: number }>;
 };
 
 type ContextMenu = { formationId: string; x: number; y: number } | null;
@@ -57,14 +59,39 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
 
   const copyFormationPositions = useCallback((formationId: string) => {
     const state = useShowStore.getState();
-    const cp: PositionClipboard = { performers: {}, props: {} };
+    const cp: PositionClipboard = { performers: {}, props: {}, arrivalPaths: {}, departurePaths: {} };
     Object.entries(state.performerPositions).forEach(([key, pos]) => {
       if (key.endsWith(`-${formationId}`)) cp.performers[pos.performer_id] = { x: pos.x, y: pos.y };
     });
     Object.entries(state.propPositions).forEach(([key, pos]) => {
       if (key.endsWith(`-${formationId}`)) cp.props[pos.prop_id] = { x: pos.x, y: pos.y };
     });
+    const sortedForms = state.formations.slice().sort((a, b) => a.order_index - b.order_index);
+    const idx = sortedForms.findIndex(f => f.id === formationId);
+    const prevId = idx > 0 ? sortedForms[idx - 1].id : null;
+    const nextId = idx < sortedForms.length - 1 ? sortedForms[idx + 1].id : null;
+    Object.entries(state.performerPaths).forEach(([key, path]) => {
+      const performerId = key.substring(0, 36);
+      const fromId = key.substring(37, 73);
+      const toId = key.substring(74);
+      if (prevId && fromId === prevId && toId === formationId) cp.arrivalPaths[performerId] = path;
+      if (nextId && fromId === formationId && toId === nextId) cp.departurePaths[performerId] = path;
+    });
     setClipboard(cp);
+  }, []);
+
+  const applyClipboardPaths = useCallback((targetFormationId: string, cp: PositionClipboard) => {
+    const state = useShowStore.getState();
+    const sortedForms = state.formations.slice().sort((a, b) => a.order_index - b.order_index);
+    const idx = sortedForms.findIndex(f => f.id === targetFormationId);
+    const prevId = idx > 0 ? sortedForms[idx - 1].id : null;
+    const nextId = idx < sortedForms.length - 1 ? sortedForms[idx + 1].id : null;
+    Object.entries(cp.arrivalPaths).forEach(([performerId, path]) => {
+      if (prevId) state.setPerformerPath(performerId, prevId, targetFormationId, path.cpDx, path.cpDy);
+    });
+    Object.entries(cp.departurePaths).forEach(([performerId, path]) => {
+      if (nextId) state.setPerformerPath(performerId, targetFormationId, nextId, path.cpDx, path.cpDy);
+    });
   }, []);
 
   const handleContextMenu = useCallback((e: React.MouseEvent, formationId: string) => {
@@ -131,6 +158,7 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
         if (activeId && clipboardRef.current) {
           e.preventDefault();
           pastePositionsToFormation(activeId, clipboardRef.current);
+          applyClipboardPaths(activeId, clipboardRef.current);
         }
         return;
       }
@@ -404,7 +432,7 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
             label: 'Paste positions',
             shortcut: `${modKey}V`,
             disabled: !clipboard,
-            action: () => { if (clipboard) { pastePositionsToFormation(fid, clipboard); } closeContextMenu(); },
+            action: () => { if (clipboard) { pastePositionsToFormation(fid, clipboard); applyClipboardPaths(fid, clipboard); } closeContextMenu(); },
           },
           {
             label: 'Delete',
