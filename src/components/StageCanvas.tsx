@@ -27,7 +27,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
     performerPositions, propPositions, performerPaths,
     activeFormationId,
     selectedItemIds, setSelectedItemIds, toggleItemSelected,
-    movePerformer, moveProp, pushHistory,
+    movePerformer, moveProp, pushHistory, captureSnapshot,
     setPerformerPath, clearPerformerPath, updateStageConfig, currentUserRole,
   } = useShowStore(useShallow(state => ({
     show: state.show,
@@ -44,6 +44,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
     movePerformer: state.movePerformer,
     moveProp: state.moveProp,
     pushHistory: state.pushHistory,
+    captureSnapshot: state.captureSnapshot,
     setPerformerPath: state.setPerformerPath,
     clearPerformerPath: state.clearPerformerPath,
     updateStageConfig: state.updateStageConfig,
@@ -404,7 +405,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
           radius={5} fill={performer.color}
           stroke="rgba(255,255,255,0.4)" strokeWidth={1}
           opacity={0.85} draggable
-          onMouseDown={(e: Konva.KonvaEventObject<MouseEvent>) => { e.cancelBubble = true; }}
+          onMouseDown={(e: Konva.KonvaEventObject<MouseEvent>) => { e.cancelBubble = true; captureSnapshot(); }}
           onDragMove={(e: Konva.KonvaEventObject<DragEvent>) => {
             e.cancelBubble = true;
             const h = canvasToWorld(e.target.x(), e.target.y(), offsetXRef.current, offsetYRef.current, cellScaleRef.current);
@@ -416,6 +417,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
           }}
           onDblClick={(e: Konva.KonvaEventObject<MouseEvent>) => {
             e.cancelBubble = true;
+            captureSnapshot();
             clearPerformerPath(pid, prevFormId, activeFormationId!);
             pushHistory();
           }}
@@ -566,6 +568,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
             const propD = (prop.depth ?? prop.size ?? 2) * cellScale * 0.5;
 
             function onPropDragStart() {
+              captureSnapshot();
               dragStartPos.current = { x: pos!.x, y: pos!.y };
               dragStartWorldPosRef.current = { x: pos!.x, y: pos!.y };
               lastDragCanvasPosRef.current = null;
@@ -663,6 +666,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
             const { x, y } = toCanvas(pos.x, pos.y);
 
             function onPerformerDragStart() {
+              captureSnapshot();
               dragStartPos.current = { x: basePos!.x, y: basePos!.y };
               dragStartWorldPosRef.current = { x: basePos!.x, y: basePos!.y };
               lastDragCanvasPosRef.current = null;
@@ -887,6 +891,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
             e.preventDefault();
             e.stopPropagation();
             if (!activeFormationId) return;
+            captureSnapshot();
             const state = useShowStore.getState();
             const basePositions: Record<string, { x: number; y: number }> = {};
             selectedItemIds.forEach(id => {

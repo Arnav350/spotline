@@ -109,9 +109,24 @@ export interface HistorySnapshot {
   performerGroups: PerformerGroup[];
 }
 
-export interface HistoryEntry extends HistorySnapshot {
-  // State before this action was applied — used for delta-based undo that preserves remote changes.
-  before?: HistorySnapshot;
+// Non-null array patch entry: op distinguishes new items from updates to prevent
+// resurrection of remotely-deleted items (updates are skipped if item no longer exists).
+export type ArrayPatchEntry<T> = { op: 'insert' | 'update'; data: T } | null;
+
+// Only stores what changed — null value means the item/key was deleted.
+export interface HistoryPatch {
+  performers?: Record<string, ArrayPatchEntry<Performer>>;
+  props?: Record<string, ArrayPatchEntry<Prop>>;
+  formations?: Record<string, ArrayPatchEntry<Formation>>;
+  performerPositions?: Record<string, PerformerPosition | null>;
+  propPositions?: Record<string, PropPosition | null>;
+  performerPaths?: Record<string, { cpDx: number; cpDy: number } | null>;
+  performerGroups?: Record<string, ArrayPatchEntry<PerformerGroup>>;
+}
+
+export interface HistoryEntry {
+  forward: HistoryPatch; // apply to redo (pre-action → post-action)
+  reverse: HistoryPatch; // apply to undo (post-action → pre-action)
 }
 
 export interface Profile {

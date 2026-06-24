@@ -11,6 +11,8 @@ import type {
   SelectableItem,
   HistoryEntry,
   HistorySnapshot,
+  HistoryPatch,
+  ArrayPatchEntry,
   Shape,
   PerformerGroup,
   AudioSegment,
@@ -152,6 +154,7 @@ interface ShowState {
 
   undo: () => void;
   redo: () => void;
+  captureSnapshot: () => void;
   pushHistory: () => void;
 
   uploadMusic: (file: File) => Promise<void>;
@@ -203,98 +206,205 @@ function scheduleAutoSave(state: ShowState) {
 
 // Delta-based history restore: only revert keys that changed between `from` and `to`,
 // leaving keys that remote users may have changed independently untouched.
-function applyHistoryDelta(
-  from: HistorySnapshot,
-  to: HistorySnapshot,
-  current: ShowState,
-): Partial<ShowState> {
+// Baseline snapshot captured before each local action. Only updated by captureSnapshot(), never by remote changes.
+let historyBaseline: HistorySnapshot | null = null;
+
+function snapshotState(state: ShowState): HistorySnapshot {
+  return {
+    performers: JSON.parse(JSON.stringify(state.performers)),
+    props: JSON.parse(JSON.stringify(state.props)),
+    formations: JSON.parse(JSON.stringify(state.formations)),
+    performerPositions: JSON.parse(JSON.stringify(state.performerPositions)),
+    propPositions: JSON.parse(JSON.stringify(state.propPositions)),
+    performerPaths: JSON.parse(JSON.stringify(state.performerPaths)),
+    performerGroups: JSON.parse(JSON.stringify(state.performerGroups)),
+  };
+}
+
+// Compute what changed between two snapshots. Only changed keys are stored; null means deleted.
+function computePatch(from: HistorySnapshot, to: HistorySnapshot): HistoryPatch {
+  const patch: HistoryPatch = {};
+
+  function diffArray<T extends { id: string }>(fromArr: T[], toArr: T[]): Record<string, ArrayPatchEntry<T>> | undefined {
+    const fromMap = Object.fromEntries(fromArr.map(x => [x.id, x]));
+    const toMap = Object.fromEntries(toArr.map(x => [x.id, x]));
+    const diff: Record<string, ArrayPatchEntry<T>> = {};
+    let changed = false;
+    for (const [id, item] of Object.entries(toMap)) {
+      if (JSON.stringify(fromMap[id]) !== JSON.stringify(item)) {
+        diff[id] = { op: fromMap[id] !== undefined ? 'update' : 'insert', data: JSON.parse(JSON.stringify(item)) };
+        changed = true;
+      }
+    }
+    for (const id of Object.keys(fromMap)) {
+      if (!toMap[id]) { diff[id] = null; changed = true; }
+    }
+    return changed ? diff : undefined;
+  }
+
+  const performers = diffArray(from.performers, to.performers);
+  if (performers) patch.performers = performers;
+  const props = diffArray(from.props, to.props);
+  if (props) patch.props = props;
+  const formations = diffArray(from.formations, to.formations);
+  if (formations) patch.formations = formations;
+  const performerGroups = diffArray(from.performerGroups, to.performerGroups);
+  if (performerGroups) patch.performerGroups = performerGroups;
+
+  function diffRecord<T>(
+    fromRec: Record<string, T>,
+    toRec: Record<string, T>,
+  ): Record<string, T | null> | undefined {
+    const allKeys = new Set([...Object.keys(fromRec), ...Object.keys(toRec)]);
+    const changes: Record<string, T | null> = {};
+    let hasChanges = false;
+    for (const k of allKeys) {
+      if (JSON.stringify(fromRec[k]) !== JSON.stringify(toRec[k])) {
+        changes[k] = toRec[k] ?? null;
+        hasChanges = true;
+      }
+    }
+    return hasChanges ? changes : undefined;
+  }
+
+  const pp = diffRecord(from.performerPositions, to.performerPositions);
+  if (pp) patch.performerPositions = pp as Record<string, PerformerPosition | null>;
+
+  const prp = diffRecord(from.propPositions, to.propPositions);
+  if (prp) patch.propPositions = prp as Record<string, PropPosition | null>;
+
+  const paths = diffRecord(from.performerPaths, to.performerPaths);
+  if (paths) patch.performerPaths = paths as Record<string, { cpDx: number; cpDy: number } | null>;
+
+  return patch;
+}
+
+function applyArrayPatch<T extends { id: string }>(patch: Record<string, ArrayPatchEntry<T>>, current: T[]): T[] {
+  const result: T[] = [];
+  for (const item of current) {
+    const entry = patch[item.id];
+    if (entry === null) continue;       // deleted
+    result.push(entry ? entry.data : item); // updated or unchanged
+  }
+  for (const [id, entry] of Object.entries(patch)) {
+    // Only re-insert items that A originally created; skip updates to remotely-deleted items.
+    if (entry !== null && entry.op === 'insert' && !current.some(x => x.id === id)) {
+      result.push(entry.data);
+    }
+  }
+  return result;
+}
+
+function applyPatch(patch: HistoryPatch, current: ShowState): Partial<ShowState> {
   const result: Partial<ShowState> = {};
 
-  // Generic array diff helper
-  function diffArrays<T extends { id: string }>(
-    fromArr: T[], toArr: T[], curArr: T[],
-  ): T[] | null {
-    const fromIds = new Set(fromArr.map(x => x.id));
-    const toIds = new Set(toArr.map(x => x.id));
-    const changed =
-      fromArr.length !== toArr.length ||
-      fromArr.some(x => { const t = toArr.find(y => y.id === x.id); return !t || JSON.stringify(x) !== JSON.stringify(t); }) ||
-      toArr.some(x => !fromIds.has(x.id));
-    if (!changed) return null;
+  if (patch.performers !== undefined)
+    result.performers = applyArrayPatch(patch.performers, current.performers);
+  if (patch.props !== undefined)
+    result.props = applyArrayPatch(patch.props, current.props);
+  if (patch.formations !== undefined)
+    result.formations = applyArrayPatch(patch.formations, current.formations).sort((a, b) => a.order_index - b.order_index);
+  if (patch.performerGroups !== undefined)
+    result.performerGroups = applyArrayPatch(patch.performerGroups, current.performerGroups);
 
-    let next = [...curArr];
-    // Remove items added in this action (in from but not to)
-    next = next.filter(x => !fromIds.has(x.id) || toIds.has(x.id));
-    // Restore items removed in this action (in to but missing from current)
-    for (const x of toArr) {
-      if (!next.some(y => y.id === x.id)) next.push(x);
+  if (patch.performerPositions !== undefined) {
+    const pos = { ...current.performerPositions };
+    for (const [k, v] of Object.entries(patch.performerPositions)) {
+      if (v === null) delete pos[k]; else pos[k] = v as PerformerPosition;
     }
-    // Apply property updates from `to`
-    next = next.map(x => toArr.find(y => y.id === x.id) ?? x);
-    return next;
+    result.performerPositions = pos;
   }
 
-  const performers = diffArrays(from.performers, to.performers, current.performers);
-  if (performers) result.performers = performers;
-
-  const props = diffArrays(from.props, to.props, current.props);
-  if (props) result.props = props;
-
-  const formations = diffArrays(from.formations, to.formations, current.formations);
-  if (formations) result.formations = (formations as Formation[]).sort((a, b) => a.order_index - b.order_index);
-
-  // Position record diff: only touch keys that changed between from→to
-  function diffPositions<T>(
-    fromPos: Record<string, T>,
-    toPos: Record<string, T>,
-    curPos: Record<string, T>,
-  ): Record<string, T> | null {
-    const allKeys = new Set([...Object.keys(fromPos), ...Object.keys(toPos)]);
-    const changedKeys: string[] = [];
-    for (const k of allKeys) {
-      if (JSON.stringify(fromPos[k]) !== JSON.stringify(toPos[k])) changedKeys.push(k);
+  if (patch.propPositions !== undefined) {
+    const pos = { ...current.propPositions };
+    for (const [k, v] of Object.entries(patch.propPositions)) {
+      if (v === null) delete pos[k]; else pos[k] = v as PropPosition;
     }
-    if (changedKeys.length === 0) return null;
-    const next = { ...curPos };
-    for (const k of changedKeys) {
-      if (toPos[k] !== undefined) next[k] = toPos[k];
-      else delete next[k];
-    }
-    return next;
+    result.propPositions = pos;
   }
 
-  const performerPositions = diffPositions(from.performerPositions, to.performerPositions, current.performerPositions);
-  if (performerPositions) result.performerPositions = performerPositions as Record<string, PerformerPosition>;
-
-  const propPositions = diffPositions(from.propPositions, to.propPositions, current.propPositions);
-  if (propPositions) result.propPositions = propPositions as Record<string, PropPosition>;
-
-  const performerPaths = diffPositions(from.performerPaths, to.performerPaths, current.performerPaths);
-  if (performerPaths) result.performerPaths = performerPaths as Record<string, { cpDx: number; cpDy: number }>;
-
-  const performerGroups = diffArrays(from.performerGroups, to.performerGroups, current.performerGroups);
-  if (performerGroups) result.performerGroups = performerGroups as PerformerGroup[];
+  if (patch.performerPaths !== undefined) {
+    const paths = { ...current.performerPaths };
+    for (const [k, v] of Object.entries(patch.performerPaths)) {
+      if (v === null) delete paths[k]; else paths[k] = v as { cpDx: number; cpDy: number };
+    }
+    result.performerPaths = paths;
+  }
 
   return result;
 }
 
+// Remove position/path keys that reference entities deleted by remote users.
+// Runs on the fully-assembled applyPatch result so resurrected entities are already present.
+function sanitize(result: Partial<ShowState>, current: ShowState): Partial<ShowState> {
+  const performers = result.performers ?? current.performers;
+  const props = result.props ?? current.props;
+  const formations = result.formations ?? current.formations;
+  const performerIds = new Set(performers.map(p => p.id));
+  const propIds = new Set(props.map(p => p.id));
+  const formationIds = new Set(formations.map(f => f.id));
+
+  if (result.performerPositions) {
+    const cleaned: Record<string, PerformerPosition> = {};
+    for (const [key, pos] of Object.entries(result.performerPositions)) {
+      if (performerIds.has(pos.performer_id) && formationIds.has(pos.formation_id)) {
+        cleaned[key] = pos;
+      }
+    }
+    result.performerPositions = cleaned;
+  }
+
+  if (result.propPositions) {
+    const cleaned: Record<string, PropPosition> = {};
+    for (const [key, pos] of Object.entries(result.propPositions)) {
+      if (propIds.has(pos.prop_id) && formationIds.has(pos.formation_id)) {
+        cleaned[key] = pos;
+      }
+    }
+    result.propPositions = cleaned;
+  }
+
+  if (result.performerPaths) {
+    const cleaned: Record<string, { cpDx: number; cpDy: number }> = {};
+    for (const key of Object.keys(result.performerPaths)) {
+      // key = performerId(36)-fromFormationId(36)-toFormationId(36), each UUID is 36 chars
+      const performerId = key.substring(0, 36);
+      const fromFormationId = key.substring(37, 73);
+      const toFormationId = key.substring(74, 110);
+      if (performerIds.has(performerId) && formationIds.has(fromFormationId) && formationIds.has(toFormationId)) {
+        cleaned[key] = result.performerPaths[key];
+      }
+    }
+    result.performerPaths = cleaned;
+  }
+
+  return result;
+}
+
+function isPatchEmpty(patch: HistoryPatch): boolean {
+  return patch.performers === undefined && patch.props === undefined &&
+    patch.formations === undefined && patch.performerGroups === undefined &&
+    patch.performerPositions === undefined && patch.propPositions === undefined &&
+    patch.performerPaths === undefined;
+}
+
 // Broadcast formation/position changes produced by undo/redo so peers see them immediately.
-function broadcastHistoryChanges(
-  prev: ShowState,
-  next: Partial<ShowState>,
-  to: HistorySnapshot,
-) {
-  if (next.formations) {
-    const nextIds = new Set(next.formations.map(f => f.id));
-    for (const f of next.formations) {
+function broadcastHistoryChanges(prev: ShowState, next: Partial<ShowState>) {
+  const nextFormations = next.formations;
+  const nextPerfPos = next.performerPositions ?? prev.performerPositions;
+  const nextPropPos = next.propPositions ?? prev.propPositions;
+
+  if (nextFormations) {
+    const nextIds = new Set(nextFormations.map(f => f.id));
+    for (const f of nextFormations) {
       const old = prev.formations.find(x => x.id === f.id);
       if (!old || JSON.stringify(old) !== JSON.stringify(f)) {
         (window as any).__spotlineBroadcastFormationUpsert?.({
           ...f,
-          performerPositions: Object.values(to.performerPositions)
+          performerPositions: Object.values(nextPerfPos)
             .filter(p => p.formation_id === f.id)
             .map(p => ({ performerId: p.performer_id, formationId: p.formation_id, x: p.x, y: p.y })),
-          propPositions: Object.values(to.propPositions)
+          propPositions: Object.values(nextPropPos)
             .filter(p => p.formation_id === f.id)
             .map(p => ({ propId: p.prop_id, formationId: p.formation_id, x: p.x, y: p.y })),
         });
@@ -303,12 +413,12 @@ function broadcastHistoryChanges(
     for (const f of prev.formations) {
       if (!nextIds.has(f.id)) (window as any).__spotlineBroadcastFormationDelete?.(f.id);
     }
-    if (next.formations.some(f => {
+    if (nextFormations.some(f => {
       const old = prev.formations.find(x => x.id === f.id);
       return old && old.order_index !== f.order_index;
     })) {
       (window as any).__spotlineBroadcastFormationsReorder?.(
-        next.formations.map(f => ({ id: f.id, order_index: f.order_index })),
+        nextFormations.map(f => ({ id: f.id, order_index: f.order_index })),
       );
     }
   }
@@ -392,7 +502,6 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
           historyIndex: -1,
           isLoading: false,
         });
-        get().pushHistory();
       } else {
         const show: Show = {
           id: showId,
@@ -473,7 +582,6 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         historyIndex: -1,
         isLoading: false,
       });
-      get().pushHistory();
     } catch {
       set({ isLoading: false });
     }
@@ -543,7 +651,6 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         historyIndex: -1,
         isLoading: false,
       });
-      get().pushHistory();
     } catch {
       set({ isLoading: false });
     }
@@ -587,7 +694,6 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       history: [],
       historyIndex: -1,
     });
-    get().pushHistory();
     return id;
   },
 
@@ -671,6 +777,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         y: srcPos?.y ?? state.show!.stage_config.height / 2,
       };
     });
+    get().captureSnapshot();
     set(s => ({
       formations: [...s.formations, formation],
       activeFormationId: id,
@@ -734,6 +841,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     const updated = [...state.formations];
     updated.splice(srcIdx + 1, 0, newFormation);
     const reindexed = updated.map((f, i) => ({ ...f, order_index: i }));
+    get().captureSnapshot();
     set({ formations: reindexed, activeFormationId: newId, performerPositions: newPerformerPositions, propPositions: newPropPositions });
     get().pushHistory();
     scheduleAutoSave(get());
@@ -766,6 +874,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         };
       }
     });
+    get().captureSnapshot();
     set({ performerPositions: newPerformerPositions, propPositions: newPropPositions });
     get().pushHistory();
     scheduleAutoSave(get());
@@ -787,6 +896,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         newPropPositions[key] = { ...newPropPositions[key], x: pos.x, y: pos.y };
       }
     });
+    get().captureSnapshot();
     set({ performerPositions: newPerformerPositions, propPositions: newPropPositions });
     get().pushHistory();
     scheduleAutoSave(get());
@@ -810,6 +920,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     Object.keys(newPerformerPositions).forEach(k => { if (k.endsWith(`-${id}`)) delete newPerformerPositions[k]; });
     Object.keys(newPropPositions).forEach(k => { if (k.endsWith(`-${id}`)) delete newPropPositions[k]; });
     Object.keys(newPerformerPaths).forEach(k => { if (k.includes(`-${id}-`) || k.endsWith(`-${id}`)) delete newPerformerPaths[k]; });
+    get().captureSnapshot();
     set({ formations: remaining, activeFormationId: newActive, performerPositions: newPerformerPositions, propPositions: newPropPositions, performerPaths: newPerformerPaths });
     (window as any).__spotlineBroadcastFormationDelete?.(id);
     get().pushHistory();
@@ -818,6 +929,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
   },
 
   updateFormation: (id: string, updates: Partial<Formation>) => {
+    get().captureSnapshot();
     set(s => ({
       formations: s.formations.map(f => {
         if (f.id !== id) return f;
@@ -838,6 +950,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     const [removed] = reordered.splice(sourceIndex, 1);
     reordered.splice(destIndex, 0, removed);
     const updated = reordered.map((f, i) => ({ ...f, order_index: i }));
+    get().captureSnapshot();
     set({ formations: updated });
     (window as any).__spotlineBroadcastFormationsReorder?.(updated.map(f => ({ id: f.id, order_index: f.order_index })));
     get().pushHistory();
@@ -894,6 +1007,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     updatedFormations.splice(srcIdx + 1, 0, newFormation);
     const reindexed = updatedFormations.map((f, i) => ({ ...f, order_index: i }));
 
+    get().captureSnapshot();
     set({
       formations: reindexed,
       activeFormationId: newId,
@@ -943,6 +1057,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         y: spawnY,
       };
     });
+    get().captureSnapshot();
     set(s => ({ performers: [...s.performers, performer], performerPositions: newPositions }));
     get().pushHistory();
     scheduleAutoSave(get());
@@ -954,6 +1069,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     const newPaths = { ...state.performerPaths };
     Object.keys(newPositions).forEach(k => { if (k.startsWith(`${id}-`)) delete newPositions[k]; });
     Object.keys(newPaths).forEach(k => { if (k.startsWith(`${id}-`)) delete newPaths[k]; });
+    get().captureSnapshot();
     set(s => ({
       performers: s.performers.filter(p => p.id !== id),
       performerPositions: newPositions,
@@ -967,6 +1083,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
   },
 
   updatePerformer: (id: string, updates: Partial<Performer>) => {
+    get().captureSnapshot();
     set(s => ({ performers: s.performers.map(p => p.id === id ? { ...p, ...updates } : p) }));
     get().pushHistory();
     scheduleAutoSave(get());
@@ -1010,6 +1127,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         y: propSpawnY,
       };
     });
+    get().captureSnapshot();
     set(s => ({ props: [...s.props, prop], propPositions: newPositions }));
     get().pushHistory();
     scheduleAutoSave(get());
@@ -1019,6 +1137,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     const state = get();
     const newPositions = { ...state.propPositions };
     Object.keys(newPositions).forEach(k => { if (k.startsWith(`${id}-`)) delete newPositions[k]; });
+    get().captureSnapshot();
     set(s => ({
       props: s.props.filter(p => p.id !== id),
       propPositions: newPositions,
@@ -1031,6 +1150,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
   },
 
   updateProp: (id: string, updates: Partial<Prop>) => {
+    get().captureSnapshot();
     set(s => ({ props: s.props.map(p => p.id === id ? { ...p, ...updates } : p) }));
     get().pushHistory();
     scheduleAutoSave(get());
@@ -1062,6 +1182,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         newPropPositions[pk] = { ...newPropPositions[pk], x: newPropPositions[pk].x + dx, y: newPropPositions[pk].y + dy };
       }
     });
+    if (!nudgeHistoryTimeout) get().captureSnapshot();
     set({ performerPositions: newPerfPositions, propPositions: newPropPositions });
     if (nudgeHistoryTimeout) clearTimeout(nudgeHistoryTimeout);
     nudgeHistoryTimeout = setTimeout(() => { get().pushHistory(); nudgeHistoryTimeout = null; }, 400);
@@ -1178,6 +1299,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       }
     }
 
+    get().captureSnapshot();
     set({ performerPositions: newPositions, performerPaths: newPaths });
     get().pushHistory();
     scheduleAutoSave(get());
@@ -1222,6 +1344,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       if (newPerfPositions[key]) newPerfPositions[key] = { ...newPerfPositions[key], x: targets[i].x, y: targets[i].y };
       else if (newPropPositions[key]) newPropPositions[key] = { ...newPropPositions[key], x: targets[i].x, y: targets[i].y };
     });
+    get().captureSnapshot();
     set({ performerPositions: newPerfPositions, propPositions: newPropPositions });
     get().pushHistory();
     scheduleAutoSave(get());
@@ -1250,6 +1373,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       if (newPerfPositions[key]) newPerfPositions[key] = { ...newPerfPositions[key], ...snapped };
       else newPropPositions[key] = { ...newPropPositions[key], ...snapped };
     });
+    get().captureSnapshot();
     set({ performerPositions: newPerfPositions, propPositions: newPropPositions });
     get().pushHistory();
     scheduleAutoSave(get());
@@ -1284,6 +1408,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       if (newPerfPositions[key]) newPerfPositions[key] = { ...newPerfPositions[key], ...snapped };
       else newPropPositions[key] = { ...newPropPositions[key], ...snapped };
     });
+    get().captureSnapshot();
     set({ performerPositions: newPerfPositions, propPositions: newPropPositions });
     get().pushHistory();
     scheduleAutoSave(get());
@@ -1344,6 +1469,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     (async () => {
       const state = get();
       if (!state.activeFormationId || !state.show) return;
+      get().captureSnapshot();
 
       let items: SpotlineClipboardItem[] = [];
       try {
@@ -1429,12 +1555,14 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       name: `Group ${state.performerGroups.length + 1}`,
       color: APP_COLORS[state.performerGroups.length % APP_COLORS.length],
     };
+    get().captureSnapshot();
     set(s => ({ performerGroups: [...s.performerGroups, group] }));
     get().pushHistory();
     scheduleAutoSave(get());
   },
 
   deletePerformerGroup: async (id: string) => {
+    get().captureSnapshot();
     set(s => ({
       performerGroups: s.performerGroups.filter(g => g.id !== id),
       performers: s.performers.map(p => p.group_id === id ? { ...p, group_id: undefined } : p),
@@ -1450,6 +1578,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
   },
 
   assignPerformerToGroup: (performerId: string, groupId: string | null) => {
+    get().captureSnapshot();
     set(s => ({
       performers: s.performers.map(p => p.id === performerId ? { ...p, group_id: groupId ?? undefined } : p),
     }));
@@ -1544,44 +1673,31 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     set({ viewMode: mode });
   },
 
+  captureSnapshot: () => {
+    historyBaseline = snapshotState(get());
+  },
+
   pushHistory: () => {
+    if (!historyBaseline) return;
     const state = get();
-    const prevEntry = state.historyIndex >= 0 ? state.history[state.historyIndex] : undefined;
-    const snapshot: HistorySnapshot = {
-      performers: JSON.parse(JSON.stringify(state.performers)),
-      props: JSON.parse(JSON.stringify(state.props)),
-      formations: JSON.parse(JSON.stringify(state.formations)),
-      performerPositions: JSON.parse(JSON.stringify(state.performerPositions)),
-      propPositions: JSON.parse(JSON.stringify(state.propPositions)),
-      performerPaths: JSON.parse(JSON.stringify(state.performerPaths)),
-      performerGroups: JSON.parse(JSON.stringify(state.performerGroups)),
-    };
-    const entry: HistoryEntry = {
-      ...snapshot,
-      before: prevEntry ? {
-        performers: prevEntry.performers,
-        props: prevEntry.props,
-        formations: prevEntry.formations,
-        performerPositions: prevEntry.performerPositions,
-        propPositions: prevEntry.propPositions,
-        performerPaths: prevEntry.performerPaths,
-        performerGroups: prevEntry.performerGroups,
-      } : undefined,
-    };
+    const postSnapshot = snapshotState(state);
+    const forward = computePatch(historyBaseline, postSnapshot);
+    const reverse = computePatch(postSnapshot, historyBaseline);
+    historyBaseline = null;
+    if (isPatchEmpty(forward) && isPatchEmpty(reverse)) return;
     const newHistory = state.history.slice(0, state.historyIndex + 1);
-    newHistory.push(entry);
+    newHistory.push({ forward, reverse });
     if (newHistory.length > MAX_HISTORY) newHistory.shift();
     set({ history: newHistory, historyIndex: newHistory.length - 1 });
   },
 
   undo: () => {
     const state = get();
-    if (state.historyIndex <= 0) return;
+    if (state.historyIndex < 0) return;
     const entry = state.history[state.historyIndex];
-    if (!entry.before) return;
-    const changes = applyHistoryDelta(entry, entry.before, state);
+    const changes = sanitize(applyPatch(entry.reverse, state), state);
     set({ ...changes, historyIndex: state.historyIndex - 1 });
-    broadcastHistoryChanges(state, changes, entry.before);
+    broadcastHistoryChanges(state, changes);
     scheduleAutoSave(get());
   },
 
@@ -1589,10 +1705,9 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     const state = get();
     if (state.historyIndex >= state.history.length - 1) return;
     const nextEntry = state.history[state.historyIndex + 1];
-    if (!nextEntry.before) return;
-    const changes = applyHistoryDelta(nextEntry.before, nextEntry, state);
+    const changes = sanitize(applyPatch(nextEntry.forward, state), state);
     set({ ...changes, historyIndex: state.historyIndex + 1 });
-    broadcastHistoryChanges(state, changes, nextEntry);
+    broadcastHistoryChanges(state, changes);
     scheduleAutoSave(get());
   },
 

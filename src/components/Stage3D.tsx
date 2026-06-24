@@ -187,7 +187,7 @@ function SceneContent({ animating, animationProgress, previousFormationId, onDra
   const {
     show, performers, props, performerPositions, propPositions, performerPaths,
     activeFormationId, selectedItem, selectedItemIds,
-    setSelectedItemIds, movePerformer, pushHistory,
+    setSelectedItemIds, movePerformer, pushHistory, captureSnapshot,
   } = useShowStore();
   const stageConfig = show?.stage_config || { width: 60, height: 40, divisionsX: 5, divisionsY: 5, subdivisionsX: 2, subdivisionsY: 2, unit: 'ft' };
 
@@ -226,7 +226,7 @@ function SceneContent({ animating, animationProgress, previousFormationId, onDra
   function handlePerformerPointerDown(e: ThreeEvent<PointerEvent>, performer: Performer) {
     e.stopPropagation();
     if (animating) return;
-    pushHistory();
+    captureSnapshot();
     setSelectedItemIds([performer.id]);
     setDraggingId(performer.id);
     onDraggingChange(true);
@@ -249,6 +249,7 @@ function SceneContent({ animating, animationProgress, previousFormationId, onDra
       if (perf) {
         (window as any).__spotlineBroadcastPositions?.([{ type: 'performer', id: draggingId, formationId: activeFormationId, x: perf.x, y: perf.y }]);
       }
+      pushHistory();
     }
     setDraggingId(null);
     onDraggingChange(false);
