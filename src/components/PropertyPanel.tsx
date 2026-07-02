@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Layers, Music, Users, Settings } from 'lucide-react';
+import { Layers, Music, Users, Settings, Sparkles } from 'lucide-react';
 import { useShowStore } from '../store/showStore';
 import { colors, fontSize, fontWeight, radius, spacing } from '../lib/theme';
 import { FormationPanel } from './panels/FormationPanel';
 import { AudioPanel } from './panels/AudioPanel';
 import { CastPanel } from './panels/CastPanel';
 import { StagePanel } from './panels/StagePanel';
+import { AIPanel } from './panels/AIPanel';
 
-export type NavPanel = 'formation' | 'audio' | 'cast' | 'stage';
+export type NavPanel = 'formation' | 'audio' | 'cast' | 'stage' | 'ai';
 
 export const NAV_WIDTH = 88;
 export const CONTENT_WIDTH = 240;
@@ -17,6 +18,7 @@ const NAV_ITEMS: { id: NavPanel; icon: React.ReactNode; label: string }[] = [
   { id: 'audio', icon: <Music size={24} />, label: 'Audio' },
   { id: 'cast', icon: <Users size={24} />, label: 'Cast' },
   { id: 'stage', icon: <Settings size={24} />, label: 'Stage' },
+  { id: 'ai', icon: <Sparkles size={24} />, label: 'AI' },
 ];
 
 interface PropertyPanelProps {
@@ -98,6 +100,7 @@ export default function PropertyPanel({ activePanel, onPanelChange }: PropertyPa
           {activePanel === 'audio' && <AudioPanel onClose={close} />}
           {activePanel === 'cast' && <CastPanel onClose={close} />}
           {activePanel === 'stage' && <StagePanel onClose={close} />}
+          {activePanel === 'ai' && <AIPanel onClose={close} />}
         </div>
       )}
     </div>

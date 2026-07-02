@@ -115,6 +115,7 @@ interface ShowState {
   deletePerformer: (id: string) => Promise<void>;
   updatePerformer: (id: string, updates: Partial<Performer>) => void;
   movePerformer: (performerId: string, formationId: string, x: number, y: number) => void;
+  bulkSetPerformerPositions: (formationId: string, updates: { id: string; x: number; y: number }[]) => void;
 
   addProp: () => void;
   deleteProp: (id: string) => Promise<void>;
@@ -1097,6 +1098,21 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         [key]: { ...s.performerPositions[key], id: s.performerPositions[key]?.id || uuidv4(), performer_id: performerId, formation_id: formationId, x, y },
       },
     }));
+    scheduleAutoSave(get());
+  },
+
+  bulkSetPerformerPositions: (formationId: string, updates: { id: string; x: number; y: number }[]) => {
+    const state = get();
+    const newPositions = { ...state.performerPositions };
+    updates.forEach(({ id, x, y }) => {
+      const key = `${id}-${formationId}`;
+      if (newPositions[key]) {
+        newPositions[key] = { ...newPositions[key], x, y };
+      }
+    });
+    get().captureSnapshot();
+    set({ performerPositions: newPositions });
+    get().pushHistory();
     scheduleAutoSave(get());
   },
 
