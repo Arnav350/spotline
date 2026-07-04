@@ -273,21 +273,7 @@ export async function duplicateShow(showId: string, userId: string, sourceTitle:
   return newShowId;
 }
 
-export async function addShowToFolder(showId: string, folderId: string | null, userId: string): Promise<void> {
+export async function addShowToFolder(showId: string, folderId: string | null, _userId: string): Promise<void> {
   await supabase.from('shows').update({ folder_id: folderId }).eq('id', showId);
-  if (folderId) {
-    // Grant folder members access to this show
-    const { data: members } = await supabase
-      .from('folder_members')
-      .select('user_id, role')
-      .eq('folder_id', folderId);
-    if (members && members.length > 0) {
-      const inserts = members
-        .filter((m: any) => m.user_id !== userId)
-        .map((m: any) => ({ show_id: showId, user_id: m.user_id, role: m.role }));
-      if (inserts.length > 0) {
-        await supabase.from('show_members').upsert(inserts, { onConflict: 'show_id,user_id' });
-      }
-    }
-  }
+  // Member-granting is handled by the on_show_folder_change DB trigger
 }

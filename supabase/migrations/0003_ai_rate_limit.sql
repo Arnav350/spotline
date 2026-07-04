@@ -45,25 +45,3 @@ begin
   return p_limit - v_used - 1;
 end;
 $$;
-
--- New-user trigger: pre-fill generation slots so new accounts start with 0 remaining.
--- Must match WEEKLY_LIMIT (currently 2).
-create or replace function handle_new_user_ai_limit()
-returns trigger
-language plpgsql
-security definer
-as $$
-declare
-  i int;
-begin
-  for i in 1..2 loop
-    insert into ai_generations (user_id) values (new.id);
-  end loop;
-  return new;
-end;
-$$;
-
-drop trigger if exists on_auth_user_created_ai_limit on auth.users;
-create trigger on_auth_user_created_ai_limit
-  after insert on auth.users
-  for each row execute function handle_new_user_ai_limit();

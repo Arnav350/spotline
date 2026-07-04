@@ -233,13 +233,11 @@ Output ONLY a valid JSON array — no explanation, no prose. Format: [{"id":"p0"
       body: JSON.stringify({ positions: result, remaining, limit: WEEKLY_LIMIT }),
     };
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    const stack = err instanceof Error ? err.stack : undefined;
-    console.error('[generate-formation] ERROR:', message);
-    if (stack) console.error('[generate-formation] STACK:', stack);
+    console.error('[generate-formation] ERROR:', err instanceof Error ? err.message : String(err));
+    if (err instanceof Error && err.stack) console.error('[generate-formation] STACK:', err.stack);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: message }),
+      body: JSON.stringify({ error: 'Generation failed. Please try again.' }),
     };
   }
 };

@@ -121,6 +121,12 @@ export async function generateFormation(opts: AIGenerationOptions): Promise<AIGe
   });
 
   if (!res.ok) {
+    if (res.status === 429) {
+      const cached = getCachedAIUsage();
+      if (cached) {
+        localStorage.setItem(USAGE_CACHE_KEY, JSON.stringify({ remaining: 0, limit: cached.limit }));
+      }
+    }
     const text = await res.text();
     let message = `Generation failed: ${text}`;
     try {

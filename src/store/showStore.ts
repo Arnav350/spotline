@@ -1746,6 +1746,12 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
   },
 
   uploadMusic: async (file: File) => {
+    if (!file.type.startsWith('audio/')) {
+      throw new Error('Only audio files are supported.');
+    }
+    if (file.size > 52_428_800) {
+      throw new Error('Audio file must be under 50 MB.');
+    }
     const state = get();
     if (!state.show) return;
     if (isSupabaseConfigured()) {

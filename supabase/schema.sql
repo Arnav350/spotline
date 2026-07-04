@@ -83,6 +83,19 @@ create table if not exists show_members (
 );
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- SHOW PUBLIC LINKS
+-- ─────────────────────────────────────────────────────────────────────────────
+create table if not exists show_public_links (
+  id          uuid primary key default gen_random_uuid(),
+  show_id     uuid references shows(id) on delete cascade,
+  token       uuid default gen_random_uuid() unique,
+  created_by  uuid references auth.users(id),
+  enabled     boolean not null default true,
+  created_at  timestamptz default now(),
+  unique(show_id)
+);
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- INVITATIONS
 -- show_id is nullable — folder invites set folder_id and leave show_id null.
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -228,6 +241,7 @@ alter table props               enable row level security;
 alter table performer_positions enable row level security;
 alter table prop_positions      enable row level security;
 alter table audio_segments      enable row level security;
+alter table show_public_links   enable row level security;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- SECURITY DEFINER HELPERS
@@ -258,15 +272,38 @@ returns boolean language sql security definer stable as $$
   );
 $$;
 
+create or replace function is_public_show(show_uuid uuid)
+returns boolean language sql security definer stable as $$
+  select exists (
+    select 1 from public.show_public_links
+    where show_id = show_uuid and enabled = true
+  );
+$$;
+
+create or replace function get_show_from_public_token(public_token uuid)
+returns uuid language sql security definer stable as $$
+  select show_id from public.show_public_links
+  where token = public_token and enabled = true
+  limit 1;
+$$;
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- ACCEPT SHOW INVITE RPC
 -- Only matches invitations that have a show_id (not folder invites).
 -- ─────────────────────────────────────────────────────────────────────────────
+create or replace function cleanup_expired_invitations()
+returns void language plpgsql security definer as $$
+begin
+  delete from invitations where expires_at < now() - interval '7 days';
+end;
+$$;
+
 create or replace function accept_invite(invite_token uuid)
 returns json language plpgsql security definer as $$
 declare
   inv record;
 begin
+  perform cleanup_expired_invitations();
   select * into inv from invitations
   where token = invite_token
     and status = 'pending'
@@ -286,8 +323,7 @@ $$;
 -- ─────────────────────────────────────────────────────────────────────────────
 -- ACCEPT FOLDER INVITE RPC
 -- Grants access to the folder + all shows currently inside it.
--- Shows added to the folder later get members added by the app layer
--- (see addShowToFolder in dashboardHelpers.ts).
+-- Shows added to the folder later get members granted by the on_show_folder_change trigger.
 -- ─────────────────────────────────────────────────────────────────────────────
 create or replace function accept_folder_invite(invite_token uuid)
 returns json language plpgsql security definer as $$
@@ -295,6 +331,7 @@ declare
   inv  record;
   s    record;
 begin
+  perform cleanup_expired_invitations();
   select * into inv from invitations
   where token = invite_token
     and status = 'pending'
@@ -315,6 +352,53 @@ begin
   return json_build_object('folder_id', inv.folder_id);
 end;
 $$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- PUBLIC LINK RPC
+-- ─────────────────────────────────────────────────────────────────────────────
+create or replace function upsert_public_link(p_show_id uuid, p_enabled boolean)
+returns table(token uuid, enabled boolean) language plpgsql security definer as $$
+declare
+  link record;
+begin
+  if not is_show_owner(p_show_id) then
+    raise exception 'Only show owners can manage public links';
+  end if;
+  insert into show_public_links (show_id, created_by, enabled)
+    values (p_show_id, auth.uid(), p_enabled)
+    on conflict (show_id) do update set enabled = p_enabled
+  returning show_public_links.token, show_public_links.enabled into link;
+  return query select link.token, link.enabled;
+end;
+$$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- INVITE LIMIT TRIGGER
+-- Rejects if there are already 20 pending invitations for the same show/folder.
+-- ─────────────────────────────────────────────────────────────────────────────
+create or replace function check_invite_rate_limit()
+returns trigger language plpgsql as $$
+declare
+  v_count int;
+begin
+  select count(*) into v_count
+  from invitations
+  where status = 'pending'
+    and (
+      (new.show_id is not null and show_id = new.show_id)
+      or (new.folder_id is not null and folder_id = new.folder_id)
+    );
+  if v_count >= 20 then
+    raise exception 'Maximum of 20 pending invitations allowed per show or folder.';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_invitation_rate_limit on invitations;
+create trigger on_invitation_rate_limit
+  before insert on invitations
+  for each row execute function check_invite_rate_limit();
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- RLS POLICIES — profiles
@@ -384,7 +468,7 @@ create policy "Owners and editors can update shows"
   on shows for update using (is_show_owner_or_editor(id));
 
 create policy "Authenticated users can create shows"
-  on shows for insert with check (auth.uid() is not null);
+  on shows for insert with check (owner_id = auth.uid());
 
 create policy "Owners can delete shows"
   on shows for delete using (is_show_owner(id));
@@ -429,6 +513,14 @@ create policy "Owners and editors can update invitations"
       select 1 from show_folders where id = folder_id and owner_id = auth.uid()
     ))
   );
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- RLS POLICIES — show_public_links
+-- Owners can manage their own link. The security-definer RPCs (is_public_show,
+-- get_show_from_public_token) bypass RLS, so no extra select policy is needed.
+-- ─────────────────────────────────────────────────────────────────────────────
+create policy "Owners can manage public links"
+  on show_public_links for all using (is_show_owner(show_id));
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- RLS POLICIES — formations, performers, props
@@ -481,6 +573,154 @@ create policy "Members can delete audio"
   using (bucket_id = 'audio' and is_show_member((storage.foldername(name))[1]::uuid));
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- PUBLIC READ POLICIES — anonymous access for enabled public links
+-- ─────────────────────────────────────────────────────────────────────────────
+create policy "Public can read shows"
+  on shows for select using (is_public_show(id));
+
+create policy "Public can read formations"
+  on formations for select using (is_public_show(show_id));
+
+create policy "Public can read performers"
+  on performers for select using (is_public_show(show_id));
+
+create policy "Public can read props"
+  on props for select using (is_public_show(show_id));
+
+create policy "Public can read performer_groups"
+  on performer_groups for select using (is_public_show(show_id));
+
+create policy "Public can read audio_segments"
+  on audio_segments for select using (is_public_show(show_id));
+
+create policy "Public can read performer_positions"
+  on performer_positions for select
+  using (is_public_show((select show_id from formations where id = formation_id)));
+
+create policy "Public can read prop_positions"
+  on prop_positions for select
+  using (is_public_show((select show_id from formations where id = formation_id)));
+
+create policy "Public can read audio"
+  on storage.objects for select
+  using (bucket_id = 'audio' and is_public_show((storage.foldername(name))[1]::uuid));
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- FOLDER AUTO-GRANT TRIGGER
+-- When a show is moved into a folder, automatically grants all existing folder
+-- members access to that show. Eliminates split responsibility with app layer.
+-- ─────────────────────────────────────────────────────────────────────────────
+create or replace function auto_grant_folder_members()
+returns trigger language plpgsql security definer as $$
+begin
+  if new.folder_id is null then return new; end if;
+  if old.folder_id is not distinct from new.folder_id then return new; end if;
+
+  insert into show_members (show_id, user_id, role)
+  select new.id, fm.user_id, fm.role
+  from folder_members fm
+  where fm.folder_id = new.folder_id
+    and fm.user_id != new.owner_id
+  on conflict (show_id, user_id) do update set role = excluded.role;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists on_show_folder_change on shows;
+create trigger on_show_folder_change
+  after update of folder_id on shows
+  for each row execute function auto_grant_folder_members();
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- BLOCK DISPOSABLE EMAIL DOMAINS ON SIGNUP
+-- ─────────────────────────────────────────────────────────────────────────────
+create or replace function block_disposable_email()
+returns trigger
+language plpgsql
+security definer
+as $$
+declare
+  v_domain text;
+  disposable_domains text[] := array[
+    'mailinator.com', 'guerrillamail.com', 'guerrillamail.net', 'guerrillamail.org',
+    'guerrillamail.biz', 'guerrillamail.de', 'guerrillamail.info', 'grr.la',
+    'sharklasers.com', 'guerrillamailblock.com', 'spam4.me', 'yopmail.com',
+    'yopmail.fr', 'cool.fr.nf', 'jetable.fr.nf', 'nospam.ze.tc', 'nomail.xl.cx',
+    'mega.zik.dj', 'speed.1s.fr', 'courriel.fr.nf', 'moncourrier.fr.nf',
+    'monemail.fr.nf', 'monmail.fr.nf', 'tempmail.com', 'temp-mail.org',
+    'throwam.com', 'throwam.net', 'dispostable.com', 'mailnull.com',
+    'spamgourmet.com', 'spamgourmet.net', 'spamgourmet.org', 'trashmail.at',
+    'trashmail.com', 'trashmail.io', 'trashmail.me', 'trashmail.net',
+    'trashmail.org', 'trashmail.xyz', 'wegwerfmail.de', 'wegwerfmail.net',
+    'wegwerfmail.org', 'maildrop.cc', 'mailnesia.com', 'mailnull.com',
+    'spamspot.com', 'spamthis.co.uk', 'spamtroll.net', 'temporaryemail.net',
+    'temporaryinbox.com', 'throwaway.email', 'filzmail.com', 'getnada.com',
+    'mohmal.com', 'spamfree24.org', 'tempinbox.com', 'tempinbox.co.uk',
+    'tempomail.fr', 'thanksnospam.info', 'trbvm.com', 'mailexpire.com',
+    'fakeinbox.com', 'antichef.com', 'antichef.net', 'antispam24.de',
+    'chacuo.net', 'deadaddress.com', 'discardmail.com', 'discardmail.de',
+    'discard.email', 'e4ward.com', 'emaildienst.de', 'emailias.com',
+    'emailinfive.com', 'emailtemporanea.com', 'emailtemporanea.net',
+    'emailtemporanea.org', 'fakeemailgenerator.com', 'filzmail.com',
+    'fizmail.com', 'kurzepost.de', 'letthemeatspam.com', 'lortemail.dk',
+    'mt2009.com', 'mt2014.com', 'mytrashmail.com', 'netmails.com',
+    'nobulk.com', 'noclickemail.com', 'nogmailspam.info', 'nospamfor.us',
+    'nowmymail.com', 'objectmail.com', 'obobbo.com', 'oneoffemail.com',
+    'onewaymail.com', 'pookmail.com', 'putthisinyourspamdatabase.com',
+    'rcpt.at', 'recode.me', 'regbypass.com', 'rklips.com',
+    'safe-mail.net', 'safetypost.de', 'sandelf.de', 'schafmail.de',
+    'schrott-email.de', 'secretemail.de', 'secure-mail.biz',
+    'selfdestructingmail.com', 'sendspamhere.com', 'shiftmail.com',
+    'skeefmail.com', 'slopsbox.com', 'snakemail.com', 'sneakemail.com',
+    'snkmail.com', 'sofimail.com', 'sofort-mail.de', 'sogetthis.com',
+    'spam.la', 'spam.su', 'spamavert.com', 'spambob.com', 'spambob.net',
+    'spambob.org', 'spambog.com', 'spambog.de', 'spambog.ru',
+    'spambox.info', 'spambox.us', 'spamcannon.com', 'spamcannon.net',
+    'spamcon.org', 'spamcorpse.com', 'spamevader.com', 'spamfree.eu',
+    'spamfree24.de', 'spamfree24.eu', 'spamfree24.info', 'spamfree24.net',
+    'spamgoes.in', 'spamhole.com', 'spamify.com', 'spaminator.de',
+    'spamkill.info', 'spaml.com', 'spaml.de', 'spammotel.com',
+    'spammy.host', 'spamoff.de', 'spamsalad.in', 'spamsphere.com',
+    'spamstack.net', 'spamthisplease.com', 'spamwc.de', 'spamwc.net',
+    'spamwc.org', 'spikio.com', 'suremail.info', 'sweetxxx.de',
+    'techemail.com', 'techgroup.me', 'teleworm.com', 'teleworm.us',
+    'temp-mail.ru', 'tempail.com', 'tempalias.com', 'tempe-mail.com',
+    'tempemail.co.za', 'tempemail.com', 'tempemail.net', 'tempmail.de',
+    'tempmail.eu', 'tempmail.it', 'tempmaildemo.com', 'tempmailer.com',
+    'tempmailer.de', 'temporaryemail.net', 'temporaryforwarding.com',
+    'temporarymailaddress.com', 'tempthe.net', 'thisisnotmyrealemail.com',
+    'throam.com', 'throwam.com', 'tilien.com', 'tmailinator.com',
+    'tradermail.info', 'trash-amil.com', 'trash-mail.at', 'trash-mail.com',
+    'trash-mail.de', 'trash-mail.ga', 'trash-mail.io', 'trash-mail.net',
+    'trash2009.com', 'trash2010.com', 'trash2011.com', 'trashdevil.com',
+    'trashdevil.de', 'trashemail.de', 'trashimail.de', 'trashmail.app',
+    'trashmail.at', 'trashmail.com', 'trashmail.de', 'trashmail.io',
+    'trashmail.me', 'trashmail.net', 'trashmail.org', 'trashmail.se',
+    'trashmail.xyz', 'trashmailer.com', 'turual.com', 'twinmail.de',
+    'tyldd.com', 'venompen.com', 'veryrealemail.com', 'webm4il.info',
+    'wegwerfadresse.de', 'wegwerfmail.de', 'wegwerfmail.net', 'wegwerfmail.org',
+    'wuzupmail.net', 'xagloo.com', 'xemaps.com', 'xents.com',
+    'xmaily.com', 'xoxy.net', 'yepmail.net', 'yogamaven.com',
+    'yopmail.com', 'yopmail.fr', 'yuurok.com', 'z1p.biz',
+    'zehnminuten.de', 'zehnminutenmail.de', 'zippymail.info',
+    'zoemail.net', 'zoemail.org', 'zomg.info'
+  ];
+begin
+  v_domain := lower(split_part(new.email, '@', 2));
+  if v_domain = any(disposable_domains) then
+    raise exception 'Disposable email addresses are not allowed.';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created_block_disposable on auth.users;
+create trigger on_auth_user_created_block_disposable
+  before insert on auth.users
+  for each row execute function block_disposable_email();
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- AI GENERATION RATE LIMITING
 -- ─────────────────────────────────────────────────────────────────────────────
 create table if not exists ai_generations (
@@ -526,22 +766,3 @@ begin
 end;
 $$;
 
-create or replace function handle_new_user_ai_limit()
-returns trigger
-language plpgsql
-security definer
-as $$
-declare
-  i int;
-begin
-  for i in 1..2 loop
-    insert into ai_generations (user_id) values (new.id);
-  end loop;
-  return new;
-end;
-$$;
-
-drop trigger if exists on_auth_user_created_ai_limit on auth.users;
-create trigger on_auth_user_created_ai_limit
-  after insert on auth.users
-  for each row execute function handle_new_user_ai_limit();
