@@ -12,13 +12,6 @@ import { AudioSegmentBar } from './timeline/AudioSegmentBar';
 import { usePlayback } from '../hooks/usePlayback';
 import { useTimelineGestures } from '../hooks/useTimelineGestures';
 
-type PositionClipboard = {
-  performers: Record<string, { x: number; y: number }>;
-  props: Record<string, { x: number; y: number }>;
-  arrivalPaths: Record<string, { cpDx: number; cpDy: number }>;
-  departurePaths: Record<string, { cpDx: number; cpDy: number }>;
-};
-
 type ContextMenu = { formationId: string; x: number; y: number } | null;
 
 export default function FormationTimeline({ showAudioSegments = false }: { showAudioSegments?: boolean }) {
@@ -28,7 +21,7 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
     audioSegments, selectedAudioSegmentId,
     collaborators, localUserId,
     addFormation, addFormationAfter, deleteFormation,
-    resetFormationToPrev, pastePositionsToFormation,
+    resetFormationToPrev,
     currentUserRole,
   } = useShowStore();
   const isViewer = currentUserRole === 'viewer';
@@ -52,47 +45,8 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [hasSeeked, setHasSeeked] = useState(false);
   const [contextMenu, setContextMenu] = useState<ContextMenu>(null);
-  const [clipboard, setClipboard] = useState<PositionClipboard | null>(null);
-  const clipboardRef = useRef<PositionClipboard | null>(null);
-  clipboardRef.current = clipboard;
   function seek(t: number) { setHasSeeked(true); seekToTime(t); }
 
-  const copyFormationPositions = useCallback((formationId: string) => {
-    const state = useShowStore.getState();
-    const cp: PositionClipboard = { performers: {}, props: {}, arrivalPaths: {}, departurePaths: {} };
-    Object.entries(state.performerPositions).forEach(([key, pos]) => {
-      if (key.endsWith(`-${formationId}`)) cp.performers[pos.performer_id] = { x: pos.x, y: pos.y };
-    });
-    Object.entries(state.propPositions).forEach(([key, pos]) => {
-      if (key.endsWith(`-${formationId}`)) cp.props[pos.prop_id] = { x: pos.x, y: pos.y };
-    });
-    const sortedForms = state.formations.slice().sort((a, b) => a.order_index - b.order_index);
-    const idx = sortedForms.findIndex(f => f.id === formationId);
-    const prevId = idx > 0 ? sortedForms[idx - 1].id : null;
-    const nextId = idx < sortedForms.length - 1 ? sortedForms[idx + 1].id : null;
-    Object.entries(state.performerPaths).forEach(([key, path]) => {
-      const performerId = key.substring(0, 36);
-      const fromId = key.substring(37, 73);
-      const toId = key.substring(74);
-      if (prevId && fromId === prevId && toId === formationId) cp.arrivalPaths[performerId] = path;
-      if (nextId && fromId === formationId && toId === nextId) cp.departurePaths[performerId] = path;
-    });
-    setClipboard(cp);
-  }, []);
-
-  const applyClipboardPaths = useCallback((targetFormationId: string, cp: PositionClipboard) => {
-    const state = useShowStore.getState();
-    const sortedForms = state.formations.slice().sort((a, b) => a.order_index - b.order_index);
-    const idx = sortedForms.findIndex(f => f.id === targetFormationId);
-    const prevId = idx > 0 ? sortedForms[idx - 1].id : null;
-    const nextId = idx < sortedForms.length - 1 ? sortedForms[idx + 1].id : null;
-    Object.entries(cp.arrivalPaths).forEach(([performerId, path]) => {
-      if (prevId) state.setPerformerPath(performerId, prevId, targetFormationId, path.cpDx, path.cpDy);
-    });
-    Object.entries(cp.departurePaths).forEach(([performerId, path]) => {
-      if (nextId) state.setPerformerPath(performerId, targetFormationId, nextId, path.cpDx, path.cpDy);
-    });
-  }, []);
 
   const handleContextMenu = useCallback((e: React.MouseEvent, formationId: string) => {
     e.preventDefault();
@@ -143,23 +97,11 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
       }
       const mod = e.metaKey || e.ctrlKey;
       const state = useShowStore.getState();
-      if (mod && e.key === 'c') {
-        const activeId = state.activeFormationId;
-        if (activeId && state.selectedItemIds.length === 0 && !state.selectedItem) {
-          e.preventDefault();
-          copyFormationPositions(activeId);
-        } else if (state.selectedItemIds.length > 0 || state.selectedItem) {
-          setClipboard(null);
-        }
-        return;
-      }
-      if (mod && e.key === 'v') {
-        const activeId = state.activeFormationId;
-        if (activeId && clipboardRef.current) {
-          e.preventDefault();
-          pastePositionsToFormation(activeId, clipboardRef.current);
-          applyClipboardPaths(activeId, clipboardRef.current);
-        }
+      if (mod && e.key === 'c' && state.selectedItemIds.length === 0 && !state.selectedItem) {
+        e.preventDefault();
+        state.selectAllItems();
+        state.copySelectedPerformers();
+        state.setSelectedItemIds([]);
         return;
       }
       if (state.selectedItemIds.length > 0) return;
@@ -180,7 +122,7 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [setActiveFormation, copyFormationPositions, pastePositionsToFormation]);
+  }, [setActiveFormation]);
 
   // Auto-scroll to keep playhead visible
   useEffect(() => {
@@ -426,13 +368,12 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
           {
             label: 'Copy positions',
             shortcut: `${modKey}C`,
-            action: () => { copyFormationPositions(fid); closeContextMenu(); },
+            action: () => { const s = useShowStore.getState(); s.selectAllItems(); s.copySelectedPerformers(); s.setSelectedItemIds([]); closeContextMenu(); },
           },
           {
             label: 'Paste positions',
             shortcut: `${modKey}V`,
-            disabled: !clipboard,
-            action: () => { if (clipboard) { pastePositionsToFormation(fid, clipboard); applyClipboardPaths(fid, clipboard); } closeContextMenu(); },
+            action: () => { setActiveFormation(fid); useShowStore.getState().pastePerformers(); closeContextMenu(); },
           },
           {
             label: 'Delete',

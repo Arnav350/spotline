@@ -884,15 +884,19 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
   pastePositionsToFormation: (id: string, positions: { performers: Record<string, { x: number; y: number }>; props: Record<string, { x: number; y: number }> }) => {
     const state = get();
     const newPerformerPositions = { ...state.performerPositions };
-    Object.entries(positions.performers).forEach(([performerId, pos]) => {
-      const key = `${performerId}-${id}`;
+    Object.entries(positions.performers).forEach(([name, pos]) => {
+      const performer = state.performers.find(p => p.name.toLowerCase() === name.toLowerCase());
+      if (!performer) return;
+      const key = `${performer.id}-${id}`;
       if (newPerformerPositions[key]) {
         newPerformerPositions[key] = { ...newPerformerPositions[key], x: pos.x, y: pos.y };
       }
     });
     const newPropPositions = { ...state.propPositions };
-    Object.entries(positions.props).forEach(([propId, pos]) => {
-      const key = `${propId}-${id}`;
+    Object.entries(positions.props).forEach(([name, pos]) => {
+      const prop = state.props.find(p => p.name.toLowerCase() === name.toLowerCase());
+      if (!prop) return;
+      const key = `${prop.id}-${id}`;
       if (newPropPositions[key]) {
         newPropPositions[key] = { ...newPropPositions[key], x: pos.x, y: pos.y };
       }
@@ -1523,8 +1527,22 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       }
 
       const afId = freshState.activeFormationId!;
+      const cfg = freshState.show!.stage_config;
       const newPerfPositions = { ...freshState.performerPositions };
       const newPropPositions = { ...freshState.propPositions };
+
+      // Place newly created performers backstage in all formations except the paste target
+      const allPerformerCountBase = freshState.performers.length;
+      newPerformers.forEach((p, i) => {
+        const spawnX = (cfg.width / 8) * ((allPerformerCountBase + i) % 8) + cfg.width / 16;
+        const spawnY = -5;
+        freshState.formations.forEach(f => {
+          if (f.id === afId) return;
+          const key = `${p.id}-${f.id}`;
+          newPerfPositions[key] = { id: uuidv4(), performer_id: p.id, formation_id: f.id, x: spawnX, y: spawnY };
+        });
+      });
+
       posUpdates.forEach(({ type, id, x, y }) => {
         if (type === 'performer') {
           const key = `${id}-${afId}`;

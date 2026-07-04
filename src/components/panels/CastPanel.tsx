@@ -25,7 +25,9 @@ export function CastPanel({ onClose }: CastPanelProps) {
 
         {/* Performers */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xxs }}>
-          <span style={{ fontSize: fontSize.md, color: colors.textMuted }}>Performers</span>
+          <span style={{ fontSize: fontSize.md, color: colors.textMuted }}>Performers
+            {performers.length > 0 && <span style={{ marginLeft: 6, fontSize: fontSize.sm, color: colors.textFaint, fontVariantNumeric: 'tabular-nums' }}>{performers.length}</span>}
+          </span>
           <button
             style={{ fontSize: fontSize.md, color: colors.accentLight, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: spacing.xxs }}
             onClick={addPerformer}
@@ -68,7 +70,9 @@ export function CastPanel({ onClose }: CastPanelProps) {
 
         {/* Groups */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.sm, marginBottom: spacing.xxs }}>
-          <span style={{ fontSize: fontSize.md, color: colors.textMuted }}>Groups</span>
+          <span style={{ fontSize: fontSize.md, color: colors.textMuted }}>Groups
+            {performerGroups.length > 0 && <span style={{ marginLeft: 6, fontSize: fontSize.sm, color: colors.textFaint, fontVariantNumeric: 'tabular-nums' }}>{performerGroups.length}</span>}
+          </span>
           <button
             style={{ fontSize: fontSize.md, color: colors.accentLight, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: spacing.xxs }}
             onClick={addPerformerGroup}
@@ -132,7 +136,9 @@ export function CastPanel({ onClose }: CastPanelProps) {
 
         {/* Props */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.sm, marginBottom: spacing.xxs }}>
-          <span style={{ fontSize: fontSize.md, color: colors.textMuted }}>Props</span>
+          <span style={{ fontSize: fontSize.md, color: colors.textMuted }}>Props
+            {props.length > 0 && <span style={{ marginLeft: 6, fontSize: fontSize.sm, color: colors.textFaint, fontVariantNumeric: 'tabular-nums' }}>{props.length}</span>}
+          </span>
           <button
             style={{ fontSize: fontSize.md, color: colors.accentLight, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: spacing.xxs }}
             onClick={addProp}
