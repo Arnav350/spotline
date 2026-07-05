@@ -276,13 +276,18 @@ export function useRealtimeSync(showId: string | null) {
           }
           useShowStore.getState().setRealtimeConnected(true);
 
-          // Announce our presence to others
+          // Announce our presence to others — but only if the user identity has
+          // resolved. If still at the 'Anonymous' default (profile not loaded yet),
+          // skip here: the store subscriber above fires track() once setLocalUser()
+          // resolves the real profile, ensuring we never broadcast 'Anonymous' to peers.
           const state = useShowStore.getState();
-          channel.track({
-            userId: state.localUserId,
-            name: state.localUserName,
-            color: colorFromUserId(state.localUserId),
-          });
+          if (state.localUserName !== 'Anonymous') {
+            channel.track({
+              userId: state.localUserId,
+              name: state.localUserName,
+              color: colorFromUserId(state.localUserId),
+            });
+          }
 
           // Broadcast our current formation so late-joiners see us immediately
           broadcastEphemeral({ activeFormationId: useShowStore.getState().activeFormationId });
