@@ -131,10 +131,11 @@ create table if not exists formations (
 -- PERFORMER GROUPS
 -- ─────────────────────────────────────────────────────────────────────────────
 create table if not exists performer_groups (
-  id       uuid primary key default gen_random_uuid(),
-  show_id  uuid references shows(id) on delete cascade,
-  name     text not null default 'Group',
-  color    text not null default '#7c3aed'
+  id           uuid primary key default gen_random_uuid(),
+  show_id      uuid references shows(id) on delete cascade,
+  name         text not null default 'Group',
+  color        text not null default '#7c3aed',
+  order_index  integer not null default 0
 );
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -147,6 +148,7 @@ create table if not exists performers (
   color       text not null default '#7c3aed',
   shape       text not null default 'circle',
   group_id    uuid references performer_groups(id) on delete set null,
+  order_index integer not null default 0,
   created_at  timestamptz default now()
 );
 
@@ -165,6 +167,7 @@ create table if not exists props (
   width       numeric not null default 2,
   depth       numeric not null default 2,
   size        numeric,
+  order_index integer not null default 0,
   created_at  timestamptz default now()
 );
 

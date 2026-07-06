@@ -5,6 +5,7 @@ export interface PerformerGroup {
   show_id: string;
   name: string;
   color: string;
+  order_index: number;
 }
 
 export interface StageConfig {
@@ -25,6 +26,7 @@ export interface Performer {
   color: string;
   shape: Shape;
   group_id?: string;
+  order_index: number;
   created_at?: string;
 }
 
@@ -37,6 +39,7 @@ export interface Prop {
   width: number;
   depth: number;
   size?: number;  // legacy — kept for backwards compat with existing DB rows
+  order_index: number;
   created_at?: string;
 }
 

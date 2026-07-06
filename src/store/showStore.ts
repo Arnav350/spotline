@@ -116,11 +116,13 @@ interface ShowState {
   updatePerformer: (id: string, updates: Partial<Performer>) => void;
   movePerformer: (performerId: string, formationId: string, x: number, y: number) => void;
   bulkSetPerformerPositions: (formationId: string, updates: { id: string; x: number; y: number }[]) => void;
+  reorderPerformers: (sourceIndex: number, destIndex: number) => void;
 
   addProp: () => void;
   deleteProp: (id: string) => Promise<void>;
   updateProp: (id: string, updates: Partial<Prop>) => void;
   moveProp: (propId: string, formationId: string, x: number, y: number) => void;
+  reorderProps: (sourceIndex: number, destIndex: number) => void;
 
   setSelectedItem: (item: SelectableItem) => void;
   setSelectedItemIds: (ids: string[]) => void;
@@ -141,6 +143,7 @@ interface ShowState {
   addPerformerGroup: () => void;
   deletePerformerGroup: (id: string) => Promise<void>;
   updatePerformerGroup: (id: string, updates: Partial<PerformerGroup>) => void;
+  reorderPerformerGroups: (sourceIndex: number, destIndex: number) => void;
   assignPerformerToGroup: (performerId: string, groupId: string | null) => void;
 
   setAudioVolume: (v: number) => void;
@@ -168,6 +171,15 @@ interface ShowState {
 
   isPublicView: boolean;
   loadPublicShow: (token: string) => Promise<void>;
+}
+
+// Sorts by order_index, backfilling it by array position for rows saved before
+// the column existed (order_index undefined) so old shows still get a stable order.
+function withOrderIndex<T extends { order_index?: number }>(items: T[]): (T & { order_index: number })[] {
+  return items
+    .slice()
+    .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+    .map((item, i) => ({ ...item, order_index: item.order_index ?? i })) as (T & { order_index: number })[];
 }
 
 function resolveSelectedItem(performers: Performer[], props: Prop[], ids: string[]): SelectableItem {
@@ -488,12 +500,12 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         set({
           show: data.show,
           formations: data.formations || [],
-          performers: data.performers || [],
-          props: data.props || [],
+          performers: withOrderIndex(data.performers || []),
+          props: withOrderIndex(data.props || []),
           performerPositions: data.performerPositions || {},
           propPositions: data.propPositions || {},
           performerPaths: data.performerPaths || {},
-          performerGroups: data.performerGroups || [],
+          performerGroups: withOrderIndex(data.performerGroups || []),
           audioSegments: (data.audioSegments || [])
             .sort((a: any, b: any) => (a.order_index ?? a.start_time ?? 0) - (b.order_index ?? b.start_time ?? 0))
             .map((s: any, i: number) => ({ ...s, order_index: i, start_time: undefined })),
@@ -570,12 +582,12 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       set({
         show: resolvedShow,
         formations: formations || [],
-        performers: performers || [],
-        props: props || [],
+        performers: withOrderIndex(performers || []),
+        props: withOrderIndex(props || []),
         performerPositions,
         propPositions,
         performerPaths,
-        performerGroups: performerGroupsData || [],
+        performerGroups: withOrderIndex(performerGroupsData || []),
         audioSegments: (audioSegsData || []).sort((a: any, b: any) => a.order_index - b.order_index),
         activeFormationId: formations?.[0]?.id || null,
         currentUserRole,
@@ -638,12 +650,12 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       set({
         show: resolvedShow,
         formations: formations || [],
-        performers: performers || [],
-        props: props || [],
+        performers: withOrderIndex(performers || []),
+        props: withOrderIndex(props || []),
         performerPositions,
         propPositions,
         performerPaths,
-        performerGroups: performerGroupsData || [],
+        performerGroups: withOrderIndex(performerGroupsData || []),
         audioSegments: (audioSegsData || []).sort((a: any, b: any) => a.order_index - b.order_index),
         activeFormationId: (formations as any[])?.[0]?.id || null,
         currentUserRole: 'viewer',
@@ -1047,6 +1059,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       name: `P${state.performers.length + 1}`,
       color,
       shape: shapes[state.performers.length % shapes.length],
+      order_index: state.performers.length,
     };
     const cfg = state.show!.stage_config;
     const spawnX = (cfg.width / 8) * (state.performers.length % 8) + cfg.width / 16;
@@ -1120,6 +1133,18 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     scheduleAutoSave(get());
   },
 
+  reorderPerformers: (sourceIndex: number, destIndex: number) => {
+    const state = get();
+    const reordered = [...state.performers];
+    const [removed] = reordered.splice(sourceIndex, 1);
+    reordered.splice(destIndex, 0, removed);
+    const updated = reordered.map((p, i) => ({ ...p, order_index: i }));
+    get().captureSnapshot();
+    set({ performers: updated });
+    get().pushHistory();
+    scheduleAutoSave(get());
+  },
+
   addProp: () => {
     const state = get();
     if (!state.show) return;
@@ -1132,6 +1157,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       shape: 'square',
       width: 2,
       depth: 2,
+      order_index: state.props.length,
     };
     const cfg2 = state.show!.stage_config;
     const propSpawnX = (cfg2.width / 8) * (state.props.length % 8) + cfg2.width / 16;
@@ -1184,6 +1210,18 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         [key]: { ...s.propPositions[key], id: s.propPositions[key]?.id || uuidv4(), prop_id: propId, formation_id: formationId, x, y },
       },
     }));
+    scheduleAutoSave(get());
+  },
+
+  reorderProps: (sourceIndex: number, destIndex: number) => {
+    const state = get();
+    const reordered = [...state.props];
+    const [removed] = reordered.splice(sourceIndex, 1);
+    reordered.splice(destIndex, 0, removed);
+    const updated = reordered.map((p, i) => ({ ...p, order_index: i }));
+    get().captureSnapshot();
+    set({ props: updated });
+    get().pushHistory();
     scheduleAutoSave(get());
   },
 
@@ -1511,7 +1549,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         if (item.type === 'performer') {
           let p = freshState.performers.find(p => p.name.toLowerCase() === item.name.toLowerCase());
           if (!p) {
-            p = { id: uuidv4(), show_id: freshState.show!.id, name: item.name, color: item.color, shape: item.shape, created_at: new Date().toISOString() };
+            p = { id: uuidv4(), show_id: freshState.show!.id, name: item.name, color: item.color, shape: item.shape, order_index: freshState.performers.length + newPerformers.length, created_at: new Date().toISOString() };
             newPerformers.push(p);
           }
           posUpdates.push({ type: 'performer', id: p.id, x: item.x, y: item.y });
@@ -1519,7 +1557,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
           let pr = freshState.props.find(p => p.name.toLowerCase() === item.name.toLowerCase());
           if (!pr) {
             const s = item.size ?? 2;
-            pr = { id: uuidv4(), show_id: freshState.show!.id, name: item.name, color: item.color, shape: item.shape, width: s, depth: s, created_at: new Date().toISOString() };
+            pr = { id: uuidv4(), show_id: freshState.show!.id, name: item.name, color: item.color, shape: item.shape, width: s, depth: s, order_index: freshState.props.length + newProps.length, created_at: new Date().toISOString() };
             newProps.push(pr);
           }
           posUpdates.push({ type: 'prop', id: pr!.id, x: item.x, y: item.y });
@@ -1588,6 +1626,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       show_id: state.show.id,
       name: `Group ${state.performerGroups.length + 1}`,
       color: APP_COLORS[state.performerGroups.length % APP_COLORS.length],
+      order_index: state.performerGroups.length,
     };
     get().captureSnapshot();
     set(s => ({ performerGroups: [...s.performerGroups, group] }));
@@ -1608,6 +1647,18 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
 
   updatePerformerGroup: (id: string, updates: Partial<PerformerGroup>) => {
     set(s => ({ performerGroups: s.performerGroups.map(g => g.id === id ? { ...g, ...updates } : g) }));
+    scheduleAutoSave(get());
+  },
+
+  reorderPerformerGroups: (sourceIndex: number, destIndex: number) => {
+    const state = get();
+    const reordered = [...state.performerGroups];
+    const [removed] = reordered.splice(sourceIndex, 1);
+    reordered.splice(destIndex, 0, removed);
+    const updated = reordered.map((g, i) => ({ ...g, order_index: i }));
+    get().captureSnapshot();
+    set({ performerGroups: updated });
+    get().pushHistory();
     scheduleAutoSave(get());
   },
 
