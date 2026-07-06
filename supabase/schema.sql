@@ -61,7 +61,7 @@ create table if not exists shows (
   owner_id             uuid references auth.users(id),
   folder_id            uuid references show_folders(id) on delete set null,
   title                text not null default 'Untitled Show',
-  stage_config         jsonb not null default '{"width":60,"height":40,"divisionsX":5,"divisionsY":5,"subdivisionsX":2,"subdivisionsY":2,"unit":"ft"}',
+  stage_config         jsonb not null default '{"width":60,"height":40,"divisionsX":5,"divisionsY":5,"subdivisionsX":2,"subdivisionsY":2,"unit":"ft","maxTransitionSpeed":8}',
   bpm                  numeric,
   music_url            text,
   music_filename       text,

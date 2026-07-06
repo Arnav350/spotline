@@ -7,6 +7,8 @@ import { PanelHeader } from '../ui/PanelHeader';
 import { ColorPicker } from '../ui/ColorPicker';
 import { SegmentedControl } from '../ui/SegmentedControl';
 import { ArrangeTools } from '../ui/ArrangeTools';
+import { CollapsibleSection } from '../ui/CollapsibleSection';
+import { FormationMetrics } from './FormationMetrics';
 import type { Shape } from '../../lib/types';
 
 function NumericInput({ value, onChange, min, max, step = 0.5 }: { value: number; onChange: (n: number) => void; min?: number; max?: number; step?: number }) {
@@ -190,7 +192,7 @@ interface FormationPanelProps {
 export function FormationPanel({ onClose }: FormationPanelProps) {
   const {
     formations, activeFormationId, updateFormation, deleteFormation, duplicateFormation,
-    setActiveFormation, selectedItem, selectedItemIds, optimizeFormationTransition,
+    setActiveFormation, selectedItem, optimizeFormationTransition,
   } = useShowStore();
 
   const formation = formations.find(f => f.id === activeFormationId);
@@ -216,16 +218,6 @@ export function FormationPanel({ onClose }: FormationPanelProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       {selectedItem?.type === 'performer' && <PerformerEditor />}
-      {selectedItemIds.length > 1 && !selectedItem && (
-        <div style={{
-          padding: `${spacing.md}px ${spacing.md}px`,
-          fontSize: fontSize.md,
-          color: colors.textMuted,
-          borderBottom: `1px solid ${colors.border}`,
-        }}>
-          {selectedItemIds.length} items selected
-        </div>
-      )}
       <PropEditor />
 
       <PanelHeader title="Formation" onClose={onClose} />
@@ -253,8 +245,10 @@ export function FormationPanel({ onClose }: FormationPanelProps) {
                 style={{ resize: 'vertical', lineHeight: 1.5, fontFamily: 'inherit' }}
               />
             </div>
-            <div>
-              <label className="panel-label">Transition Easing</label>
+          </div>
+
+          <CollapsibleSection title="Transition Easing" persistKey="formation-transition-easing">
+            <div style={{ padding: `0 ${spacing.md}px` }}>
               <SegmentedControl
                 options={EASING_OPTIONS}
                 value={easing}
@@ -264,45 +258,49 @@ export function FormationPanel({ onClose }: FormationPanelProps) {
                 {EASING_OPTIONS.find(o => o.value === easing)?.title}
               </div>
             </div>
-          </div>
+          </CollapsibleSection>
 
-          {/* Arrange tools — full-width section */}
-          <ArrangeTools />
+          <CollapsibleSection title="Shape / Transform" persistKey="formation-shape-transform">
+            <ArrangeTools />
+          </CollapsibleSection>
+
+          <FormationMetrics />
 
           {/* Action buttons */}
           <div style={{ padding: `${spacing.sm}px ${spacing.md}px ${spacing.md}px`, display: 'flex', flexDirection: 'column', gap: spacing.sm }}>
-            {prevFormation && (
-              <button
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: spacing.sm,
-                  fontSize: fontSize.md,
-                  color: colors.textSecondary,
-                  background: 'transparent',
-                  border: 'none',
-                  padding: `${spacing.sm}px 0`,
-                  cursor: 'pointer',
-                  borderRadius: radius.sm,
-                  width: '100%',
-                  transition: 'color 0.15s, background 0.15s',
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.color = colors.accentLight;
-                  e.currentTarget.style.background = colors.bgCard;
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.color = colors.textSecondary;
-                  e.currentTarget.style.background = 'transparent';
-                }}
-                onClick={handleOptimize}
-                title={`Minimize travel distance from "${prevFormation.name}"`}
-              >
-                <Shuffle size={12} />
-                Optimize Transition
-              </button>
-            )}
+            <button
+              disabled={!prevFormation}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: spacing.sm,
+                fontSize: fontSize.md,
+                color: prevFormation ? colors.textSecondary : colors.textGhost,
+                background: 'transparent',
+                border: 'none',
+                padding: `${spacing.sm}px 0`,
+                cursor: prevFormation ? 'pointer' : 'default',
+                borderRadius: radius.sm,
+                width: '100%',
+                transition: 'color 0.15s, background 0.15s',
+              }}
+              onMouseEnter={e => {
+                if (!prevFormation) return;
+                e.currentTarget.style.color = colors.accentLight;
+                e.currentTarget.style.background = colors.bgCard;
+              }}
+              onMouseLeave={e => {
+                if (!prevFormation) return;
+                e.currentTarget.style.color = colors.textSecondary;
+                e.currentTarget.style.background = 'transparent';
+              }}
+              onClick={handleOptimize}
+              title={prevFormation ? `Minimize travel distance from "${prevFormation.name}"` : 'No previous formation to transition from'}
+            >
+              <Shuffle size={12} />
+              Optimize Transition
+            </button>
             <button
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',

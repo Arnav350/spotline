@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useShowStore } from '../../store/showStore';
 import { colors, fontSize, radius, spacing } from '../../lib/theme';
 import { PanelHeader } from '../ui/PanelHeader';
+import { DEFAULT_MAX_TRANSITION_SPEED } from '../../lib/formationMetrics';
 
 interface StagePanelProps {
   onClose: () => void;
@@ -158,6 +159,15 @@ export function StagePanel({ onClose }: StagePanelProps) {
             <option value="yd">Yards (yd)</option>
             <option value="units">Units</option>
           </select>
+        </div>
+
+        <div>
+          <label className="panel-label">Max Transition Speed ({config.unit}/s)</label>
+          <NumericInput
+            value={config.maxTransitionSpeed ?? DEFAULT_MAX_TRANSITION_SPEED}
+            onChange={v => updateStageConfig({ maxTransitionSpeed: v })}
+            min={1} max={100} step={0.5} isFloat
+          />
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.sm }}>

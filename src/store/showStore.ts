@@ -20,6 +20,7 @@ import type {
 } from '../lib/types';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { hungarian } from '../lib/hungarian';
+import { DEFAULT_MAX_TRANSITION_SPEED } from '../lib/formationMetrics';
 import { colors } from '../lib/theme';
 import { APP_COLORS } from '../lib/colors';
 
@@ -44,6 +45,7 @@ const DEFAULT_STAGE: StageConfig = {
   subdivisionsX: 2,
   subdivisionsY: 2,
   unit: 'ft',
+  maxTransitionSpeed: DEFAULT_MAX_TRANSITION_SPEED,
 };
 
 
@@ -70,6 +72,9 @@ interface ShowState {
   audioVolume: number;
   audioMuted: boolean;
   performerGroups: PerformerGroup[];
+  // Toggled from the "Stage balance" metric — shows the formation's center-of-mass vs. the stage center on canvas.
+  showBalanceOverlay: boolean;
+  setBalanceOverlay: (open: boolean) => void;
   viewMode: '2d' | '3d';
   isLoading: boolean;
   collaborators: CollaboratorState[];
@@ -472,6 +477,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
   audioVolume: 1,
   audioMuted: false,
   performerGroups: [],
+  showBalanceOverlay: false,
   viewMode: '2d',
   isLoading: false,
   collaborators: [],
@@ -747,6 +753,8 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     });
     scheduleAutoSave(get());
   },
+
+  setBalanceOverlay: (open: boolean) => set({ showBalanceOverlay: open }),
 
   addFormation: () => {
     const state = get();

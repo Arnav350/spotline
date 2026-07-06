@@ -66,8 +66,7 @@ export function ArrangeTools() {
 
   return (
     <div style={{
-      padding: `${spacing.sm}px ${spacing.md}px`,
-      borderBottom: `1px solid ${colors.border}`,
+      padding: `0 ${spacing.md}px`,
       display: 'flex',
       flexDirection: 'column',
       gap: spacing.sm,

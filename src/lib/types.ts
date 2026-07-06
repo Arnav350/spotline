@@ -17,6 +17,8 @@ export interface StageConfig {
   subdivisionsY: number;
   unit: string;
   snapToGrid?: boolean;
+  // Stage units/second — threshold for the "max transition speed" formation metric.
+  maxTransitionSpeed?: number;
 }
 
 export interface Performer {

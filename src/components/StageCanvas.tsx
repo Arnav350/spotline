@@ -29,6 +29,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
     selectedItemIds, setSelectedItemIds, toggleItemSelected,
     movePerformer, moveProp, pushHistory, captureSnapshot,
     setPerformerPath, clearPerformerPath, updateStageConfig, currentUserRole,
+    showBalanceOverlay,
   } = useShowStore(useShallow(state => ({
     show: state.show,
     formations: state.formations,
@@ -49,6 +50,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
     clearPerformerPath: state.clearPerformerPath,
     updateStageConfig: state.updateStageConfig,
     currentUserRole: state.currentUserRole,
+    showBalanceOverlay: state.showBalanceOverlay,
   })));
 
   const isViewer = currentUserRole === 'viewer';
@@ -451,6 +453,39 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ctrlHeld, selectedItemIds, performers, performerPositions, activeFormationId, performerSize, cellScale, offsetX, offsetY, stageConfig.width]);
 
+  // Balance overlay: stage center vs. on-stage performer centroid, toggled from the "Stage balance" metric.
+  const balanceOverlay = useMemo(() => {
+    if (!showBalanceOverlay || !activeFormationId) return null;
+    const onStagePts = performers
+      .map(p => performerPositions[`${p.id}-${activeFormationId}`])
+      .filter((pos): pos is NonNullable<typeof pos> => !!pos)
+      .filter(pos => pos.x >= 0 && pos.x <= stageConfig.width && pos.y >= 0 && pos.y <= stageConfig.height);
+    if (onStagePts.length === 0) return null;
+
+    const centroidWorld = {
+      x: onStagePts.reduce((sum, p) => sum + p.x, 0) / onStagePts.length,
+      y: onStagePts.reduce((sum, p) => sum + p.y, 0) / onStagePts.length,
+    };
+    const center = worldToCanvas(stageConfig.width / 2, stageConfig.height / 2, offsetX, offsetY, cellScale);
+    const centroid = worldToCanvas(centroidWorld.x, centroidWorld.y, offsetX, offsetY, cellScale);
+
+    return (
+      <>
+        <Line points={[center.x, center.y, centroid.x, centroid.y]}
+          stroke={colors.accentLight} strokeWidth={1.5} dash={[5, 4]} opacity={0.7} listening={false} />
+        <Circle x={center.x} y={center.y} radius={4} fill="transparent"
+          stroke={colors.textSecondary} strokeWidth={1.5} listening={false} />
+        <Line points={[center.x - 6, center.y, center.x + 6, center.y]} stroke={colors.textSecondary} strokeWidth={1.5} listening={false} />
+        <Line points={[center.x, center.y - 6, center.x, center.y + 6]} stroke={colors.textSecondary} strokeWidth={1.5} listening={false} />
+        <Circle x={centroid.x} y={centroid.y} radius={5} fill={colors.accentLight} opacity={0.9} listening={false} />
+        <Text x={center.x + 8} y={center.y - 16} text="Center" fontSize={9} fontFamily="Inter, sans-serif"
+          fill={colors.textSecondary} listening={false} />
+        <Text x={centroid.x + 8} y={centroid.y - 16} text="Centroid" fontSize={9} fontFamily="Inter, sans-serif"
+          fill={colors.accentLight} listening={false} />
+      </>
+    );
+  }, [showBalanceOverlay, activeFormationId, performers, performerPositions, stageConfig.width, stageConfig.height, offsetX, offsetY, cellScale]);
+
   // --- Fix 8: Memoized rotate handle position (uiTick ensures it updates after pan/zoom) ---
   const rotateHandle = useMemo(() => {
     if (selectedItemIds.length < 2 || !activeFormationId || isAnimatingNow) return null;
@@ -538,6 +573,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
         <Layer listening={false}>
           {ghostLines}
           {mirrorIndicators}
+          {balanceOverlay}
         </Layer>
 
         {/* Layer 2 — path handles + dynamic performers/props. All nodes are bitmap-cached
@@ -865,7 +901,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
 
       {/* Multi-select indicator */}
       {selectedItemIds.length > 1 && (
-        <div style={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', fontSize: fontSize.sm, color: colors.textSecondary, background: `${colors.bgPanel}d9`, padding: `${spacing.xs}px ${spacing.md}px`, borderRadius: radius.pill, border: `1px solid ${colors.borderMed}`, pointerEvents: 'none' }}>
+        <div style={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', fontSize: fontSize.md, color: colors.textSecondary, background: `${colors.bgPanel}d9`, padding: `${spacing.xs}px ${spacing.md}px`, borderRadius: radius.pill, border: `1px solid ${colors.borderMed}`, pointerEvents: 'none' }}>
           {selectedItemIds.length} selected
         </div>
       )}
