@@ -218,8 +218,19 @@ function scheduleAutoSave(state: ShowState) {
   if (!state.show) return;
   if (saveTimeout) clearTimeout(saveTimeout);
   saveTimeout = setTimeout(() => {
+    saveTimeout = null;
     useShowStore.getState().persistAll();
   }, 800);
+}
+
+// Called when the page is about to unload/hide — without this, a pending debounced
+// autosave (e.g. right after editing a field then refreshing) is silently dropped.
+export function flushPendingAutoSave() {
+  if (saveTimeout) {
+    clearTimeout(saveTimeout);
+    saveTimeout = null;
+    useShowStore.getState().persistAll();
+  }
 }
 
 // Delta-based history restore: only revert keys that changed between `from` and `to`,
@@ -1883,10 +1894,14 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     }
 
     try {
-      await supabase.from('shows').upsert({
+      // update, not upsert: this show already exists (created via a separate insert in
+      // createShow()), and upsert's INSERT-on-conflict compiles to an actual INSERT statement,
+      // which forces Postgres to also check the INSERT policy (owner_id = auth.uid()) — that
+      // rejects any editor who isn't the literal owner, even though they're allowed to update.
+      await supabase.from('shows').update({
         ...state.show,
         updated_at: new Date().toISOString(),
-      });
+      }).eq('id', state.show.id);
 
       const pathByDest: Record<string, { cpDx: number; cpDy: number }> = {};
       Object.entries(state.performerPaths).forEach(([key, path]) => {

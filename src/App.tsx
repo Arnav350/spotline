@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useState, useRef } from 'react';
-import { useShowStore } from './store/showStore';
+import { useShowStore, flushPendingAutoSave } from './store/showStore';
 import { useAuthStore } from './store/authStore';
 import { isSupabaseConfigured, supabase } from './lib/supabase';
 import { colors, fontSize, fontWeight, radius } from './lib/theme';
@@ -45,6 +45,20 @@ export default function App() {
 
   useEffect(() => {
     initialize();
+  }, []);
+
+  // Flush any pending debounced autosave before the tab closes/refreshes/backgrounds —
+  // otherwise an edit made just before a refresh can be silently lost.
+  useEffect(() => {
+    function onVisibilityChange() {
+      if (document.visibilityState === 'hidden') flushPendingAutoSave();
+    }
+    window.addEventListener('pagehide', flushPendingAutoSave);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      window.removeEventListener('pagehide', flushPendingAutoSave);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, []);
 
   // Sync auth identity into showStore so collaborator presence uses real user
