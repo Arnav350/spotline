@@ -290,6 +290,11 @@ returns uuid language sql security definer stable as $$
   limit 1;
 $$;
 
+create or replace function is_folder_owner(p_folder_id uuid)
+returns boolean language sql security definer stable as $$
+  select exists(select 1 from show_folders where id = p_folder_id and owner_id = auth.uid())
+$$;
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- ACCEPT SHOW INVITE RPC
 -- Only matches invitations that have a show_id (not folder invites).
@@ -346,6 +351,7 @@ begin
   insert into folder_members (folder_id, user_id, role)
     values (inv.folder_id, auth.uid(), inv.role)
     on conflict (folder_id, user_id) do update set role = excluded.role;
+  perform set_config('spotline.folder_sync', 'true', true);
   for s in select id from shows where folder_id = inv.folder_id loop
     insert into show_members (show_id, user_id, role)
       values (s.id, auth.uid(), inv.role)
@@ -440,11 +446,13 @@ create policy "Folder owners can delete folders"
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- RLS POLICIES — folder_members
--- SELECT is covered by the user-scoped policy only (no cross-table lookup),
+-- SELECT is a user-scoped check plus a security-definer owner check (is_folder_owner),
 -- which avoids infinite recursion with the show_folders SELECT policy.
 -- ─────────────────────────────────────────────────────────────────────────────
-create policy "Users can read own folder membership"
-  on folder_members for select using (user_id = auth.uid());
+create policy "Users can read own folder membership or folder members they own"
+  on folder_members for select using (
+    user_id = auth.uid() or is_folder_owner(folder_id)
+  );
 
 create policy "Folder owners can insert folder members"
   on folder_members for insert with check (
@@ -504,26 +512,33 @@ create policy "Members can read invitations"
 create policy "Owners and editors can create invitations"
   on invitations for insert with check (
     (show_id is not null and is_show_owner_or_editor(show_id))
-    or (folder_id is not null and exists (
-      select 1 from show_folders where id = folder_id and owner_id = auth.uid()
+    or (folder_id is not null and (
+      exists (select 1 from show_folders where id = folder_id and owner_id = auth.uid())
+      or exists (select 1 from folder_members where folder_id = invitations.folder_id and user_id = auth.uid() and role in ('owner','editor'))
     ))
   );
 
 create policy "Owners and editors can update invitations"
   on invitations for update using (
     (show_id is not null and is_show_owner_or_editor(show_id))
-    or (folder_id is not null and exists (
-      select 1 from show_folders where id = folder_id and owner_id = auth.uid()
+    or (folder_id is not null and (
+      exists (select 1 from show_folders where id = folder_id and owner_id = auth.uid())
+      or exists (select 1 from folder_members where folder_id = invitations.folder_id and user_id = auth.uid() and role in ('owner','editor'))
     ))
   );
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- RLS POLICIES — show_public_links
--- Owners can manage their own link. The security-definer RPCs (is_public_show,
--- get_show_from_public_token) bypass RLS, so no extra select policy is needed.
+-- Owners can manage their own link (insert/update/delete). Any show member can
+-- read it, so editors/viewers can see and copy an enabled link. The
+-- security-definer RPCs (is_public_show, get_show_from_public_token) bypass RLS
+-- for the anonymous public-view flow.
 -- ─────────────────────────────────────────────────────────────────────────────
 create policy "Owners can manage public links"
   on show_public_links for all using (is_show_owner(show_id));
+
+create policy "Members can view public link"
+  on show_public_links for select using (is_show_member(show_id));
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- RLS POLICIES — formations, performers, props
@@ -609,16 +624,55 @@ create policy "Public can read audio"
   using (bucket_id = 'audio' and is_public_show((storage.foldername(name))[1]::uuid));
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- FOLDER AUTO-GRANT TRIGGER
--- When a show is moved into a folder, automatically grants all existing folder
--- members access to that show. Eliminates split responsibility with app layer.
+-- FOLDER-AUTHORITATIVE SHOW ACCESS
+-- Folder membership is the single source of truth for show access within a
+-- shared folder: a user's role on a show in that folder always matches their
+-- folder role, and it can't be overridden per-show. Three pieces work together:
+--
+-- 1. guard_folder_managed_show_member: blocks direct role changes/removal on
+--    show_members for a folder-derived member, unless the write is coming from
+--    one of the trusted sync paths below (flagged via a transaction-local
+--    'spotline.folder_sync' setting).
+-- 2. auto_grant_folder_members: when a show is moved into a folder, grants all
+--    existing folder members access to that show.
+-- 3. sync_folder_role_to_shows: when a folder member's role changes, propagates
+--    it to their show_members rows for every show already in that folder — so
+--    the guard above never locks in stale drift.
 -- ─────────────────────────────────────────────────────────────────────────────
+create or replace function guard_folder_managed_show_member()
+returns trigger language plpgsql as $$
+declare
+  v_folder_id uuid;
+  v_target_user uuid := coalesce(new.user_id, old.user_id);
+  v_show_id uuid := coalesce(new.show_id, old.show_id);
+begin
+  if current_setting('spotline.folder_sync', true) = 'true' then
+    return coalesce(new, old);
+  end if;
+
+  select folder_id into v_folder_id from shows where id = v_show_id;
+  if v_folder_id is not null and exists (
+    select 1 from folder_members where folder_id = v_folder_id and user_id = v_target_user
+  ) then
+    raise exception 'This member''s access to this show is managed through the folder. Change their folder role or remove them from the folder instead.';
+  end if;
+
+  return coalesce(new, old);
+end;
+$$;
+
+drop trigger if exists on_show_member_folder_guard on show_members;
+create trigger on_show_member_folder_guard
+  before update of role or delete on show_members
+  for each row execute function guard_folder_managed_show_member();
+
 create or replace function auto_grant_folder_members()
 returns trigger language plpgsql security definer as $$
 begin
   if new.folder_id is null then return new; end if;
   if old.folder_id is not distinct from new.folder_id then return new; end if;
 
+  perform set_config('spotline.folder_sync', 'true', true);
   insert into show_members (show_id, user_id, role)
   select new.id, fm.user_id, fm.role
   from folder_members fm
@@ -634,6 +688,26 @@ drop trigger if exists on_show_folder_change on shows;
 create trigger on_show_folder_change
   after update of folder_id on shows
   for each row execute function auto_grant_folder_members();
+
+create or replace function sync_folder_role_to_shows()
+returns trigger language plpgsql security definer as $$
+begin
+  if new.role = old.role then return new; end if;
+  perform set_config('spotline.folder_sync', 'true', true);
+  update show_members sm
+  set role = new.role
+  from shows s
+  where s.id = sm.show_id
+    and s.folder_id = new.folder_id
+    and sm.user_id = new.user_id;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_folder_member_role_change on folder_members;
+create trigger on_folder_member_role_change
+  after update of role on folder_members
+  for each row execute function sync_folder_role_to_shows();
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- BLOCK DISPOSABLE EMAIL DOMAINS ON SIGNUP

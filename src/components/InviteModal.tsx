@@ -9,8 +9,10 @@ import { colorFromUserId } from '../lib/colors';
 interface InviteModalProps {
   // Exactly one of showId or folderId must be provided
   showId?: string;
+  showFolderId?: string | null;
   folderId?: string;
   folderTitle?: string;
+  folderRole?: ShowMemberRole;
   onClose: () => void;
 }
 
@@ -26,7 +28,7 @@ interface FolderMember {
   profile?: Profile;
 }
 
-export default function InviteModal({ showId, folderId, folderTitle, onClose }: InviteModalProps) {
+export default function InviteModal({ showId, showFolderId, folderId, folderTitle, folderRole, onClose }: InviteModalProps) {
   const { user } = useAuthStore();
   const isFolder = !!folderId;
 
@@ -35,6 +37,7 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
   const [members, setMembers] = useState<MemberWithProfile[]>([]);
   const [folderMembers, setFolderMembers] = useState<FolderMember[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [folderDerivedUserIds, setFolderDerivedUserIds] = useState<Set<string>>(new Set());
   const [sending, setSending] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -44,9 +47,9 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
   const [linkLoading, setLinkLoading] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
-  const isOwner = isFolder
-    ? true  // only owners can open the folder share modal
-    : members.find(m => m.user_id === user?.id)?.role === 'owner';
+  const myRole = isFolder ? folderRole : members.find(m => m.user_id === user?.id)?.role;
+  const isOwner = myRole === 'owner';
+  const canInvite = myRole === 'owner' || myRole === 'editor';
 
   useEffect(() => { loadData(); }, [showId, folderId]);
 
@@ -85,6 +88,13 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
         setMembers(memberRows.map((m: any) => ({ ...m, profile: profileMap[m.user_id] })) as MemberWithProfile[]);
       }
       if (inviteRows) setInvitations(inviteRows as Invitation[]);
+
+      if (showFolderId) {
+        const { data: folderMemberRows } = await supabase.from('folder_members').select('user_id').eq('folder_id', showFolderId);
+        setFolderDerivedUserIds(new Set((folderMemberRows || []).map((m: any) => m.user_id)));
+      } else {
+        setFolderDerivedUserIds(new Set());
+      }
     }
   }
 
@@ -126,14 +136,17 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
   }
 
   async function handleRevoke(inviteId: string) {
-    await supabase.from('invitations').update({ status: 'revoked' }).eq('id', inviteId);
+    const { error: err } = await supabase.from('invitations').update({ status: 'revoked' }).eq('id', inviteId);
+    if (err) { setError(err.message); return; }
     setInvitations(prev => prev.filter(i => i.id !== inviteId));
   }
 
   async function handleRemoveMember(memberId: string, userId: string) {
     if (userId === user?.id) return;
+    setError(null);
     if (isFolder) {
-      await supabase.from('folder_members').delete().eq('id', memberId);
+      const { error: err } = await supabase.from('folder_members').delete().eq('id', memberId);
+      if (err) { setError(err.message); return; }
       // Also remove from all shows in this folder
       const { data: folderShows } = await supabase.from('shows').select('id').eq('folder_id', folderId);
       if (folderShows && folderShows.length > 0) {
@@ -142,17 +155,24 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
       }
       setFolderMembers(prev => prev.filter(m => m.id !== memberId));
     } else {
-      await supabase.from('show_members').delete().eq('id', memberId);
+      // Access derived from a folder can only be changed at the folder level (DB also enforces this).
+      if (folderDerivedUserIds.has(userId)) { setError('This member’s access comes from the folder. Manage them from the folder’s share settings instead.'); return; }
+      const { error: err } = await supabase.from('show_members').delete().eq('id', memberId);
+      if (err) { setError(err.message); return; }
       setMembers(prev => prev.filter(m => m.id !== memberId));
     }
   }
 
-  async function handleChangeRole(memberId: string, newRole: ShowMemberRole) {
+  async function handleChangeRole(memberId: string, newRole: ShowMemberRole, userId: string) {
+    setError(null);
     if (isFolder) {
-      await supabase.from('folder_members').update({ role: newRole }).eq('id', memberId);
+      const { error: err } = await supabase.from('folder_members').update({ role: newRole }).eq('id', memberId);
+      if (err) { setError(err.message); return; }
       setFolderMembers(prev => prev.map(m => m.id === memberId ? { ...m, role: newRole } : m));
     } else {
-      await supabase.from('show_members').update({ role: newRole }).eq('id', memberId);
+      if (folderDerivedUserIds.has(userId)) { setError('This member’s access comes from the folder. Manage them from the folder’s share settings instead.'); return; }
+      const { error: err } = await supabase.from('show_members').update({ role: newRole }).eq('id', memberId);
+      if (err) { setError(err.message); return; }
       setMembers(prev => prev.map(m => m.id === memberId ? { ...m, role: newRole } : m));
     }
   }
@@ -266,7 +286,7 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
           )}
 
           {/* Invite by email */}
-          {isOwner && (
+          {canInvite && (
             <div>
               <label className="panel-label">Invite by email</label>
               <form onSubmit={handleInvite} style={{ display: 'flex', gap: spacing.sm }}>
@@ -317,7 +337,7 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
                     <button className="btn-icon" onClick={() => copyLink(inv.token)} title="Copy invite link" style={{ color: copied === inv.token ? colors.success : colors.textSecondary }}>
                       {copied === inv.token ? <Check size={14} /> : <Copy size={14} />}
                     </button>
-                    {isOwner && (
+                    {canInvite && (
                       <button className="btn-icon" onClick={() => handleRevoke(inv.id)} title="Revoke invite" style={{ color: colors.textMuted }}>
                         <X size={14} />
                       </button>
@@ -339,6 +359,8 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
                 const name = p?.display_name || 'Unknown';
                 const isMe = m.user_id === user?.id;
                 const isMemberOwner = m.role === 'owner';
+                const isFolderDerived = !isFolder && folderDerivedUserIds.has(m.user_id);
+                const canEditThisMember = isOwner && !isMe && !isMemberOwner && !isFolderDerived;
                 return (
                   <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: spacing.md, padding: `${spacing.sm}px ${spacing.md}px`, borderRadius: radius.sm, background: isMe ? 'rgba(124,58,237,0.06)' : 'transparent' }}>
                     <div style={{ width: 30, height: 30, borderRadius: '50%', flexShrink: 0, background: isMe ? colors.accent : (p ? colorFromUserId(p.id) : colors.borderMed), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: fontSize.sm, fontWeight: fontWeight.bold, color: colors.text }}>
@@ -348,12 +370,15 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
                       <div style={{ fontSize: fontSize.sm, color: colors.text }}>
                         {name}{isMe && <span style={{ marginLeft: spacing.sm, fontSize: fontSize.sm, color: colors.textMuted }}>(you)</span>}
                       </div>
+                      {isFolderDerived && (
+                        <div style={{ fontSize: fontSize.sm, color: colors.textMuted }}>via folder</div>
+                      )}
                     </div>
-                    {isOwner && !isMe && !isMemberOwner ? (
+                    {canEditThisMember ? (
                       <select
                         className="panel-input"
                         value={m.role}
-                        onChange={e => handleChangeRole(m.id, e.target.value as ShowMemberRole)}
+                        onChange={e => handleChangeRole(m.id, e.target.value as ShowMemberRole, m.user_id)}
                         style={{ width: 90, padding: `${spacing.xs}px ${spacing.sm}px`, fontSize: fontSize.sm }}
                       >
                         <option value="editor">Editor</option>
@@ -364,7 +389,7 @@ export default function InviteModal({ showId, folderId, folderTitle, onClose }: 
                         {m.role}
                       </span>
                     )}
-                    {isOwner && !isMe && !isMemberOwner && (
+                    {canEditThisMember && (
                       <button className="btn-icon" onClick={() => handleRemoveMember(m.id, m.user_id)} title="Remove member" style={{ color: colors.textMuted }}>
                         <UserMinus size={14} />
                       </button>

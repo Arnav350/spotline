@@ -160,7 +160,7 @@ export async function fetchFolders(userId: string, knownFolderIds: string[] = []
   );
 }
 
-export async function duplicateShow(showId: string, userId: string, sourceTitle: string, folderId?: string | null): Promise<string | null> {
+export async function duplicateShow(showId: string, userId: string, sourceTitle: string): Promise<string | null> {
   const newShowId = crypto.randomUUID();
 
   const [
@@ -199,13 +199,15 @@ export async function duplicateShow(showId: string, userId: string, sourceTitle:
       ])
     : [{ data: [] }, { data: [] }];
 
-  // Insert show and owner membership first so storage RLS (owner check) passes for the audio copy
+  // Insert show and owner membership first so storage RLS (owner check) passes for the audio copy.
+  // folder_id starts null so the caller's addShowToFolder() UPDATE is a real null -> folderId
+  // change, which is what fires the auto_grant_folder_members trigger.
   const { error: showErr } = await supabase.from('shows').insert({
     ...srcShow,
     id: newShowId,
     title: `Copy of ${sourceTitle}`,
     owner_id: userId,
-    folder_id: folderId ?? null,
+    folder_id: null,
     music_storage_path: null,
     music_url: null,
     created_at: new Date().toISOString(),
@@ -214,6 +216,14 @@ export async function duplicateShow(showId: string, userId: string, sourceTitle:
   if (showErr) return null;
 
   await supabase.from('show_members').insert({ show_id: newShowId, user_id: userId, role: 'owner' });
+
+  const { data: srcMembers } = await supabase.from('show_members').select('user_id, role').eq('show_id', showId);
+  const otherMembers = (srcMembers || []).filter((m: any) => m.user_id !== userId);
+  if (otherMembers.length) {
+    await supabase.from('show_members').insert(
+      otherMembers.map((m: any) => ({ show_id: newShowId, user_id: m.user_id, role: m.role }))
+    );
+  }
 
   // Copy audio file to a new show-scoped path so deleting one show's audio doesn't affect the other
   const srcStoragePath = srcShow.music_storage_path as string | null | undefined;

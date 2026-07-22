@@ -230,9 +230,11 @@ interface SidebarItemProps {
   onDelete?: () => void;
   onShare?: () => void;
   isOwner?: boolean;
+  canShare?: boolean;
 }
 
-function SidebarItem({ label, count, icon, active, onClick, onRename, onDelete, onShare, isOwner }: SidebarItemProps) {
+function SidebarItem({ label, count, icon, active, onClick, onRename, onDelete, onShare, isOwner, canShare }: SidebarItemProps) {
+  const effectiveCanShare = canShare ?? isOwner ?? false;
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });
   const [renaming, setRenaming] = useState(false);
@@ -317,9 +319,9 @@ function SidebarItem({ label, count, icon, active, onClick, onRename, onDelete, 
           {menuOpen && (
             <div ref={menuRef} style={{ position: 'fixed', left: menuPos.x, top: menuPos.y, zIndex: 1000, background: colors.bgPanel, border: `1px solid ${colors.borderMed}`, borderRadius: radius.sm, overflow: 'hidden', minWidth: 140, boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
               {isOwner && onRename && <button className="menu-item" onClick={() => { setRenaming(true); setMenuOpen(false); }}>Rename</button>}
-              {isOwner && onShare && <button className="menu-item" onClick={() => { onShare(); setMenuOpen(false); }}>Share folder</button>}
+              {effectiveCanShare && onShare && <button className="menu-item" onClick={() => { onShare(); setMenuOpen(false); }}>Share folder</button>}
               {isOwner && onDelete && <button className="menu-item danger" onClick={() => { onDelete(); setMenuOpen(false); }}>Delete folder</button>}
-              {!isOwner && <span style={{ padding: '8px 12px', fontSize: fontSize.sm, color: colors.textFaint, display: 'block' }}>Shared with you</span>}
+              {!isOwner && !effectiveCanShare && <span style={{ padding: '8px 12px', fontSize: fontSize.sm, color: colors.textFaint, display: 'block' }}>Shared with you</span>}
             </div>
           )}
         </div>
@@ -444,7 +446,7 @@ export default function Dashboard({ onOpenShow }: DashboardProps) {
     const src = shows.find(s => s.id === showId);
     if (!src) return;
     const targetFolderId = src.folder_id ?? null;
-    const newId = await duplicateShow(showId, user.id, src.title, targetFolderId);
+    const newId = await duplicateShow(showId, user.id, src.title);
     if (!newId) return;
     if (targetFolderId) await addShowToFolder(newId, targetFolderId, user.id);
     await loadAll();
@@ -474,6 +476,7 @@ export default function Dashboard({ onOpenShow }: DashboardProps) {
         <InviteModal
           folderId={shareFolder.id}
           folderTitle={shareFolder.title}
+          folderRole={shareFolder.role}
           onClose={() => setShareFolder(null)}
         />
       )}
@@ -552,6 +555,7 @@ export default function Dashboard({ onOpenShow }: DashboardProps) {
                       onDelete={() => handleDeleteFolder(folder.id)}
                       onShare={() => setShareFolder(folder)}
                       isOwner={folder.role === 'owner'}
+                      canShare={folder.role === 'owner' || folder.role === 'editor'}
                     />
                   ))}
                 </div>
@@ -596,7 +600,7 @@ export default function Dashboard({ onOpenShow }: DashboardProps) {
                 <span style={{ fontSize: fontSize.sm, color: colors.textGhost }}>{visibleShows.length} show{visibleShows.length !== 1 ? 's' : ''}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
-                {selectedFolder?.role === 'owner' && (
+                {(selectedFolder?.role === 'owner' || selectedFolder?.role === 'editor') && (
                   <button
                     onClick={() => setShareFolder(selectedFolder)}
                     style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, padding: `${spacing.sm}px ${spacing.lg}px`, fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.text, borderRadius: radius.sm, cursor: 'pointer', background: colors.bgCard, border: `1px solid ${colors.borderMed}`, flexShrink: 0, transition: 'background 0.12s, border-color 0.12s' }}

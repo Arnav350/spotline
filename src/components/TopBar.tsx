@@ -237,7 +237,7 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
   return (
     <>
       {showInvite && show && (
-        <InviteModal showId={show.id} onClose={() => setShowInvite(false)} />
+        <InviteModal showId={show.id} showFolderId={show.folder_id} onClose={() => setShowInvite(false)} />
       )}
 
       <div style={{
