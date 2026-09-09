@@ -6524,7 +6524,7 @@
       "relation": "indirect_call",
       "confidence": "INFERRED",
       "source_file": "src/components/StageCanvas.tsx",
-      "source_location": "L1013",
+      "source_location": "L1009",
       "weight": 1.0,
       "context": "argument",
       "source": "src_components_stagecanvas",

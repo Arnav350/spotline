@@ -1,9 +1,9 @@
 import React, { useRef, useCallback, useMemo, useEffect, useState, memo } from 'react';
-import { Stage, Layer, Rect, Line, Circle, Text } from 'react-konva';
+import { Stage, Layer, Rect, Line, Circle, Text, Label, Tag } from 'react-konva';
 import { useShowStore } from '../store/showStore';
 import { useShallow } from 'zustand/shallow';
 import Konva from 'konva';
-import { Magnet, RotateCw } from 'lucide-react';
+import { Magnet, RotateCw, LocateFixed } from 'lucide-react';
 import { colors, fontSize, fontWeight, radius, spacing } from '../lib/theme';
 import {
   CANVAS_PADDING, PERFORMER_RADIUS,
@@ -54,6 +54,18 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
   })));
 
   const isViewer = currentUserRole === 'viewer';
+
+  // Personal view preference — persisted per-browser only, never synced to the show/DB
+  const [showCoords, setShowCoords] = useState(() => {
+    try { return localStorage.getItem('spotline-show-coordinates') === '1'; } catch { return false; }
+  });
+  const toggleShowCoords = useCallback(() => {
+    setShowCoords(v => {
+      const next = !v;
+      try { localStorage.setItem('spotline-show-coordinates', next ? '1' : '0'); } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
 
   const [ctrlHeld, setCtrlHeld] = useState(false);
   useEffect(() => {
@@ -829,6 +841,46 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
             listening={false}
           />
         </Layer>
+
+        {/* Coordinate labels — personal view toggle. On-stage performers/props only;
+            anything outside the stage bounds (backstage/wings) is excluded. */}
+        {showCoords && activeFormationId && !draggingId && !isAnimatingNow && (
+          <Layer listening={false}>
+            {[
+              ...performers.map(p => ({ id: p.id, isP: true })),
+              ...props.map(p => ({ id: p.id, isP: false })),
+            ].map(({ id, isP }) => {
+              const pos = getAnimatedPosition(id, isP);
+              if (!pos) return null;
+              if (pos.x < 0 || pos.x > stageConfig.width || pos.y < 0 || pos.y > stageConfig.height) return null;
+              const { x, y } = toCanvas(pos.x, pos.y);
+              const divX = Math.max(1, stageConfig.divisionsX);
+              const divY = Math.max(1, stageConfig.divisionsY);
+              const coordX = pos.x / (stageConfig.width / divX) - divX / 2;
+              const coordY = pos.y / (stageConfig.height / divY) - divY / 2;
+              const fmt = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
+              const iconSize = isP ? performerSize : 10;
+              return (
+                <Label
+                  key={`coord-${id}`}
+                  x={x + iconSize + 3} y={y - iconSize - 3}
+                  listening={false}
+                >
+                  <Tag
+                    fill={colors.bgCard} opacity={0.92}
+                    stroke={'rgba(139,92,246,0.45)'} strokeWidth={1}
+                    cornerRadius={radius.sm}
+                  />
+                  <Text
+                    text={`(${fmt(coordX)}, ${fmt(coordY)})`}
+                    fontSize={fontSize.sm} fontStyle="600" fontFamily="Inter, sans-serif"
+                    fill={colors.accentLight} padding={4} listening={false}
+                  />
+                </Label>
+              );
+            })}
+          </Layer>
+        )}
       </Stage>
 
       {/* Zoom controls */}
@@ -845,6 +897,13 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
           onClick={() => { zoomRef.current = 1; panRef.current = { x: 0, y: 0 }; const stage = stageRef.current; if (stage) { stage.scale({ x: 1, y: 1 }); stage.position({ x: 0, y: 0 }); stage.batchDraw(); } }}
           style={{ width: 26, height: 26, background: colors.bgCard, border: `1px solid ${colors.borderMed}`, borderRadius: radius.sm, color: colors.textFaint, fontSize: fontSize.xs, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', letterSpacing: '0.05em' }}
         >FIT</button>
+        <button
+          onClick={toggleShowCoords}
+          title={showCoords ? 'Coordinates: ON' : 'Coordinates: OFF'}
+          style={{ width: 26, height: 26, background: showCoords ? colors.accent : colors.bgCard, border: `1px solid ${showCoords ? colors.accent : colors.borderMed}`, borderRadius: radius.sm, color: showCoords ? colors.text : colors.textFaint, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <LocateFixed size={13} />
+        </button>
         {!isViewer && (
           <button
             onClick={() => updateStageConfig({ snapToGrid: !stageConfig.snapToGrid })}
