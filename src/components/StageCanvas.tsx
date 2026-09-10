@@ -220,7 +220,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
     for (let di = 0; di <= divCountX; di++) {
       const x = di * divSpacingX;
       const cx = offsetX + x * cellScale;
-      const label = di - divCountX / 2;
+      const label = divCountX / 2 - di;
       labels.push(
         <Text key={`xl-${di}`} x={cx - 15} y={offsetY + stagePixelHeight + 6}
           text={Number.isInteger(label) ? String(label) : label.toFixed(1)}
@@ -856,7 +856,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
               const { x, y } = toCanvas(pos.x, pos.y);
               const divX = Math.max(1, stageConfig.divisionsX);
               const divY = Math.max(1, stageConfig.divisionsY);
-              const coordX = pos.x / (stageConfig.width / divX) - divX / 2;
+              const coordX = -(pos.x / (stageConfig.width / divX) - divX / 2);
               const coordY = pos.y / (stageConfig.height / divY) - divY / 2;
               const fmt = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
               const iconSize = isP ? performerSize : 10;

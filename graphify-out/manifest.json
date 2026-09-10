@@ -55,8 +55,8 @@
     "semantic_hash": "5810707dc22ae9f7169c961a5bc7d608"
   },
   "src/components/StageCanvas.tsx": {
-    "mtime": 1788993304.405839,
-    "ast_hash": "09db17019093d910b442c2430635fbb0",
+    "mtime": 1789068053.1312394,
+    "ast_hash": "e6301940332fb720853bfc33d823487c",
     "semantic_hash": ""
   },
   "src/components/TopBar.tsx": {
