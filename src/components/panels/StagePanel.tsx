@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useShowStore } from '../../store/showStore';
 import { colors, fontSize, radius, spacing } from '../../lib/theme';
 import { PanelHeader } from '../ui/PanelHeader';
@@ -117,6 +117,88 @@ function NumericInput({ value, onChange, min, max, step = 1, isFloat = false }: 
   );
 }
 
+const UNIT_OPTIONS = [
+  { value: 'ft', label: 'Feet (ft)' },
+  { value: 'm', label: 'Meters (m)' },
+  { value: 'yd', label: 'Yards (yd)' },
+  { value: 'units', label: 'Units' },
+];
+
+function UnitSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const current = UNIT_OPTIONS.find(o => o.value === value)?.label ?? value;
+
+  useEffect(() => {
+    if (!open) return;
+    function onDocDown(e: MouseEvent) {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setOpen(false); }
+    document.addEventListener('mousedown', onDocDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const select = useCallback((v: string) => { onChange(v); setOpen(false); }, [onChange]);
+
+  return (
+    <div ref={rootRef} style={{ position: 'relative' }}>
+      <button
+        type="button"
+        className="panel-input"
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          cursor: 'pointer', textAlign: 'left',
+        }}
+      >
+        <span>{current}</span>
+        <span style={{ color: colors.textFaint, fontSize: fontSize.xs, lineHeight: 1, marginLeft: spacing.xs }}>▼</span>
+      </button>
+
+      {/* Always opens below the trigger — never overlaps the input itself */}
+      {open && (
+        <div style={{
+          position: 'absolute',
+          top: '100%',
+          left: 0,
+          right: 0,
+          marginTop: spacing.xs,
+          zIndex: 50,
+          background: colors.bgCard,
+          border: `1px solid ${colors.borderMed}`,
+          borderRadius: radius.sm,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          overflow: 'hidden',
+        }}>
+          {UNIT_OPTIONS.map(o => (
+            <button
+              key={o.value}
+              type="button"
+              onClick={() => select(o.value)}
+              style={{
+                display: 'block', width: '100%', textAlign: 'left',
+                padding: `${spacing.sm}px ${spacing.sm}px`,
+                background: o.value === value ? colors.bgCardHover : 'transparent',
+                border: 'none', cursor: 'pointer',
+                fontSize: fontSize.md, color: o.value === value ? colors.text : colors.textSecondary,
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = colors.bgCardHover; }}
+              onMouseLeave={e => { e.currentTarget.style.background = o.value === value ? colors.bgCardHover : 'transparent'; }}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function StagePanel({ onClose }: StagePanelProps) {
   const { show, updateStageConfig, updateShowBpm } = useShowStore();
   const config = show?.stage_config ?? {
@@ -153,12 +235,7 @@ export function StagePanel({ onClose }: StagePanelProps) {
 
         <div>
           <label className="panel-label">Unit</label>
-          <select className="panel-input" value={config.unit} onChange={e => updateStageConfig({ unit: e.target.value })}>
-            <option value="ft">Feet (ft)</option>
-            <option value="m">Meters (m)</option>
-            <option value="yd">Yards (yd)</option>
-            <option value="units">Units</option>
-          </select>
+          <UnitSelect value={config.unit} onChange={v => updateStageConfig({ unit: v })} />
         </div>
 
         <div>
@@ -237,6 +314,35 @@ export function StagePanel({ onClose }: StagePanelProps) {
               position: 'absolute',
               top: 3,
               left: config.snapToGrid ? 18 : 3,
+              width: 14,
+              height: 14,
+              borderRadius: '50%',
+              background: 'white',
+              transition: 'left 0.2s',
+            }} />
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <label className="panel-label" style={{ marginBottom: 0 }}>Snap to Beat</label>
+          <button
+            onClick={() => updateStageConfig({ snapToBeat: !(config.snapToBeat ?? true) })}
+            style={{
+              width: 36,
+              height: 20,
+              borderRadius: radius.xl,
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'background 0.2s',
+              flexShrink: 0,
+              background: (config.snapToBeat ?? true) ? colors.accent : colors.borderMed,
+              position: 'relative',
+            }}
+          >
+            <div style={{
+              position: 'absolute',
+              top: 3,
+              left: (config.snapToBeat ?? true) ? 18 : 3,
               width: 14,
               height: 14,
               borderRadius: '50%',

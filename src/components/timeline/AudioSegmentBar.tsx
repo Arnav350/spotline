@@ -3,6 +3,7 @@ import type { AudioSegment } from '../../lib/types';
 import { useShowStore } from '../../store/showStore';
 import { colors, fontSize, fontWeight, radius, spacing } from '../../lib/theme';
 import { HANDLE_WIDTH, SEGMENT_ROW_HEIGHT, LEFT_PADDING, BAR_GAP } from './constants';
+import { GripVertical } from 'lucide-react';
 
 interface AudioSegmentBarProps {
   segment: AudioSegment;
@@ -11,11 +12,13 @@ interface AudioSegmentBarProps {
   effectivePPS: number;
   isSelected: boolean;
   isEditable: boolean;
+  isBeingDragged?: boolean;
   bpm?: number;
   onResizeStart: (e: React.MouseEvent, segmentId: string, startX: number, startDur: number) => void;
+  onReorderStart?: (e: React.MouseEvent, segmentId: string, origIndex: number) => void;
 }
 
-export function AudioSegmentBar({ segment, index, startTime, effectivePPS, isSelected, isEditable, bpm, onResizeStart }: AudioSegmentBarProps) {
+export function AudioSegmentBar({ segment, index, startTime, effectivePPS, isSelected, isEditable, isBeingDragged, bpm, onResizeStart, onReorderStart }: AudioSegmentBarProps) {
   const { setSelectedAudioSegment } = useShowStore();
   const [hovered, setHovered] = useState(false);
 
@@ -44,14 +47,41 @@ export function AudioSegmentBar({ segment, index, startTime, effectivePPS, isSel
         alignItems: 'center',
         overflow: 'hidden',
         cursor: isEditable ? 'pointer' : 'default',
+        opacity: isBeingDragged ? 0.4 : 1,
       }}
       onMouseDown={e => e.stopPropagation()}
       onClick={() => isEditable && setSelectedAudioSegment(segment.id)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
+      {/* Grip handle — reorder */}
+      {isEditable && onReorderStart && (
+        <div
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            width: 14,
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'grab',
+            zIndex: 1,
+            color: hovered ? 'rgba(255,255,255,0.7)' : 'transparent',
+          }}
+          onMouseDown={e => {
+            e.preventDefault();
+            e.stopPropagation();
+            onReorderStart(e, segment.id, index);
+          }}
+        >
+          <GripVertical size={10} />
+        </div>
+      )}
+
       {/* Name + duration */}
-      <div style={{ flex: 1, minWidth: 0, paddingLeft: spacing.sm, paddingRight: isEditable ? HANDLE_WIDTH + spacing.xs : spacing.xs, display: 'flex', alignItems: 'center', gap: spacing.xs }}>
+      <div style={{ flex: 1, minWidth: 0, paddingLeft: isEditable && onReorderStart ? 14 : spacing.sm, paddingRight: isEditable ? HANDLE_WIDTH + spacing.xs : spacing.xs, display: 'flex', alignItems: 'center', gap: spacing.xs }}>
         <span style={{
           fontSize: fontSize.sm,
           color: colors.text,

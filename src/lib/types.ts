@@ -17,6 +17,8 @@ export interface StageConfig {
   subdivisionsY: number;
   unit: string;
   snapToGrid?: boolean;
+  // Snap formation duration/transition and audio segment duration to the beat grid (when bpm is set).
+  snapToBeat?: boolean;
   // Stage units/second — threshold for the "max transition speed" formation metric.
   maxTransitionSpeed?: number;
 }

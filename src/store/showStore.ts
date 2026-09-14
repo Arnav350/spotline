@@ -158,6 +158,7 @@ interface ShowState {
   updateAudioSegment: (id: string, changes: Partial<AudioSegment>) => void;
   deleteAudioSegment: (id: string) => Promise<void>;
   setSelectedAudioSegment: (id: string | null) => void;
+  reorderAudioSegments: (sourceIndex: number, destIndex: number) => void;
 
   setViewMode: (mode: '2d' | '3d') => void;
 
@@ -1703,7 +1704,6 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     if (!state.show) return;
     const SEGMENT_COLORS = APP_COLORS;
     const sorted = [...state.audioSegments].sort((a, b) => a.order_index - b.order_index);
-    const newColor = SEGMENT_COLORS[sorted.length % SEGMENT_COLORS.length];
 
     const bpm = state.show.bpm;
     const beatDur = bpm && bpm > 0 ? 60 / bpm : 1;
@@ -1712,37 +1712,26 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     const selIdx = state.selectedAudioSegmentId
       ? sorted.findIndex(s => s.id === state.selectedAudioSegmentId)
       : -1;
-    const isLastOrNone = selIdx < 0 || selIdx === sorted.length - 1;
+    // Insert right after the selected segment, or at the end if nothing's selected.
+    const insertAfterIdx = selIdx >= 0 ? selIdx : sorted.length - 1;
 
-    let insertAfterIdx = sorted.length - 1;
-    let newDuration = defaultDuration;
-    let updatedSorted = sorted;
-
-    if (!isLastOrNone) {
-      insertAfterIdx = selIdx;
-      const sel = sorted[selIdx];
-      if (sel.duration <= beatDur) {
-        // Already at minimum — insert 1 beat, keep selected unchanged
-        newDuration = beatDur;
-      } else {
-        // Split: selected gets half (beat-snapped), new gets remainder
-        const half = Math.max(beatDur, Math.round(sel.duration / 2 / beatDur) * beatDur);
-        newDuration = sel.duration - half;
-        updatedSorted = sorted.map((s, i) => i === selIdx ? { ...s, duration: half } : s);
-      }
-    }
+    // Pick a color that doesn't match either neighbor it'll land between.
+    const prevColor = sorted[insertAfterIdx]?.color;
+    const nextColor = sorted[insertAfterIdx + 1]?.color;
+    const newColor = SEGMENT_COLORS.find(c => c !== prevColor && c !== nextColor)
+      ?? SEGMENT_COLORS[sorted.length % SEGMENT_COLORS.length];
 
     const seg: AudioSegment = {
       id: uuidv4(),
       show_id: state.show.id,
       name: 'Segment',
-      duration: newDuration,
+      duration: defaultDuration,
       order_index: insertAfterIdx + 1,
       color: newColor,
     };
 
-    const before = updatedSorted.slice(0, insertAfterIdx + 1);
-    const after = updatedSorted.slice(insertAfterIdx + 1);
+    const before = sorted.slice(0, insertAfterIdx + 1);
+    const after = sorted.slice(insertAfterIdx + 1);
     const newSegments = [...before, seg, ...after].map((s, i) => ({ ...s, order_index: i }));
 
     set({ audioSegments: newSegments, selectedAudioSegmentId: seg.id });
@@ -1771,6 +1760,16 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
 
   setSelectedAudioSegment: (id: string | null) => {
     set({ selectedAudioSegmentId: id });
+  },
+
+  reorderAudioSegments: (sourceIndex: number, destIndex: number) => {
+    const state = get();
+    const sorted = [...state.audioSegments].sort((a, b) => a.order_index - b.order_index);
+    const [removed] = sorted.splice(sourceIndex, 1);
+    sorted.splice(destIndex, 0, removed);
+    const updated = sorted.map((s, i) => ({ ...s, order_index: i }));
+    set({ audioSegments: updated });
+    scheduleAutoSave(get());
   },
 
   setViewMode: (mode: '2d' | '3d') => {

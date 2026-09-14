@@ -830,7 +830,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_components_propertypanel_navpanel",
-      "community": 2,
+      "community": 0,
       "norm_label": "navpanel"
     },
     {
@@ -1080,7 +1080,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_components_panels_aipanel_aipanel",
-      "community": 0,
+      "community": 18,
       "norm_label": "aipanel()"
     },
     {
@@ -1354,30 +1354,10 @@
       "norm_label": "numericinput()"
     },
     {
-      "label": "UNIT_OPTIONS",
-      "file_type": "code",
-      "source_file": "src/components/panels/StagePanel.tsx",
-      "source_location": "L120",
-      "_origin": "ast",
-      "id": "src_components_panels_stagepanel_unit_options",
-      "community": 0,
-      "norm_label": "unit_options"
-    },
-    {
-      "label": "UnitSelect()",
-      "file_type": "code",
-      "source_file": "src/components/panels/StagePanel.tsx",
-      "source_location": "L127",
-      "_origin": "ast",
-      "id": "src_components_panels_stagepanel_unitselect",
-      "community": 0,
-      "norm_label": "unitselect()"
-    },
-    {
       "label": "StagePanel()",
       "file_type": "code",
       "source_file": "src/components/panels/StagePanel.tsx",
-      "source_location": "L202",
+      "source_location": "L120",
       "_origin": "ast",
       "id": "src_components_panels_stagepanel_stagepanel",
       "community": 0,
@@ -1910,7 +1890,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_aiformationservice",
-      "community": 1,
+      "community": 18,
       "norm_label": "aiformationservice.ts"
     },
     {
@@ -1930,7 +1910,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_lib_aiformationservice_aigeneratedposition",
-      "community": 1,
+      "community": 18,
       "norm_label": "aigeneratedposition"
     },
     {
@@ -1940,7 +1920,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_lib_aiformationservice_aigenerationresult",
-      "community": 1,
+      "community": 18,
       "norm_label": "aigenerationresult"
     },
     {
@@ -1950,7 +1930,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_lib_aiformationservice_snaptogrid",
-      "community": 1,
+      "community": 18,
       "norm_label": "snaptogrid()"
     },
     {
@@ -1960,7 +1940,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_lib_aiformationservice_getauthheader",
-      "community": 1,
+      "community": 18,
       "norm_label": "getauthheader()"
     },
     {
@@ -1970,7 +1950,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_lib_aiformationservice_aiusage",
-      "community": 1,
+      "community": 18,
       "norm_label": "aiusage"
     },
     {
@@ -1980,7 +1960,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_lib_aiformationservice_getcachedaiusage",
-      "community": 1,
+      "community": 18,
       "norm_label": "getcachedaiusage()"
     },
     {
@@ -1990,7 +1970,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "src_lib_aiformationservice_getaiusage",
-      "community": 1,
+      "community": 18,
       "norm_label": "getaiusage()"
     },
     {
@@ -2000,7 +1980,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "src_lib_aiformationservice_generateformation",
-      "community": 1,
+      "community": 18,
       "norm_label": "generateformation()"
     },
     {
@@ -2020,7 +2000,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_colors_app_colors",
-      "community": 2,
+      "community": 1,
       "norm_label": "app_colors"
     },
     {
@@ -2320,7 +2300,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_stageutils",
-      "community": 1,
+      "community": 18,
       "norm_label": "stageutils.ts"
     },
     {
@@ -2460,7 +2440,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_lib_types_stageconfig",
-      "community": 1,
+      "community": 18,
       "norm_label": "stageconfig"
     },
     {
@@ -2630,7 +2610,7 @@
       "source_location": "L156",
       "_origin": "ast",
       "id": "src_lib_types_invitation",
-      "community": 2,
+      "community": 1,
       "norm_label": "invitation"
     },
     {
@@ -2640,7 +2620,7 @@
       "source_location": "L169",
       "_origin": "ast",
       "id": "src_lib_types_showwithrole",
-      "community": 2,
+      "community": 1,
       "norm_label": "showwithrole"
     },
     {
@@ -2660,7 +2640,7 @@
       "source_location": "L181",
       "_origin": "ast",
       "id": "src_lib_types_showfolderwithrole",
-      "community": 2,
+      "community": 1,
       "norm_label": "showfolderwithrole"
     },
     {
@@ -2670,7 +2650,7 @@
       "source_location": "L187",
       "_origin": "ast",
       "id": "src_lib_types_showpubliclink",
-      "community": 2,
+      "community": 1,
       "norm_label": "showpubliclink"
     },
     {
@@ -8309,7 +8289,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/panels/StagePanel.tsx",
-      "source_location": "L202",
+      "source_location": "L120",
       "weight": 1.0,
       "source": "src_components_panels_stagepanel",
       "target": "src_components_panels_stagepanel_stagepanel",
@@ -8323,26 +8303,6 @@
       "weight": 1.0,
       "source": "src_components_panels_stagepanel",
       "target": "src_components_panels_stagepanel_stagepanelprops",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/components/panels/StagePanel.tsx",
-      "source_location": "L120",
-      "weight": 1.0,
-      "source": "src_components_panels_stagepanel",
-      "target": "src_components_panels_stagepanel_unit_options",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/components/panels/StagePanel.tsx",
-      "source_location": "L127",
-      "weight": 1.0,
-      "source": "src_components_panels_stagepanel",
-      "target": "src_components_panels_stagepanel_unitselect",
       "confidence_score": 1.0
     },
     {
@@ -8456,23 +8416,12 @@
       "confidence_score": 1.0
     },
     {
-      "relation": "references",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/components/panels/StagePanel.tsx",
-      "source_location": "L130",
-      "weight": 1.0,
-      "source": "src_components_panels_stagepanel_unitselect",
-      "target": "src_components_panels_stagepanel_unit_options"
-    },
-    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/panels/StagePanel.tsx",
-      "source_location": "L203",
+      "source_location": "L121",
       "weight": 1.0,
       "source": "src_components_panels_stagepanel_stagepanel",
       "target": "src_store_showstore_useshowstore"

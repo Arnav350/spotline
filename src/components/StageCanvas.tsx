@@ -3,7 +3,7 @@ import { Stage, Layer, Rect, Line, Circle, Text, Label, Tag } from 'react-konva'
 import { useShowStore } from '../store/showStore';
 import { useShallow } from 'zustand/shallow';
 import Konva from 'konva';
-import { Magnet, RotateCw, LocateFixed } from 'lucide-react';
+import { RotateCw, LocateFixed } from 'lucide-react';
 import { colors, fontSize, fontWeight, radius, spacing } from '../lib/theme';
 import {
   CANVAS_PADDING, PERFORMER_RADIUS,
@@ -28,7 +28,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
     activeFormationId,
     selectedItemIds, setSelectedItemIds, toggleItemSelected,
     movePerformer, moveProp, pushHistory, captureSnapshot,
-    setPerformerPath, clearPerformerPath, updateStageConfig, currentUserRole,
+    setPerformerPath, clearPerformerPath, currentUserRole,
     showBalanceOverlay,
   } = useShowStore(useShallow(state => ({
     show: state.show,
@@ -48,7 +48,6 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
     captureSnapshot: state.captureSnapshot,
     setPerformerPath: state.setPerformerPath,
     clearPerformerPath: state.clearPerformerPath,
-    updateStageConfig: state.updateStageConfig,
     currentUserRole: state.currentUserRole,
     showBalanceOverlay: state.showBalanceOverlay,
   })));
@@ -66,6 +65,20 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
       return next;
     });
   }, []);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key.toLowerCase() === 'l') {
+        e.preventDefault();
+        toggleShowCoords();
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [toggleShowCoords]);
 
   const [ctrlHeld, setCtrlHeld] = useState(false);
   useEffect(() => {
@@ -899,20 +912,11 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
         >FIT</button>
         <button
           onClick={toggleShowCoords}
-          title={showCoords ? 'Coordinates: ON' : 'Coordinates: OFF'}
+          title={showCoords ? 'Coordinates: ON (L)' : 'Coordinates: OFF (L)'}
           style={{ width: 26, height: 26, background: showCoords ? colors.accent : colors.bgCard, border: `1px solid ${showCoords ? colors.accent : colors.borderMed}`, borderRadius: radius.sm, color: showCoords ? colors.text : colors.textFaint, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
           <LocateFixed size={13} />
         </button>
-        {!isViewer && (
-          <button
-            onClick={() => updateStageConfig({ snapToGrid: !stageConfig.snapToGrid })}
-            title={stageConfig.snapToGrid ? 'Snap to grid: ON' : 'Snap to grid: OFF'}
-            style={{ width: 26, height: 26, background: stageConfig.snapToGrid ? colors.accent : colors.bgCard, border: `1px solid ${stageConfig.snapToGrid ? colors.accent : colors.borderMed}`, borderRadius: radius.sm, color: stageConfig.snapToGrid ? colors.text : colors.textFaint, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          >
-            <Magnet size={13} />
-          </button>
-        )}
       </div>
 
       {/* Zoom level indicator — reads from ref, uiTick keeps it current */}

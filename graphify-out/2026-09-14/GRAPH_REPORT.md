@@ -1,11 +1,11 @@
 # Graph Report - spotline  (2026-09-14)
 
 ## Corpus Check
-- 63 files · ~54,373 words
+- 63 files · ~54,105 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 372 nodes · 796 edges · 41 communities (13 shown, 28 thin omitted)
+- 370 nodes · 793 edges · 41 communities (13 shown, 28 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 7 edges (avg confidence: 0.79)
 - Token cost: 0 input · 0 output
 
@@ -86,15 +86,15 @@
 
 ### Community 0 - "Editor Panels & Modals"
 Cohesion: 0.07
-Nodes (57): Tab, ContextMenu, FormationTimeline(), AIPanel(), AIPanelProps, AudioPanel(), AudioPanelProps, SegmentRow() (+49 more)
+Nodes (55): Tab, ContextMenu, FormationTimeline(), AIPanelProps, AudioPanel(), AudioPanelProps, SegmentRow(), CastPanel() (+47 more)
 
 ### Community 1 - "AI Formation Generation Logic"
 Cohesion: 0.08
-Nodes (35): AudioSegmentBarProps, FormationBarProps, AIGeneratedPosition, AIGenerationOptions, AIGenerationResult, AIUsage, generateFormation(), getAIUsage() (+27 more)
+Nodes (31): AudioSegmentBarProps, FormationBarProps, AIGenerationOptions, APP_COLORS, hungarian(), ArrayPatchEntry, AudioSegment, Formation (+23 more)
 
 ### Community 2 - "Dashboard & App Shell"
-Cohesion: 0.08
-Nodes (44): App(), useWindowSize(), AuthModal(), Dashboard(), DashboardProps, ProjectCard(), ProjectCardProps, SelectedView (+36 more)
+Cohesion: 0.09
+Nodes (38): App(), useWindowSize(), AuthModal(), Dashboard(), DashboardProps, ProjectCard(), ProjectCardProps, SelectedView (+30 more)
 
 ### Community 3 - "Project Documentation"
 Cohesion: 0.15
@@ -125,8 +125,8 @@ Cohesion: 0.23
 Nodes (11): client, extractJsonArray(), GenerateRequest, getAuthToken(), getUsageCount(), handler(), PerformerInput, PositionInput (+3 more)
 
 ### Community 18 - "FormationMetrics.tsx"
-Cohesion: 0.23
-Nodes (14): describeBalance(), FormationMetrics(), MetricRow(), MetricStatus, statusIcon(), orientation(), pathCrossingPairs(), PerformerPath (+6 more)
+Cohesion: 0.13
+Nodes (24): AIPanel(), describeBalance(), FormationMetrics(), MetricRow(), MetricStatus, statusIcon(), AIGeneratedPosition, AIGenerationResult (+16 more)
 
 ## Knowledge Gaps
 - **160 isolated node(s):** `PerformerInput`, `PositionInput`, `GenerateRequest`, `PositionOutput`, `client` (+155 more)
@@ -137,16 +137,16 @@ Nodes (14): describeBalance(), FormationMetrics(), MetricRow(), MetricStatus, st
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Dashboard()` connect `Dashboard & App Shell` to `Editor Panels & Modals`, `Core Dependencies`?**
-  _High betweenness centrality (0.162) - this node is a cross-community bridge._
+  _High betweenness centrality (0.163) - this node is a cross-community bridge._
 - **Why does `react` connect `Core Dependencies` to `Dashboard & App Shell`?**
-  _High betweenness centrality (0.159) - this node is a cross-community bridge._
+  _High betweenness centrality (0.160) - this node is a cross-community bridge._
 - **What connects `PerformerInput`, `PositionInput`, `GenerateRequest` to the rest of the system?**
   _161 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Editor Panels & Modals` be split into smaller, more focused modules?**
-  _Cohesion score 0.06855995410212277 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07046070460704607 - nodes in this community are weakly interconnected._
 - **Should `AI Formation Generation Logic` be split into smaller, more focused modules?**
-  _Cohesion score 0.07908163265306123 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08305647840531562 - nodes in this community are weakly interconnected._
 - **Should `Dashboard & App Shell` be split into smaller, more focused modules?**
-  _Cohesion score 0.07957393483709273 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09333333333333334 - nodes in this community are weakly interconnected._
 - **Should `Dev Tooling Config` be split into smaller, more focused modules?**
   _Cohesion score 0.11764705882352941 - nodes in this community are weakly interconnected._

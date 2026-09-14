@@ -9,11 +9,16 @@ interface ReorderDrag {
   origIndex: number;
 }
 
+interface SegReorderDrag {
+  segmentId: string;
+  origIndex: number;
+}
+
 export function useTimelineGestures(
   scrollRef: React.RefObject<HTMLDivElement | null>,
   seekToTime: (t: number) => void,
 ) {
-  const { updateFormation, reorderFormations, updateAudioSegment } = useShowStore();
+  const { updateFormation, reorderFormations, updateAudioSegment, reorderAudioSegments } = useShowStore();
 
   const ZOOM_KEY = 'spotline-timeline-zoom';
 
@@ -24,6 +29,7 @@ export function useTimelineGestures(
     localStorage.setItem(ZOOM_KEY, String(zoom));
   }
   const [dropIndicatorIdx, setDropIndicatorIdx] = useState<number | null>(null);
+  const [segDropIndicatorIdx, setSegDropIndicatorIdx] = useState<number | null>(null);
 
   const effectivePPSRef = useRef(BASE_PPS * timelineZoom);
   const timelineZoomRef = useRef(timelineZoom);
@@ -35,10 +41,14 @@ export function useTimelineGestures(
   const isSeekingRef = useRef(false);
   const reorderDragRef = useRef<ReorderDrag | null>(null);
   const dropIndicatorIdxRef = useRef<number | null>(null);
+  const segReorderDragRef = useRef<SegReorderDrag | null>(null);
+  const segDropIndicatorIdxRef = useRef<number | null>(null);
   const formationsRef = useRef(useShowStore.getState().formations);
+  const audioSegmentsRef = useRef(useShowStore.getState().audioSegments);
 
-  // Keep formationsRef current on each render
+  // Keep formationsRef / audioSegmentsRef current on each render
   formationsRef.current = useShowStore.getState().formations;
+  audioSegmentsRef.current = [...useShowStore.getState().audioSegments].sort((a, b) => a.order_index - b.order_index);
 
   // On mount: restore saved zoom, or auto-fit if no saved value
   useEffect(() => {
@@ -86,8 +96,10 @@ export function useTimelineGestures(
   // Global mouse handlers for resize, seek, reorder
   useEffect(() => {
     function snapDuration(raw: number): number {
-      const currentBpm = useShowStore.getState().show?.bpm;
-      if (!currentBpm || currentBpm <= 0) return Math.round(raw * 10) / 10;
+      const s = useShowStore.getState();
+      const currentBpm = s.show?.bpm;
+      const snapToBeat = s.show?.stage_config?.snapToBeat ?? true;
+      if (!snapToBeat || !currentBpm || currentBpm <= 0) return Math.round(raw * 10) / 10;
       const beatDur = 60 / currentBpm;
       return Math.max(beatDur, Math.round(raw / beatDur) * beatDur);
     }
@@ -110,8 +122,10 @@ export function useTimelineGestures(
           const f = useShowStore.getState().formations.find(x => x.id === drag.formationId);
           const cap = f?.duration ?? drag.startDur;
           const raw = drag.startTrans + ds;
-          const currentBpm = useShowStore.getState().show?.bpm;
-          const snapped = currentBpm && currentBpm > 0
+          const s = useShowStore.getState();
+          const currentBpm = s.show?.bpm;
+          const snapToBeat = s.show?.stage_config?.snapToBeat ?? true;
+          const snapped = snapToBeat && currentBpm && currentBpm > 0
             ? Math.max(0, Math.round(raw / (60 / currentBpm)) * (60 / currentBpm))
             : Math.max(0, Math.round(raw * 10) / 10);
           updateFormation(drag.formationId, {
@@ -143,6 +157,23 @@ export function useTimelineGestures(
         dropIndicatorIdxRef.current = idx;
         setDropIndicatorIdx(idx);
       }
+
+      if (segReorderDragRef.current) {
+        const segs = audioSegmentsRef.current;
+        const rect = scrollRef.current?.getBoundingClientRect();
+        const scrollLeft = scrollRef.current?.scrollLeft || 0;
+        const mouseX = e.clientX - (rect?.left || 0) + scrollLeft - LEFT_PADDING;
+        let cum = 0;
+        const starts: number[] = [];
+        for (const s of segs) { starts.push(cum); cum += s.duration; }
+        let idx = 0;
+        for (let i = 0; i < segs.length; i++) {
+          const midX = (starts[i] + segs[i].duration / 2) * effectivePPSRef.current;
+          if (mouseX > midX) idx = i + 1;
+        }
+        segDropIndicatorIdxRef.current = idx;
+        setSegDropIndicatorIdx(idx);
+      }
     }
 
     function onMouseUp() {
@@ -160,6 +191,17 @@ export function useTimelineGestures(
         dropIndicatorIdxRef.current = null;
         setDropIndicatorIdx(null);
       }
+      if (segReorderDragRef.current) {
+        const rd = segReorderDragRef.current;
+        const dropIdx = segDropIndicatorIdxRef.current;
+        if (dropIdx !== null && dropIdx !== rd.origIndex && dropIdx !== rd.origIndex + 1) {
+          const destIndex = dropIdx > rd.origIndex ? dropIdx - 1 : dropIdx;
+          reorderAudioSegments(rd.origIndex, destIndex);
+        }
+        segReorderDragRef.current = null;
+        segDropIndicatorIdxRef.current = null;
+        setSegDropIndicatorIdx(null);
+      }
     }
 
     window.addEventListener('mousemove', onMouseMove);
@@ -168,7 +210,7 @@ export function useTimelineGestures(
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
     };
-  }, [updateFormation, reorderFormations, updateAudioSegment, seekToTime, scrollRef]);
+  }, [updateFormation, reorderFormations, updateAudioSegment, reorderAudioSegments, seekToTime, scrollRef]);
 
   // --- Bar drag callbacks ---
   function handleDurResizeStart(e: React.MouseEvent, state: DragState) {
@@ -189,6 +231,12 @@ export function useTimelineGestures(
     setDropIndicatorIdx(origIndex);
   }
 
+  function handleSegReorderStart(_e: React.MouseEvent, segmentId: string, origIndex: number) {
+    segReorderDragRef.current = { segmentId, origIndex };
+    segDropIndicatorIdxRef.current = origIndex;
+    setSegDropIndicatorIdx(origIndex);
+  }
+
   function handleRulerMouseDown(e: React.MouseEvent<HTMLDivElement>, effectivePPS: number) {
     isSeekingRef.current = true;
     const rect = scrollRef.current?.getBoundingClientRect();
@@ -202,9 +250,11 @@ export function useTimelineGestures(
     effectivePPSRef, timelineZoomRef,
     dragRef, segDragRef, isSeekingRef, reorderDragRef,
     dropIndicatorIdx, dropIndicatorIdxRef,
+    segReorderDragRef, segDropIndicatorIdx, segDropIndicatorIdxRef,
     handleDurResizeStart,
     handleTransResizeStart,
     handleReorderStart,
+    handleSegReorderStart,
     handleRulerMouseDown,
   };
 }

@@ -85,8 +85,8 @@
     "semantic_hash": ""
   },
   "src/components/panels/StagePanel.tsx": {
-    "mtime": 1789366736.3706303,
-    "ast_hash": "a99e6a743895ed3a71ced9962fe2307b",
+    "mtime": 1789366592.5946083,
+    "ast_hash": "a84e322cf067ca6a7715de5074d23be3",
     "semantic_hash": ""
   },
   "src/components/timeline/AudioSegmentBar.tsx": {

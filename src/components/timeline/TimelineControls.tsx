@@ -27,12 +27,18 @@ export function TimelineControls({
   onZoomChange,
   formatTime,
 }: TimelineControlsProps) {
-  const { formations, activeFormationId, addFormation, currentUserRole } = useShowStore();
+  const { formations, activeFormationId, addFormation, addFormationAfter, currentUserRole } = useShowStore();
   const isViewer = currentUserRole === 'viewer';
 
   const activeIdx = formations.findIndex(f => f.id === activeFormationId);
   const canPrev = activeIdx > 0;
   const canNext = activeIdx < formations.length - 1;
+
+  function handleAddClick() {
+    // Add right after the active formation, or at the end if none is active/selected.
+    if (activeFormationId) addFormationAfter(activeFormationId);
+    else addFormation();
+  }
 
   function goToPrev() {
     if (!canPrev) return;
@@ -60,7 +66,7 @@ export function TimelineControls({
           <button
             className="btn-ghost"
             style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, fontSize: fontSize.md, color: colors.accentLight, padding: `${spacing.xs}px ${spacing.sm}px`, flexShrink: 0 }}
-            onClick={addFormation}
+            onClick={handleAddClick}
           >
             <Plus size={14} /> Add
           </button>

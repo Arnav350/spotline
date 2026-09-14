@@ -71,9 +71,12 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
     segDragRef,
     dropIndicatorIdx,
     reorderDragRef,
+    segReorderDragRef,
+    segDropIndicatorIdx,
     handleDurResizeStart,
     handleTransResizeStart,
     handleReorderStart,
+    handleSegReorderStart,
     handleRulerMouseDown,
   } = useTimelineGestures(scrollRef, seek);
 
@@ -336,12 +339,32 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
                   effectivePPS={effectivePPS}
                   isSelected={seg.id === selectedAudioSegmentId}
                   isEditable={showAudioSegments}
+                  isBeingDragged={segReorderDragRef.current?.segmentId === seg.id}
                   bpm={bpm}
                   onResizeStart={(_, segmentId, startX, startDur) => {
                     segDragRef.current = { segmentId, startX, startDur };
                   }}
+                  onReorderStart={showAudioSegments ? handleSegReorderStart : undefined}
                 />
               ))}
+
+              {/* Segment drop indicator */}
+              {segDropIndicatorIdx !== null && (() => {
+                const x = segDropIndicatorIdx >= sortedSegments.length
+                  ? LEFT_PADDING + segCum * effectivePPS
+                  : LEFT_PADDING + segStartTimes[segDropIndicatorIdx] * effectivePPS;
+                return (
+                  <div style={{
+                    position: 'absolute',
+                    left: x - 1, top: 0,
+                    width: 2, height: SEGMENT_ROW_HEIGHT,
+                    background: colors.accentLight,
+                    zIndex: 20,
+                    borderRadius: radius.xs,
+                    boxShadow: `0 0 6px ${colors.accentLight}`,
+                  }} />
+                );
+              })()}
             </div>
           </div>
         </div>

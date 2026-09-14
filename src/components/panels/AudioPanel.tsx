@@ -240,6 +240,7 @@ export function AudioPanel({ onClose }: AudioPanelProps) {
             }}
             onMouseEnter={e => (e.currentTarget.style.color = colors.text)}
             onMouseLeave={e => (e.currentTarget.style.color = colors.accentLight)}
+            onMouseDown={e => e.stopPropagation()}
             onClick={addAudioSegment}
           >
             <Plus size={12} /> Add
