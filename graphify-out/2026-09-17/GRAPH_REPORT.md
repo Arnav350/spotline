@@ -1,7 +1,7 @@
 # Graph Report - spotline  (2026-09-17)
 
 ## Corpus Check
-- 63 files · ~54,733 words
+- 63 files · ~55,305 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `32c2d3f2`
+- Built from commit: `a15f11c7`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 

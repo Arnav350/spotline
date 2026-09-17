@@ -6554,7 +6554,7 @@
       "relation": "indirect_call",
       "confidence": "INFERRED",
       "source_file": "src/components/StageCanvas.tsx",
-      "source_location": "L1017",
+      "source_location": "L1037",
       "weight": 1.0,
       "context": "argument",
       "source": "src_components_stagecanvas",
@@ -7069,7 +7069,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/TopBar.tsx",
-      "source_location": "L360",
+      "source_location": "L378",
       "weight": 1.0,
       "source": "src_components_topbar_topbar",
       "target": "src_lib_colors_colorfromuserid"
@@ -7080,7 +7080,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/TopBar.tsx",
-      "source_location": "L358",
+      "source_location": "L376",
       "weight": 1.0,
       "source": "src_components_topbar_topbar",
       "target": "src_lib_supabase_issupabaseconfigured"
@@ -7091,7 +7091,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/TopBar.tsx",
-      "source_location": "L199",
+      "source_location": "L201",
       "weight": 1.0,
       "source": "src_components_topbar_topbar",
       "target": "src_store_authstore_useauthstore"
@@ -7102,7 +7102,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/TopBar.tsx",
-      "source_location": "L197",
+      "source_location": "L198",
       "weight": 1.0,
       "source": "src_components_topbar_topbar",
       "target": "src_store_showstore_useshowstore"
@@ -9740,7 +9740,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/hooks/useRealtimeSync.ts",
-      "source_location": "L308",
+      "source_location": "L112",
       "weight": 1.0,
       "source": "src_hooks_userealtimesync_userealtimesync",
       "target": "src_lib_colors_colorfromuserid"
@@ -9751,7 +9751,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/hooks/useRealtimeSync.ts",
-      "source_location": "L96",
+      "source_location": "L120",
       "weight": 1.0,
       "source": "src_hooks_userealtimesync_userealtimesync",
       "target": "src_lib_supabase_issupabaseconfigured"
@@ -12288,5 +12288,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "32c2d3f2e98e98655737e89d3f286af78b83e607"
+  "built_at_commit": "a15f11c75a433fb4c4c350ff4dc98e60dbe43621"
 }

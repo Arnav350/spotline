@@ -4,18 +4,18 @@ import { colors, fontSize, fontWeight, radius, spacing } from '../lib/theme';
 
 const SHORTCUTS = [
   { group: 'General', items: [
-    { keys: ['⌘', 'Z'], label: 'Undo' },
-    { keys: ['⌘', '⇧', 'Z'], label: 'Redo' },
-    { keys: ['⌘', 'A'], label: 'Select all performers' },
+    { keys: ['⌘', 'Z'], label: 'Undo', editOnly: true },
+    { keys: ['⌘', '⇧', 'Z'], label: 'Redo', editOnly: true },
+    { keys: ['⌘', 'A'], label: 'Select all performers', editOnly: true },
     { keys: ['Esc'], label: 'Deselect' },
     { keys: ['?'], label: 'Show shortcuts' },
   ]},
   { group: 'Performers', items: [
-    { keys: ['⌘', 'C'], label: 'Copy selected positions' },
-    { keys: ['⌘', 'V'], label: 'Paste positions' },
-    { keys: ['⌫'], label: 'Delete selected' },
-    { keys: ['↑', '↓', '←', '→'], label: 'Nudge by one subdivision' },
-    { keys: ['⌘', 'drag'], label: 'Additive box select' },
+    { keys: ['⌘', 'C'], label: 'Copy selected positions', editOnly: true },
+    { keys: ['⌘', 'V'], label: 'Paste positions', editOnly: true },
+    { keys: ['⌫'], label: 'Delete selected', editOnly: true },
+    { keys: ['↑', '↓', '←', '→'], label: 'Nudge by one subdivision', editOnly: true },
+    { keys: ['⌘', 'drag'], label: 'Additive box select', editOnly: true },
   ]},
   { group: 'Canvas', items: [
     { keys: ['Scroll'], label: 'Pan' },
@@ -31,7 +31,15 @@ const SHORTCUTS = [
   ]},
 ];
 
-export default function ShortcutsModal({ onClose }: { onClose: () => void }) {
+export default function ShortcutsModal({ onClose, viewerOnly }: { onClose: () => void; viewerOnly?: boolean }) {
+  // Public viewers can't edit anything, so drop the shortcuts that require it — showing only
+  // what they actually have access to (navigation, playback, canvas viewing).
+  const groups = viewerOnly
+    ? SHORTCUTS
+        .map(g => ({ ...g, items: g.items.filter(i => !i.editOnly) }))
+        .filter(g => g.items.length > 0)
+    : SHORTCUTS;
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape' || e.key === '?') onClose();
@@ -57,7 +65,7 @@ export default function ShortcutsModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xl }}>
-          {SHORTCUTS.map(group => (
+          {groups.map(group => (
             <div key={group.group}>
               <div style={{ fontSize: fontSize.sm, fontWeight: fontWeight.bold, color: colors.textFaint, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: spacing.sm }}>{group.group}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs }}>

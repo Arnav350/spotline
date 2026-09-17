@@ -224,7 +224,7 @@ export default function App() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden', background: colors.bg }}>
-      {showShortcuts && <ShortcutsModal onClose={() => setShowShortcuts(false)} />}
+      {showShortcuts && <ShortcutsModal onClose={() => setShowShortcuts(false)} viewerOnly={isPublicView} />}
 
       {/* Reconnecting banner */}
       {!realtimeConnected && (
