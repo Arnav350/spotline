@@ -15,8 +15,8 @@
     "semantic_hash": "f8ea390f65984b511eb78a8f9c48b362"
   },
   "src/App.tsx": {
-    "mtime": 1789663627.509152,
-    "ast_hash": "c8e5c801ffbe377f85735df08dbf505f",
+    "mtime": 1783383666.501674,
+    "ast_hash": "63128821f44c0ace7a5eabce6a129e4a",
     "semantic_hash": ""
   },
   "src/components/AuthModal.tsx": {
@@ -145,8 +145,8 @@
     "semantic_hash": "2aa46459e61933866bc2faf7d74a0821"
   },
   "src/hooks/useRealtimeSync.ts": {
-    "mtime": 1789665947.0943224,
-    "ast_hash": "7536a51ae629567ff18632ee499323dc",
+    "mtime": 1789599424.4137917,
+    "ast_hash": "e6cb6b48fcff1e1ded6655092e51af33",
     "semantic_hash": ""
   },
   "src/hooks/useStageInteraction.ts": {

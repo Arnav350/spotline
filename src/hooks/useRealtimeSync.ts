@@ -37,6 +37,10 @@ export function useRealtimeSync(showId: string | null) {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const knownUserIdsRef = useRef<Set<string>>(new Set());
   const wasDisconnectedRef = useRef(false);
+  const hadPeersDuringDisconnectRef = useRef(false);
+  // Set on reconnect; consumed by the next presence sync so the peer-check below
+  // sees post-reconnect presence data, not the stale pre-disconnect snapshot.
+  const pendingReconnectCatchUpRef = useRef(false);
 
   // Only broadcast when other collaborators are online — skip if solo.
   const broadcastEphemeral = useCallback((data: Omit<EphemeralPayload, 'userId'>) => {
@@ -88,11 +92,37 @@ export function useRealtimeSync(showId: string | null) {
     return unsub;
   }, [broadcastEphemeral]);
 
+  // Re-track presence whenever our identity actually resolves/changes. The channel can
+  // subscribe (and send its one-time initial track()) before auth + profile finish loading,
+  // in which case that track() goes out under the placeholder identity — a throwaway
+  // localUserId and the literal name 'Anonymous' — and nothing corrects it afterward. This
+  // catches that: the moment setLocalUser fills in the real id/name, re-send presence so
+  // collaborators (and our own self-exclusion filter, which keys off the current localUserId)
+  // see the right identity instead of a permanent "Anonymous" ghost.
+  useEffect(() => {
+    let prevId = useShowStore.getState().localUserId;
+    let prevName = useShowStore.getState().localUserName;
+    const unsub = useShowStore.subscribe((state) => {
+      if (state.localUserId !== prevId || state.localUserName !== prevName) {
+        prevId = state.localUserId;
+        prevName = state.localUserName;
+        channelRef.current?.track({
+          userId: state.localUserId,
+          name: state.localUserName,
+          color: colorFromUserId(state.localUserId),
+        });
+      }
+    });
+    return unsub;
+  }, []);
+
   useEffect(() => {
     if (!showId || !isSupabaseConfigured()) return;
 
     knownUserIdsRef.current = new Set();
     wasDisconnectedRef.current = false;
+    hadPeersDuringDisconnectRef.current = false;
+    pendingReconnectCatchUpRef.current = false;
 
     // Only process DB events when others are online — avoids echo-processing our own saves when solo
     function hasPeers(): boolean {
@@ -166,6 +196,17 @@ export function useRealtimeSync(showId: string | null) {
             active_formation_id: existingById.get(p.userId)?.active_formation_id ?? null,
           }));
         useShowStore.setState({ collaborators });
+
+        // Resolve any pending post-reconnect catch-up decision now that presence has
+        // actually caught up — covers a collaborator joining while we were disconnected
+        // and never noticed, which a check made at the instant of reconnecting would miss.
+        if (pendingReconnectCatchUpRef.current) {
+          pendingReconnectCatchUpRef.current = false;
+          if (hadPeersDuringDisconnectRef.current || collaborators.length > 0) {
+            useShowStore.getState().loadShow(showId, { silent: true });
+          }
+          hadPeersDuringDisconnectRef.current = false;
+        }
       })
       .on('presence', { event: 'join' }, ({ newPresences }) => {
         const localId = useShowStore.getState().localUserId;
@@ -272,7 +313,14 @@ export function useRealtimeSync(showId: string | null) {
         if (status === 'SUBSCRIBED') {
           if (wasDisconnectedRef.current) {
             wasDisconnectedRef.current = false;
-            useShowStore.getState().loadShow(showId);
+            // A brief socket blip (WiFi roam, laptop wake, a throttled background tab missing a
+            // heartbeat) is common and usually self-heals. Solo, nobody else could have changed
+            // shared data while we were out, so skip the reload entirely — it was only ever a
+            // safety net for catching up on other collaborators' edits. Don't decide here, though:
+            // our `collaborators` state is whatever it was before we dropped, and a collaborator
+            // could have joined during the outage without us seeing it yet. Defer to the presence
+            // sync handler below, which fires right after (re-)subscribing with fresh data.
+            pendingReconnectCatchUpRef.current = true;
           }
           useShowStore.getState().setRealtimeConnected(true);
 
@@ -288,6 +336,7 @@ export function useRealtimeSync(showId: string | null) {
           broadcastEphemeral({ activeFormationId: useShowStore.getState().activeFormationId });
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
           wasDisconnectedRef.current = true;
+          hadPeersDuringDisconnectRef.current = hadPeersDuringDisconnectRef.current || hasPeers();
           useShowStore.getState().setRealtimeConnected(false);
         }
       });
@@ -296,7 +345,13 @@ export function useRealtimeSync(showId: string | null) {
 
     return () => {
       channel.untrack();
-      channel.unsubscribe();
+      // supabase.removeChannel (not channel.unsubscribe()) — it synchronously drops the channel
+      // from the client's internal registry instead of just firing an async leave message. That
+      // matters under React StrictMode's dev-only mount→cleanup→mount: without it, the second
+      // mount can open a new connection to the same topic before the first one's leave has
+      // actually finished, leaving a stale presence entry (tracked under whatever placeholder
+      // identity was current at the time) behind — which shows up as a permanent "Anonymous" ghost.
+      supabase.removeChannel(channel);
       channelRef.current = null;
       knownUserIdsRef.current = new Set();
       useShowStore.setState({ collaborators: [] });

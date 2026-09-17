@@ -9740,7 +9740,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/hooks/useRealtimeSync.ts",
-      "source_location": "L112",
+      "source_location": "L308",
       "weight": 1.0,
       "source": "src_hooks_userealtimesync_userealtimesync",
       "target": "src_lib_colors_colorfromuserid"
@@ -9751,7 +9751,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/hooks/useRealtimeSync.ts",
-      "source_location": "L120",
+      "source_location": "L96",
       "weight": 1.0,
       "source": "src_hooks_userealtimesync_userealtimesync",
       "target": "src_lib_supabase_issupabaseconfigured"

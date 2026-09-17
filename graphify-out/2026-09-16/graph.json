@@ -4815,7 +4815,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L151",
+      "source_location": "L144",
       "weight": 1.0,
       "source": "src_app_app",
       "target": "src_hooks_userealtimesync_userealtimesync"
@@ -4826,7 +4826,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L103",
+      "source_location": "L96",
       "weight": 1.0,
       "source": "src_app_app",
       "target": "src_lib_supabase_issupabaseconfigured"
@@ -9740,7 +9740,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/hooks/useRealtimeSync.ts",
-      "source_location": "L112",
+      "source_location": "L295",
       "weight": 1.0,
       "source": "src_hooks_userealtimesync_userealtimesync",
       "target": "src_lib_colors_colorfromuserid"
@@ -9751,7 +9751,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/hooks/useRealtimeSync.ts",
-      "source_location": "L120",
+      "source_location": "L93",
       "weight": 1.0,
       "source": "src_hooks_userealtimesync_userealtimesync",
       "target": "src_lib_supabase_issupabaseconfigured"
