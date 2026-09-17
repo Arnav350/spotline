@@ -15,8 +15,8 @@
     "semantic_hash": "f8ea390f65984b511eb78a8f9c48b362"
   },
   "src/App.tsx": {
-    "mtime": 1789677935.1501622,
-    "ast_hash": "31390ddaf4d348e7f489762b36b1f9af",
+    "mtime": 1783383666.501674,
+    "ast_hash": "63128821f44c0ace7a5eabce6a129e4a",
     "semantic_hash": ""
   },
   "src/components/AuthModal.tsx": {
@@ -45,23 +45,23 @@
     "semantic_hash": "9f719f62db309c430eb92cacb6eed8be"
   },
   "src/components/ShortcutsModal.tsx": {
-    "mtime": 1789677928.8423672,
-    "ast_hash": "bc2c29b269c231aff62ed9cf0b075483",
+    "mtime": 1789364726.5168889,
+    "ast_hash": "8f62ce05e34abf0b29a5e5898963529d",
     "semantic_hash": ""
   },
   "src/components/Stage3D.tsx": {
-    "mtime": 1789678253.0223038,
-    "ast_hash": "d29c6ffa3a179dc300b7087fd409e3a3",
-    "semantic_hash": ""
+    "mtime": 1782323723.526836,
+    "ast_hash": "5810707dc22ae9f7169c961a5bc7d608",
+    "semantic_hash": "5810707dc22ae9f7169c961a5bc7d608"
   },
   "src/components/StageCanvas.tsx": {
-    "mtime": 1789678193.0061738,
-    "ast_hash": "475aa16336704d1b577493faaba01fcb",
+    "mtime": 1789365812.214684,
+    "ast_hash": "f502cd71d4e8decfd9adadbe84ebeaad",
     "semantic_hash": ""
   },
   "src/components/TopBar.tsx": {
-    "mtime": 1789677909.5189643,
-    "ast_hash": "5b2c1d9bdc746fac3fc13c51f33cb0e7",
+    "mtime": 1784748980.8463686,
+    "ast_hash": "2be5924208ec8874e0cc5a3cadf027dd",
     "semantic_hash": ""
   },
   "src/components/panels/AIPanel.tsx": {
@@ -145,8 +145,8 @@
     "semantic_hash": "2aa46459e61933866bc2faf7d74a0821"
   },
   "src/hooks/useRealtimeSync.ts": {
-    "mtime": 1789665947.0943224,
-    "ast_hash": "7536a51ae629567ff18632ee499323dc",
+    "mtime": 1789599424.4137917,
+    "ast_hash": "e6cb6b48fcff1e1ded6655092e51af33",
     "semantic_hash": ""
   },
   "src/hooks/useStageInteraction.ts": {

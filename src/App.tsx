@@ -90,6 +90,13 @@ export default function App() {
     if (viewToken) {
       loadPublicShow(viewToken);
       setView('show');
+      // Deliberately leave currentShowId unset: useRealtimeSync(showId) below bails out
+      // immediately when showId is null, so public viewers never open a realtime channel.
+      // They get zero benefit from it (no live-edit UI, no presence display), and opening one
+      // anyway would only add reconnect churn — including a reconnect-triggered reload whose
+      // role lookup doesn't know about public/token-based viewers and would resolve their
+      // currentUserRole to null instead of 'viewer'. If you ever wire this up, that path needs
+      // to call loadPublicShow(viewToken), not loadShow(showId).
       return;
     }
 
@@ -217,7 +224,7 @@ export default function App() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden', background: colors.bg }}>
-      {showShortcuts && <ShortcutsModal onClose={() => setShowShortcuts(false)} />}
+      {showShortcuts && <ShortcutsModal onClose={() => setShowShortcuts(false)} viewerOnly={isPublicView} />}
 
       {/* Reconnecting banner */}
       {!realtimeConnected && (

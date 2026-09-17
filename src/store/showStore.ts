@@ -88,7 +88,7 @@ interface ShowState {
   historyIndex: number;
   isSaving: boolean;
 
-  loadShow: (showId: string) => Promise<void>;
+  loadShow: (showId: string, opts?: { silent?: boolean }) => Promise<void>;
   createShow: () => Promise<string>;
   setLocalUser: (id: string, name: string, color: string) => void;
   updateShowTitle: (title: string) => void;
@@ -509,12 +509,15 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
   animFromFormationId: null,
   isPublicView: false,
 
-  loadShow: async (showId: string) => {
-    set({ isLoading: true });
+  loadShow: async (showId: string, opts?: { silent?: boolean }) => {
+    const silent = opts?.silent ?? false;
+    if (!silent) set({ isLoading: true });
     if (!isSupabaseConfigured()) {
       const localData = localStorage.getItem(`show-${showId}`);
       if (localData) {
         const data = JSON.parse(localData);
+        const priorActiveId = get().activeFormationId;
+        const stillValid = silent && priorActiveId && (data.formations || []).some((f: Formation) => f.id === priorActiveId);
         set({
           show: data.show,
           formations: data.formations || [],
@@ -527,7 +530,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
           audioSegments: (data.audioSegments || [])
             .sort((a: any, b: any) => (a.order_index ?? a.start_time ?? 0) - (b.order_index ?? b.start_time ?? 0))
             .map((s: any, i: number) => ({ ...s, order_index: i, start_time: undefined })),
-          activeFormationId: data.formations?.[0]?.id || null,
+          activeFormationId: stillValid ? priorActiveId : (data.formations?.[0]?.id || null),
           currentUserRole: 'owner',
           history: [],
           historyIndex: -1,
@@ -597,6 +600,9 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         }
       }
 
+      const priorActiveId = get().activeFormationId;
+      const stillValid = silent && priorActiveId && (formations || []).some(f => f.id === priorActiveId);
+
       set({
         show: resolvedShow,
         formations: formations || [],
@@ -607,14 +613,14 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         performerPaths,
         performerGroups: withOrderIndex(performerGroupsData || []),
         audioSegments: (audioSegsData || []).sort((a: any, b: any) => a.order_index - b.order_index),
-        activeFormationId: formations?.[0]?.id || null,
+        activeFormationId: stillValid ? priorActiveId : (formations?.[0]?.id || null),
         currentUserRole,
         history: [],
         historyIndex: -1,
         isLoading: false,
       });
     } catch {
-      set({ isLoading: false });
+      if (!silent) set({ isLoading: false });
     }
   },
 

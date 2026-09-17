@@ -186,9 +186,10 @@ interface SceneContentProps {
 function SceneContent({ animating, animationProgress, previousFormationId, onDraggingChange }: SceneContentProps) {
   const {
     show, performers, props, performerPositions, propPositions, performerPaths,
-    activeFormationId, selectedItem, selectedItemIds,
+    activeFormationId, selectedItem, selectedItemIds, currentUserRole,
     setSelectedItemIds, movePerformer, pushHistory, captureSnapshot,
   } = useShowStore();
+  const isViewer = currentUserRole === 'viewer';
   const stageConfig = show?.stage_config || { width: 60, height: 40, divisionsX: 5, divisionsY: 5, subdivisionsX: 2, subdivisionsY: 2, unit: 'ft' };
 
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -225,7 +226,7 @@ function SceneContent({ animating, animationProgress, previousFormationId, onDra
 
   function handlePerformerPointerDown(e: ThreeEvent<PointerEvent>, performer: Performer) {
     e.stopPropagation();
-    if (animating) return;
+    if (animating || isViewer) return;
     captureSnapshot();
     setSelectedItemIds([performer.id]);
     setDraggingId(performer.id);

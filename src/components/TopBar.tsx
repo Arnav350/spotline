@@ -194,7 +194,9 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
   const {
     show, viewMode, setViewMode, undo, redo, history, historyIndex,
     updateShowTitle, isSaving, collaborators, localUserId, localUserColor, currentUserRole, isPublicView,
+    formations, activeFormationId,
   } = useShowStore();
+  const activeFormation = formations.find(f => f.id === activeFormationId);
   const isViewer = currentUserRole === 'viewer';
   const { signOut, profile } = useAuthStore();
 
@@ -243,8 +245,24 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
       <div style={{
         display: 'flex', alignItems: 'center', height: 48, padding: isPublicView ? `0 ${spacing.md}px 0 ${spacing.xl}px` : `0 ${spacing.md}px`,
         gap: spacing.sm, flexShrink: 0, background: colors.bgPanel,
-        borderBottom: `1px solid ${colors.bgCardHover}`,
+        borderBottom: `1px solid ${colors.bgCardHover}`, position: 'relative',
       }}>
+        {/* Current formation — public viewers only. Dead-centered over the whole bar so it
+            reads as the headline, not a status chip. */}
+        {isPublicView && activeFormation && (
+          <div style={{
+            position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)',
+            display: 'flex', alignItems: 'center', gap: spacing.sm,
+            maxWidth: '40%', pointerEvents: 'none',
+          }}>
+            <span style={{
+              fontSize: 22, fontWeight: fontWeight.bold, color: colors.text, letterSpacing: '0.01em',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>
+              {activeFormation.name}
+            </span>
+          </div>
+        )}
         {/* Back to dashboard — hidden for public viewers */}
         {onBackToDashboard && !isPublicView && (
           <>
@@ -372,6 +390,14 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
           >
             <UserPlus size={13} />
             Invite
+          </button>
+        )}
+
+        {/* Keyboard shortcuts — public viewers have no UserMenu (that's where this lives
+            for everyone else), so give them their own way to see what's available to them */}
+        {isPublicView && (
+          <button className="btn-icon" onClick={onShowShortcuts} title="Keyboard shortcuts (?)">
+            <Keyboard size={17} />
           </button>
         )}
 

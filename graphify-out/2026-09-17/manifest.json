@@ -50,9 +50,9 @@
     "semantic_hash": ""
   },
   "src/components/Stage3D.tsx": {
-    "mtime": 1789678253.0223038,
-    "ast_hash": "d29c6ffa3a179dc300b7087fd409e3a3",
-    "semantic_hash": ""
+    "mtime": 1782323723.526836,
+    "ast_hash": "5810707dc22ae9f7169c961a5bc7d608",
+    "semantic_hash": "5810707dc22ae9f7169c961a5bc7d608"
   },
   "src/components/StageCanvas.tsx": {
     "mtime": 1789678193.0061738,

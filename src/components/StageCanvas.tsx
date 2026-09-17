@@ -857,43 +857,63 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
 
         {/* Coordinate labels — personal view toggle. On-stage performers/props only;
             anything outside the stage bounds (backstage/wings) is excluded. */}
-        {showCoords && activeFormationId && !draggingId && !isAnimatingNow && (
-          <Layer listening={false}>
-            {[
-              ...performers.map(p => ({ id: p.id, isP: true })),
-              ...props.map(p => ({ id: p.id, isP: false })),
-            ].map(({ id, isP }) => {
-              const pos = getAnimatedPosition(id, isP);
-              if (!pos) return null;
-              if (pos.x < 0 || pos.x > stageConfig.width || pos.y < 0 || pos.y > stageConfig.height) return null;
-              const { x, y } = toCanvas(pos.x, pos.y);
-              const divX = Math.max(1, stageConfig.divisionsX);
-              const divY = Math.max(1, stageConfig.divisionsY);
-              const coordX = -(pos.x / (stageConfig.width / divX) - divX / 2);
-              const coordY = pos.y / (stageConfig.height / divY) - divY / 2;
-              const fmt = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
-              const iconSize = isP ? performerSize : 10;
-              return (
-                <Label
-                  key={`coord-${id}`}
-                  x={x + iconSize + 3} y={y - iconSize - 3}
-                  listening={false}
-                >
+        {showCoords && activeFormationId && !draggingId && !isAnimatingNow && (() => {
+          const divX = Math.max(1, stageConfig.divisionsX);
+          const divY = Math.max(1, stageConfig.divisionsY);
+          const fmt = (n: number) => String(Math.round(n * 100) / 100);
+
+          const labels = [
+            ...performers.map(p => ({ id: p.id, isP: true })),
+            ...props.map(p => ({ id: p.id, isP: false })),
+          ].map(({ id, isP }) => {
+            const pos = getAnimatedPosition(id, isP);
+            if (!pos) return null;
+            if (pos.x < 0 || pos.x > stageConfig.width || pos.y < 0 || pos.y > stageConfig.height) return null;
+            const { x, y } = toCanvas(pos.x, pos.y);
+            const coordX = -(pos.x / (stageConfig.width / divX) - divX / 2);
+            const coordY = pos.y / (stageConfig.height / divY) - divY / 2;
+            const iconSize = isP ? performerSize : 10;
+            const text = `(${fmt(coordX)}, ${fmt(coordY)})`;
+            return { id, text, x: x + iconSize + 3, y: y - iconSize - 3 };
+          }).filter((l): l is NonNullable<typeof l> => l !== null);
+
+          // Nudge labels down when they'd overlap a nearer performer's tag — cheap width
+          // estimate from character count, since we don't have real text metrics here.
+          const CHAR_W = 6.2, LABEL_H = 20, GAP = 2;
+          const placed: { x: number; y: number; w: number; h: number }[] = [];
+          const positioned = labels.map(l => {
+            const w = l.text.length * CHAR_W + 10;
+            let ly = l.y;
+            let guard = 0;
+            while (guard < 25 && placed.some(p =>
+              l.x < p.x + p.w && l.x + w > p.x && ly < p.y + p.h && ly + LABEL_H > p.y
+            )) {
+              ly += LABEL_H + GAP;
+              guard++;
+            }
+            placed.push({ x: l.x, y: ly, w, h: LABEL_H });
+            return { ...l, y: ly };
+          });
+
+          return (
+            <Layer listening={false}>
+              {positioned.map(l => (
+                <Label key={`coord-${l.id}`} x={l.x} y={l.y} listening={false}>
                   <Tag
                     fill={colors.bgCard} opacity={0.92}
                     stroke={'rgba(139,92,246,0.45)'} strokeWidth={1}
                     cornerRadius={radius.sm}
                   />
                   <Text
-                    text={`(${fmt(coordX)}, ${fmt(coordY)})`}
+                    text={l.text}
                     fontSize={fontSize.sm} fontStyle="600" fontFamily="Inter, sans-serif"
                     fill={colors.accentLight} padding={4} listening={false}
                   />
                 </Label>
-              );
-            })}
-          </Layer>
-        )}
+              ))}
+            </Layer>
+          );
+        })()}
       </Stage>
 
       {/* Zoom controls */}
