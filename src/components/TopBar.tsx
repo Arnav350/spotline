@@ -188,9 +188,11 @@ function UserMenu({ onSignOut, onShowShortcuts }: { onSignOut: () => void; onSho
 interface TopBarProps {
   onShowShortcuts?: () => void;
   onBackToDashboard?: () => void;
+  /** Public-view-only mobile mode — narrow portrait or short landscape phone. */
+  compact?: boolean;
 }
 
-export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarProps) {
+export default function TopBar({ onShowShortcuts, onBackToDashboard, compact }: TopBarProps) {
   const {
     show, viewMode, setViewMode, undo, redo, history, historyIndex,
     updateShowTitle, isSaving, collaborators, localUserId, localUserColor, currentUserRole, isPublicView,
@@ -243,8 +245,9 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
       )}
 
       <div style={{
-        display: 'flex', alignItems: 'center', height: 48, padding: isPublicView ? `0 ${spacing.md}px 0 ${spacing.xl}px` : `0 ${spacing.md}px`,
-        gap: spacing.sm, flexShrink: 0, background: colors.bgPanel,
+        display: 'flex', alignItems: 'center', height: 48,
+        padding: compact ? `0 ${spacing.sm}px` : isPublicView ? `0 ${spacing.md}px 0 ${spacing.xl}px` : `0 ${spacing.md}px`,
+        gap: compact ? spacing.xs : spacing.sm, flexShrink: 0, background: colors.bgPanel,
         borderBottom: `1px solid ${colors.bgCardHover}`, position: 'relative',
       }}>
         {/* Current formation — public viewers only. Dead-centered over the whole bar so it
@@ -253,10 +256,10 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
           <div style={{
             position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)',
             display: 'flex', alignItems: 'center', gap: spacing.sm,
-            maxWidth: '40%', pointerEvents: 'none',
+            maxWidth: compact ? '32%' : '40%', pointerEvents: 'none',
           }}>
             <span style={{
-              fontSize: 22, fontWeight: fontWeight.bold, color: colors.text, letterSpacing: '0.01em',
+              fontSize: compact ? 14 : 22, fontWeight: fontWeight.bold, color: colors.text, letterSpacing: '0.01em',
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
               {activeFormation.name}
@@ -292,9 +295,11 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
             }}>
               <div style={{ width: 8, height: 8, borderRadius: radius.xs, background: 'rgba(255,255,255,0.9)' }} />
             </div>
-            <span style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, letterSpacing: '0.12em', color: colors.text, textTransform: 'uppercase' }}>
-              SPOTLINE
-            </span>
+            {!compact && (
+              <span style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, letterSpacing: '0.12em', color: colors.text, textTransform: 'uppercase' }}>
+                SPOTLINE
+              </span>
+            )}
           </div>
           <div style={{ width: 1, height: 16, background: colors.borderSubtle, margin: '0 2px' }} />
           {editingTitle && !isViewer ? (
@@ -308,12 +313,12 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
             />
           ) : (
             <button
-              style={{ fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.textSecondary, background: 'transparent', border: 'none', cursor: isViewer ? 'default' : 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: spacing.xs }}
+              style={{ fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.textSecondary, background: 'transparent', border: 'none', cursor: isViewer ? 'default' : 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: spacing.xs, maxWidth: compact ? 90 : undefined, overflow: 'hidden' }}
               onMouseEnter={e => { if (!isViewer) { e.currentTarget.style.color = colors.text; (e.currentTarget.querySelector('.title-pencil') as HTMLElement | null)?.style.setProperty('opacity', '1'); } }}
               onMouseLeave={e => { e.currentTarget.style.color = colors.textSecondary; (e.currentTarget.querySelector('.title-pencil') as HTMLElement | null)?.style.setProperty('opacity', '0'); }}
               onClick={isViewer ? undefined : handleTitleClick}
             >
-              {show?.title || 'Untitled Show'}
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{show?.title || 'Untitled Show'}</span>
               {!isViewer && <Pencil size={11} className="title-pencil" style={{ opacity: 0, color: colors.textFaint, transition: 'opacity 0.15s', flexShrink: 0 }} />}
             </button>
           )}
@@ -356,7 +361,7 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
               key={mode}
               style={{
                 display: 'flex', alignItems: 'center', gap: spacing.xs,
-                fontSize: fontSize.md, padding: `${spacing.xs}px ${spacing.md}px`,
+                fontSize: fontSize.md, padding: compact ? `${spacing.xs}px ${spacing.sm}px` : `${spacing.xs}px ${spacing.md}px`,
                 borderRadius: radius.xs, border: 'none', cursor: 'pointer',
                 background: viewMode === mode ? colors.accent : 'transparent',
                 color: viewMode === mode ? colors.text : colors.textFaint,
@@ -365,7 +370,7 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard }: TopBarPro
               onClick={() => setViewMode(mode)}
             >
               {mode === '2d' ? <Monitor size={13} /> : <Box size={13} />}
-              {mode.toUpperCase()}
+              {!compact && mode.toUpperCase()}
             </button>
           ))}
         </div>

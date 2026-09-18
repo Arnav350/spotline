@@ -77,7 +77,7 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
     handleTransResizeStart,
     handleReorderStart,
     handleSegReorderStart,
-    handleRulerMouseDown,
+    handleRulerPointerDown,
   } = useTimelineGestures(scrollRef, seek);
 
   const effectivePPS = BASE_PPS * timelineZoom;
@@ -187,7 +187,7 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
             maxRulerT={maxRulerT}
             tickInterval={tickInterval}
             effectiveRulerHeight={effectiveRulerHeight}
-            onMouseDown={e => handleRulerMouseDown(e, effectivePPS)}
+            onPointerDown={e => handleRulerPointerDown(e, effectivePPS)}
           />
 
           {/* Playhead */}

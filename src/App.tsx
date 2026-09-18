@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useState, useRef } from 'react';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 import { useShowStore, flushPendingAutoSave } from './store/showStore';
 import { useAuthStore } from './store/authStore';
 import { isSupabaseConfigured, supabase } from './lib/supabase';
@@ -35,6 +36,7 @@ export default function App() {
   const [sidebarPanel, setSidebarPanel] = useState<NavPanel | null>('formation');
   const [view, setView] = useState<'loading' | 'auth' | 'dashboard' | 'show'>('loading');
   const [currentShowId, setCurrentShowId] = useState<string | null>(null);
+  const [timelineOpen, setTimelineOpen] = useState(true);
 
   const animFrameRef = useRef<number>(0);
   const prevActiveIdRef = useRef<string | null>(null);
@@ -191,9 +193,17 @@ export default function App() {
     setView('dashboard');
   }
 
+  // Public-view-only mobile mode — the authenticated editor stays desktop-only for now.
+  // Covers both a narrow portrait phone and a short landscape phone.
+  const isCompact = isPublicView && (width < 640 || height < 560);
+  const TIMELINE_HANDLE_HEIGHT = 22;
+
   const sidebarWidth = isPublicView ? 0 : NAV_WIDTH + (sidebarPanel !== null ? CONTENT_WIDTH : 0);
   const canvasWidth = width - sidebarWidth;
-  const canvasHeight = height - TOPBAR_HEIGHT - TIMELINE_HEIGHT;
+  const timelineRowHeight = isCompact
+    ? (timelineOpen ? TIMELINE_HEIGHT + TIMELINE_HANDLE_HEIGHT : TIMELINE_HANDLE_HEIGHT)
+    : TIMELINE_HEIGHT;
+  const canvasHeight = height - TOPBAR_HEIGHT - timelineRowHeight;
 
   if (view === 'loading') {
     return (
@@ -266,7 +276,7 @@ export default function App() {
         ))}
       </div>
 
-      <TopBar onShowShortcuts={() => setShowShortcuts(true)} onBackToDashboard={handleBackToDashboard} />
+      <TopBar onShowShortcuts={() => setShowShortcuts(true)} onBackToDashboard={handleBackToDashboard} compact={isCompact} />
 
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         {!isPublicView && (
@@ -300,9 +310,33 @@ export default function App() {
             )}
           </div>
 
-          <div style={{ height: TIMELINE_HEIGHT }}>
-            <FormationTimeline showAudioSegments={sidebarPanel === 'audio'} />
-          </div>
+          {isCompact ? (
+            <div style={{ display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+              {/* Bottom-sheet-style handle — lets a phone viewer reclaim stage height in
+                  landscape, where the fixed top bar + timeline otherwise leave little room. */}
+              <button
+                onClick={() => setTimelineOpen(v => !v)}
+                title={timelineOpen ? 'Hide timeline' : 'Show timeline'}
+                style={{
+                  height: TIMELINE_HANDLE_HEIGHT, flexShrink: 0, width: '100%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: colors.bgNav, border: 'none', borderTop: `1px solid ${colors.bgCardHover}`,
+                  color: colors.textFaint, cursor: 'pointer', padding: 0,
+                }}
+              >
+                {timelineOpen ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+              </button>
+              {timelineOpen && (
+                <div style={{ height: TIMELINE_HEIGHT }}>
+                  <FormationTimeline showAudioSegments={sidebarPanel === 'audio'} />
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{ height: TIMELINE_HEIGHT }}>
+              <FormationTimeline showAudioSegments={sidebarPanel === 'audio'} />
+            </div>
+          )}
         </div>
       </div>
     </div>

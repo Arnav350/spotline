@@ -365,7 +365,7 @@ export default function Stage3D({ width, height }: {
   const animationProgress = applyEasing(rawAnimProgress, activeFormation?.transition_easing);
 
   return (
-    <div style={{ width, height, background: colors.bg, cursor: isDragging ? 'grabbing' : 'default' }}>
+    <div style={{ width, height, background: colors.bg, cursor: isDragging ? 'grabbing' : 'default', touchAction: 'none' }}>
       <Canvas
         camera={{
           position: [0, cameraZ * 0.6, cameraZ],
@@ -373,7 +373,7 @@ export default function Stage3D({ width, height }: {
           near: 0.1,
           far: 1000,
         }}
-        style={{ width: '100%', height: '100%' }}
+        style={{ width: '100%', height: '100%', touchAction: 'none' }}
       >
         <SceneContent
           animating={isAnimating}

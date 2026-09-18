@@ -9,7 +9,7 @@ interface TimelineRulerProps {
   maxRulerT: number;
   tickInterval: number;
   effectiveRulerHeight: number;
-  onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => void;
 }
 
 export function TimelineRuler({
@@ -19,7 +19,7 @@ export function TimelineRuler({
   maxRulerT,
   tickInterval,
   effectiveRulerHeight,
-  onMouseDown,
+  onPointerDown,
 }: TimelineRulerProps) {
   const secondTicks: ReactNode[] = [];
   for (let t = 0; t <= maxRulerT; t += tickInterval) {
@@ -93,8 +93,9 @@ export function TimelineRuler({
         cursor: 'pointer',
         userSelect: 'none',
         minWidth: '100%',
+        touchAction: 'none',
       }}
-      onMouseDown={onMouseDown}
+      onPointerDown={onPointerDown}
     >
       <div style={{
         position: 'absolute',

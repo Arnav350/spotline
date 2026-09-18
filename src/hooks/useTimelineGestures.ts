@@ -104,7 +104,7 @@ export function useTimelineGestures(
       return Math.max(beatDur, Math.round(raw / beatDur) * beatDur);
     }
 
-    function onMouseMove(e: MouseEvent) {
+    function onPointerMove(e: PointerEvent) {
       const sd = segDragRef.current;
       if (sd) {
         const ds = (e.clientX - sd.startX) / effectivePPSRef.current;
@@ -176,7 +176,7 @@ export function useTimelineGestures(
       }
     }
 
-    function onMouseUp() {
+    function onPointerUp() {
       segDragRef.current = null;
       dragRef.current = null;
       isSeekingRef.current = false;
@@ -204,11 +204,11 @@ export function useTimelineGestures(
       }
     }
 
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
     return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
     };
   }, [updateFormation, reorderFormations, updateAudioSegment, reorderAudioSegments, seekToTime, scrollRef]);
 
@@ -237,7 +237,7 @@ export function useTimelineGestures(
     setSegDropIndicatorIdx(origIndex);
   }
 
-  function handleRulerMouseDown(e: React.MouseEvent<HTMLDivElement>, effectivePPS: number) {
+  function handleRulerPointerDown(e: React.PointerEvent<HTMLDivElement>, effectivePPS: number) {
     isSeekingRef.current = true;
     const rect = scrollRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -255,6 +255,6 @@ export function useTimelineGestures(
     handleTransResizeStart,
     handleReorderStart,
     handleSegReorderStart,
-    handleRulerMouseDown,
+    handleRulerPointerDown,
   };
 }

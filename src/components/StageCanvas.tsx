@@ -123,7 +123,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
     handleMiddleMouseDown,
     handleMiddleMouseMove,
     handleMiddleMouseUp,
-  } = useZoomPan(width, height, stageRef);
+  } = useZoomPan(width, height, stageRef, isViewer);
 
   // --- Fix 7: Selection, drag, rotation ---
   const {
@@ -548,7 +548,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
   return (
     // Fix 3: CSS background replaces stage-bg Rect node
     <div
-      style={{ position: 'relative', width, height, overflow: 'hidden', background: colors.bg }}
+      style={{ position: 'relative', width, height, overflow: 'hidden', background: colors.bg, touchAction: isViewer ? 'none' : undefined }}
       onMouseDown={handleContainerMouseDown}
       onMouseMove={handleContainerMouseMove}
       onMouseUp={handleContainerMouseUp}
