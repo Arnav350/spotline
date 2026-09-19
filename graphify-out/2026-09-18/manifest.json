@@ -15,8 +15,8 @@
     "semantic_hash": "f8ea390f65984b511eb78a8f9c48b362"
   },
   "src/App.tsx": {
-    "mtime": 1789771791.92301,
-    "ast_hash": "42e4c9c550346e152cdf197f4967be18",
+    "mtime": 1789770461.1139894,
+    "ast_hash": "62af55224165601fc2463e1bba01ca93",
     "semantic_hash": ""
   },
   "src/components/AuthModal.tsx": {
@@ -60,8 +60,8 @@
     "semantic_hash": ""
   },
   "src/components/TopBar.tsx": {
-    "mtime": 1789771762.1386628,
-    "ast_hash": "2d71cfa9b5a499676ff754a26b292434",
+    "mtime": 1789770536.218049,
+    "ast_hash": "1cfc655bbe0458fbb54b1fd8e1bd00cd",
     "semantic_hash": ""
   },
   "src/components/panels/AIPanel.tsx": {
@@ -280,8 +280,8 @@
     "semantic_hash": "85aa65dbf343c9e2a4f95e65c567e8c0"
   },
   "index.html": {
-    "mtime": 1789771567.0086718,
-    "ast_hash": "dd42a1858b74e833e14e399caed9fcb3",
+    "mtime": 1789768501.219689,
+    "ast_hash": "c4358947399240f0f38f393508447c63",
     "semantic_hash": ""
   },
   "public/favicon.png": {
