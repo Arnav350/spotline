@@ -1,16 +1,16 @@
 # Graph Report - spotline  (2026-09-18)
 
 ## Corpus Check
-- 63 files · ~55,973 words
+- 63 files · ~56,188 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 372 nodes · 796 edges · 41 communities (13 shown, 28 thin omitted)
+- 373 nodes · 798 edges · 42 communities (14 shown, 28 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 7 edges (avg confidence: 0.79)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `76af2623`
+- Built from commit: `154ff1e1`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -33,6 +33,7 @@
 - [[_COMMUNITY_Vite Logo Asset|Vite Logo Asset]]
 - [[_COMMUNITY_FormationMetrics.tsx|FormationMetrics.tsx]]
 - [[_COMMUNITY_CLAUDE|CLAUDE.md]]
+- [[_COMMUNITY_aiFormationService.ts|aiFormationService.ts]]
 - [[_COMMUNITY_3D perspective view with orbit controls|3D perspective view with orbit controls]]
 - [[_COMMUNITY_Auto-save to Supabase or localStorage (offline mode)|Auto-save to Supabase or localStorage (offline mode)]]
 - [[_COMMUNITY_Configurable stage (dimensions, divisions, subdivisions, unit)|Configurable stage (dimensions, divisions, subdivisions, unit)]]
@@ -82,19 +83,19 @@
 ## Import Cycles
 - None detected.
 
-## Communities (41 total, 28 thin omitted)
+## Communities (42 total, 28 thin omitted)
 
 ### Community 0 - "Editor Panels & Modals"
 Cohesion: 0.07
-Nodes (57): Tab, ContextMenu, FormationTimeline(), AIPanel(), AIPanelProps, AudioPanel(), AudioPanelProps, SegmentRow() (+49 more)
+Nodes (56): Tab, ContextMenu, FormationTimeline(), AudioPanel(), AudioPanelProps, SegmentRow(), CastPanel(), CastPanelProps (+48 more)
 
 ### Community 1 - "AI Formation Generation Logic"
 Cohesion: 0.08
-Nodes (35): AudioSegmentBarProps, FormationBarProps, AIGeneratedPosition, AIGenerationOptions, AIGenerationResult, AIUsage, generateFormation(), getAIUsage() (+27 more)
+Nodes (38): FolderMember, InviteModalProps, MemberWithProfile, AudioSegmentBarProps, FormationBarProps, AIGenerationOptions, APP_COLORS, hungarian() (+30 more)
 
 ### Community 2 - "Dashboard & App Shell"
-Cohesion: 0.08
-Nodes (44): App(), useWindowSize(), AuthModal(), Dashboard(), DashboardProps, ProjectCard(), ProjectCardProps, SelectedView (+36 more)
+Cohesion: 0.10
+Nodes (33): App(), useSafeAreaInsets(), useWindowSize(), AuthModal(), Dashboard(), DashboardProps, ProjectCard(), ProjectCardProps (+25 more)
 
 ### Community 3 - "Project Documentation"
 Cohesion: 0.15
@@ -125,8 +126,12 @@ Cohesion: 0.23
 Nodes (11): client, extractJsonArray(), GenerateRequest, getAuthToken(), getUsageCount(), handler(), PerformerInput, PositionInput (+3 more)
 
 ### Community 18 - "FormationMetrics.tsx"
-Cohesion: 0.23
+Cohesion: 0.21
 Nodes (14): describeBalance(), FormationMetrics(), MetricRow(), MetricStatus, statusIcon(), orientation(), pathCrossingPairs(), PerformerPath (+6 more)
+
+### Community 20 - "aiFormationService.ts"
+Cohesion: 0.30
+Nodes (10): AIPanel(), AIPanelProps, AIGeneratedPosition, AIGenerationResult, AIUsage, generateFormation(), getAIUsage(), getAuthHeader() (+2 more)
 
 ## Knowledge Gaps
 - **160 isolated node(s):** `PerformerInput`, `PositionInput`, `GenerateRequest`, `PositionOutput`, `client` (+155 more)
@@ -143,10 +148,10 @@ _Questions this graph is uniquely positioned to answer:_
 - **What connects `PerformerInput`, `PositionInput`, `GenerateRequest` to the rest of the system?**
   _161 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Editor Panels & Modals` be split into smaller, more focused modules?**
-  _Cohesion score 0.06855995410212277 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06670584778136938 - nodes in this community are weakly interconnected._
 - **Should `AI Formation Generation Logic` be split into smaller, more focused modules?**
-  _Cohesion score 0.07908163265306123 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07607843137254902 - nodes in this community are weakly interconnected._
 - **Should `Dashboard & App Shell` be split into smaller, more focused modules?**
-  _Cohesion score 0.07957393483709273 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.10465116279069768 - nodes in this community are weakly interconnected._
 - **Should `Dev Tooling Config` be split into smaller, more focused modules?**
   _Cohesion score 0.11764705882352941 - nodes in this community are weakly interconnected._

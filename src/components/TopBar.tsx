@@ -244,11 +244,17 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard, compact }: 
         <InviteModal showId={show.id} showFolderId={show.folder_id} onClose={() => setShowInvite(false)} />
       )}
 
+      {/* Outer wrapper just adds the iOS/Android safe-area top inset as extra height above
+          the bar, so the fixed 48px row inside — and everything centered relative to it,
+          like the formation-name banner — doesn't have to account for it itself. */}
+      <div style={{
+        flexShrink: 0, background: colors.bgPanel, borderBottom: `1px solid ${colors.bgCardHover}`,
+        paddingTop: isPublicView ? 'env(safe-area-inset-top)' : undefined,
+      }}>
       <div style={{
         display: 'flex', alignItems: 'center', height: 48,
         padding: compact ? `0 ${spacing.sm}px` : isPublicView ? `0 ${spacing.md}px 0 ${spacing.xl}px` : `0 ${spacing.md}px`,
-        gap: compact ? spacing.xs : spacing.sm, flexShrink: 0, background: colors.bgPanel,
-        borderBottom: `1px solid ${colors.bgCardHover}`, position: 'relative',
+        gap: compact ? spacing.xs : spacing.sm, position: 'relative',
       }}>
         {/* Current formation — public viewers only. Dead-centered over the whole bar so it
             reads as the headline, not a status chip. */}
@@ -408,6 +414,7 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard, compact }: 
 
         {/* User menu */}
         {isSupabaseConfigured() && !isPublicView && <UserMenu onSignOut={signOut} onShowShortcuts={onShowShortcuts} />}
+      </div>
       </div>
     </>
   );

@@ -59,6 +59,13 @@
     -webkit-user-select: text;
   }
 
+  :root {
+    /* Resolved once here so JS can read the actual px value via getComputedStyle —
+       env() itself isn't directly readable from JS. Requires viewport-fit=cover. */
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
   body {
     margin: 0;
     background-color: #141414;
@@ -68,11 +75,16 @@
     overflow: hidden;
     height: 100vh;
     width: 100vw;
+    /* dvh accounts for mobile Safari/Chrome's collapsing address bar; 100vh alone is
+       sized as if the toolbar were always hidden, so content can end up clipped
+       behind it whenever the toolbar is actually showing. */
+    height: 100dvh;
   }
 
   #root {
     height: 100vh;
     width: 100vw;
+    height: 100dvh;
     overflow: hidden;
   }
 

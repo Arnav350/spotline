@@ -19,6 +19,7 @@
   "17": "Vite Build Config",
   "18": "FormationMetrics.tsx",
   "19": "CLAUDE.md",
+  "20": "aiFormationService.ts",
   "21": "3D perspective view with orbit controls",
   "22": "Auto-save to Supabase or localStorage (offline mode)",
   "23": "Configurable stage (dimensions, divisions, subdivisions, unit)",

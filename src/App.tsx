@@ -27,11 +27,35 @@ function useWindowSize() {
   return size;
 }
 
+// Reads the iOS/Android "safe area" (notch, Dynamic Island, home indicator) in px.
+// env() itself isn't readable from JS — index.css mirrors it into --safe-top/--safe-bottom
+// custom properties on :root, which getComputedStyle can read back as resolved px values.
+function useSafeAreaInsets() {
+  const [insets, setInsets] = useState({ top: 0, bottom: 0 });
+  useEffect(() => {
+    function measure() {
+      const style = getComputedStyle(document.documentElement);
+      const top = parseFloat(style.getPropertyValue('--safe-top')) || 0;
+      const bottom = parseFloat(style.getPropertyValue('--safe-bottom')) || 0;
+      setInsets({ top, bottom });
+    }
+    measure();
+    window.addEventListener('resize', measure);
+    window.addEventListener('orientationchange', measure);
+    return () => {
+      window.removeEventListener('resize', measure);
+      window.removeEventListener('orientationchange', measure);
+    };
+  }, []);
+  return insets;
+}
+
 
 export default function App() {
   const { show, loadShow, loadPublicShow, isPublicView, isLoading, viewMode, formations, activeFormationId, pendingTransitionDuration, setSelectedAudioSegment, setLocalUser, toasts, removeToast, realtimeConnected, setAnimationState, setRawAnimProgress, endAnimation } = useShowStore();
   const { session, loading: authLoading, initialize, user, profile } = useAuthStore();
   const { width, height } = useWindowSize();
+  const safeArea = useSafeAreaInsets();
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [sidebarPanel, setSidebarPanel] = useState<NavPanel | null>('formation');
   const [view, setView] = useState<'loading' | 'auth' | 'dashboard' | 'show'>('loading');
@@ -198,16 +222,21 @@ export default function App() {
   const isCompact = isPublicView && (width < 640 || height < 560);
   const TIMELINE_HANDLE_HEIGHT = 22;
 
+  // Public-view-only: account for the iOS/Android safe area so the top bar and timeline
+  // aren't rendered underneath the phone's status bar / home-indicator area.
+  const safeTop = isPublicView ? safeArea.top : 0;
+  const safeBottom = isPublicView ? safeArea.bottom : 0;
+
   const sidebarWidth = isPublicView ? 0 : NAV_WIDTH + (sidebarPanel !== null ? CONTENT_WIDTH : 0);
   const canvasWidth = width - sidebarWidth;
-  const timelineRowHeight = isCompact
+  const timelineRowHeight = (isCompact
     ? (timelineOpen ? TIMELINE_HEIGHT + TIMELINE_HANDLE_HEIGHT : TIMELINE_HANDLE_HEIGHT)
-    : TIMELINE_HEIGHT;
-  const canvasHeight = height - TOPBAR_HEIGHT - timelineRowHeight;
+    : TIMELINE_HEIGHT) + safeBottom;
+  const canvasHeight = height - (TOPBAR_HEIGHT + safeTop) - timelineRowHeight;
 
   if (view === 'loading') {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: colors.bg }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: colors.bg }}>
         <div style={{ width: 32, height: 32, borderRadius: '50%', border: `3px solid ${colors.border}`, borderTopColor: colors.accent, animation: 'spin 0.8s linear infinite' }} />
       </div>
     );
@@ -223,7 +252,7 @@ export default function App() {
 
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: colors.bg }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: colors.bg }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
           <div style={{ width: 32, height: 32, borderRadius: '50%', border: `3px solid ${colors.border}`, borderTopColor: colors.accent, animation: 'spin 0.8s linear infinite' }} />
           <span style={{ color: colors.textFaint, fontSize: fontSize.md }}>Loading show…</span>
@@ -233,7 +262,7 @@ export default function App() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden', background: colors.bg }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', overflow: 'hidden', background: colors.bg }}>
       {showShortcuts && <ShortcutsModal onClose={() => setShowShortcuts(false)} viewerOnly={isPublicView} />}
 
       {/* Reconnecting banner */}
@@ -318,10 +347,11 @@ export default function App() {
                 onClick={() => setTimelineOpen(v => !v)}
                 title={timelineOpen ? 'Hide timeline' : 'Show timeline'}
                 style={{
-                  height: TIMELINE_HANDLE_HEIGHT, flexShrink: 0, width: '100%',
+                  minHeight: TIMELINE_HANDLE_HEIGHT, flexShrink: 0, width: '100%',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   background: colors.bgNav, border: 'none', borderTop: `1px solid ${colors.bgCardHover}`,
                   color: colors.textFaint, cursor: 'pointer', padding: 0,
+                  paddingBottom: 'env(safe-area-inset-bottom)', boxSizing: 'border-box',
                 }}
               >
                 {timelineOpen ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
@@ -333,8 +363,10 @@ export default function App() {
               )}
             </div>
           ) : (
-            <div style={{ height: TIMELINE_HEIGHT }}>
-              <FormationTimeline showAudioSegments={sidebarPanel === 'audio'} />
+            <div style={{ paddingBottom: isPublicView ? 'env(safe-area-inset-bottom)' : undefined }}>
+              <div style={{ height: TIMELINE_HEIGHT }}>
+                <FormationTimeline showAudioSegments={sidebarPanel === 'audio'} />
+              </div>
             </div>
           )}
         </div>
