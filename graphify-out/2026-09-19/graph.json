@@ -750,7 +750,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_formationtimeline",
-      "community": 20,
+      "community": 0,
       "norm_label": "formationtimeline.tsx"
     },
     {
@@ -760,7 +760,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_components_formationtimeline_contextmenu",
-      "community": 20,
+      "community": 0,
       "norm_label": "contextmenu"
     },
     {
@@ -770,7 +770,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_components_formationtimeline_formationtimeline",
-      "community": 20,
+      "community": 0,
       "norm_label": "formationtimeline()"
     },
     {
@@ -780,7 +780,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_invitemodal",
-      "community": 2,
+      "community": 1,
       "norm_label": "invitemodal.tsx"
     },
     {
@@ -790,7 +790,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_components_invitemodal_invitemodalprops",
-      "community": 2,
+      "community": 1,
       "norm_label": "invitemodalprops"
     },
     {
@@ -800,7 +800,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_components_invitemodal_memberwithprofile",
-      "community": 2,
+      "community": 1,
       "norm_label": "memberwithprofile"
     },
     {
@@ -810,7 +810,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_components_invitemodal_foldermember",
-      "community": 2,
+      "community": 1,
       "norm_label": "foldermember"
     },
     {
@@ -897,7 +897,7 @@
       "label": "ShortcutsModal()",
       "file_type": "code",
       "source_file": "src/components/ShortcutsModal.tsx",
-      "source_location": "L36",
+      "source_location": "L34",
       "_origin": "ast",
       "id": "src_components_shortcutsmodal_shortcutsmodal",
       "community": 0,
@@ -994,20 +994,10 @@
       "norm_label": "stagecanvas.tsx"
     },
     {
-      "label": "EMPTY_POINTS",
-      "file_type": "code",
-      "source_file": "src/components/StageCanvas.tsx",
-      "source_location": "L17",
-      "_origin": "ast",
-      "id": "src_components_stagecanvas_empty_points",
-      "community": 5,
-      "norm_label": "empty_points"
-    },
-    {
       "label": "CanvasProps",
       "file_type": "code",
       "source_file": "src/components/StageCanvas.tsx",
-      "source_location": "L19",
+      "source_location": "L16",
       "_origin": "ast",
       "id": "src_components_stagecanvas_canvasprops",
       "community": 5,
@@ -1017,7 +1007,7 @@
       "label": "StageCanvas()",
       "file_type": "code",
       "source_file": "src/components/StageCanvas.tsx",
-      "source_location": "L25",
+      "source_location": "L22",
       "_origin": "ast",
       "id": "src_components_stagecanvas_stagecanvas",
       "community": 5,
@@ -1030,7 +1020,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_topbar",
-      "community": 0,
+      "community": 2,
       "norm_label": "topbar.tsx"
     },
     {
@@ -1060,7 +1050,7 @@
       "source_location": "L188",
       "_origin": "ast",
       "id": "src_components_topbar_topbarprops",
-      "community": 0,
+      "community": 2,
       "norm_label": "topbarprops"
     },
     {
@@ -1080,7 +1070,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_panels_aipanel",
-      "community": 1,
+      "community": 20,
       "norm_label": "aipanel.tsx"
     },
     {
@@ -1090,7 +1080,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_components_panels_aipanel_aipanelprops",
-      "community": 1,
+      "community": 20,
       "norm_label": "aipanelprops"
     },
     {
@@ -1100,7 +1090,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_components_panels_aipanel_aipanel",
-      "community": 1,
+      "community": 20,
       "norm_label": "aipanel()"
     },
     {
@@ -1130,7 +1120,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_components_panels_audiopanel_segmentrow",
-      "community": 20,
+      "community": 0,
       "norm_label": "segmentrow()"
     },
     {
@@ -1430,7 +1420,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_components_timeline_audiosegmentbar_audiosegmentbar",
-      "community": 20,
+      "community": 0,
       "norm_label": "audiosegmentbar()"
     },
     {
@@ -1440,7 +1430,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_timeline_formationbar",
-      "community": 20,
+      "community": 0,
       "norm_label": "formationbar.tsx"
     },
     {
@@ -1450,7 +1440,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_components_timeline_formationbar_dragstate",
-      "community": 20,
+      "community": 0,
       "norm_label": "dragstate"
     },
     {
@@ -1460,7 +1450,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_components_timeline_formationbar_formationbarprops",
-      "community": 20,
+      "community": 1,
       "norm_label": "formationbarprops"
     },
     {
@@ -1470,7 +1460,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_components_timeline_formationbar_formationbar",
-      "community": 20,
+      "community": 0,
       "norm_label": "formationbar()"
     },
     {
@@ -1500,7 +1490,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_components_timeline_timelinecontrols_timelinecontrols",
-      "community": 20,
+      "community": 0,
       "norm_label": "timelinecontrols()"
     },
     {
@@ -1530,7 +1520,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_components_timeline_timelineruler_timelineruler",
-      "community": 20,
+      "community": 0,
       "norm_label": "timelineruler()"
     },
     {
@@ -1540,7 +1530,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_timeline_constants",
-      "community": 20,
+      "community": 0,
       "norm_label": "constants.ts"
     },
     {
@@ -1760,7 +1750,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hooks_useplayback",
-      "community": 20,
+      "community": 0,
       "norm_label": "useplayback.ts"
     },
     {
@@ -1770,7 +1760,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_hooks_useplayback_useplayback",
-      "community": 20,
+      "community": 0,
       "norm_label": "useplayback()"
     },
     {
@@ -1844,20 +1834,10 @@
       "norm_label": "usestageinteraction.ts"
     },
     {
-      "label": "pointInPolygon()",
-      "file_type": "code",
-      "source_file": "src/hooks/useStageInteraction.ts",
-      "source_location": "L7",
-      "_origin": "ast",
-      "id": "src_hooks_usestageinteraction_pointinpolygon",
-      "community": 5,
-      "norm_label": "pointinpolygon()"
-    },
-    {
       "label": "UseStageInteractionParams",
       "file_type": "code",
       "source_file": "src/hooks/useStageInteraction.ts",
-      "source_location": "L16",
+      "source_location": "L6",
       "_origin": "ast",
       "id": "src_hooks_usestageinteraction_usestageinteractionparams",
       "community": 5,
@@ -1867,7 +1847,7 @@
       "label": "useStageInteraction()",
       "file_type": "code",
       "source_file": "src/hooks/useStageInteraction.ts",
-      "source_location": "L25",
+      "source_location": "L15",
       "_origin": "ast",
       "id": "src_hooks_usestageinteraction_usestageinteraction",
       "community": 5,
@@ -1880,7 +1860,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hooks_usetimelinegestures",
-      "community": 20,
+      "community": 0,
       "norm_label": "usetimelinegestures.ts"
     },
     {
@@ -1890,7 +1870,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_hooks_usetimelinegestures_reorderdrag",
-      "community": 20,
+      "community": 0,
       "norm_label": "reorderdrag"
     },
     {
@@ -1900,7 +1880,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_hooks_usetimelinegestures_segreorderdrag",
-      "community": 20,
+      "community": 0,
       "norm_label": "segreorderdrag"
     },
     {
@@ -1910,7 +1890,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_hooks_usetimelinegestures_usetimelinegestures",
-      "community": 20,
+      "community": 0,
       "norm_label": "usetimelinegestures()"
     },
     {
@@ -1940,7 +1920,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_aiformationservice",
-      "community": 1,
+      "community": 20,
       "norm_label": "aiformationservice.ts"
     },
     {
@@ -1960,7 +1940,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_lib_aiformationservice_aigeneratedposition",
-      "community": 1,
+      "community": 20,
       "norm_label": "aigeneratedposition"
     },
     {
@@ -1970,7 +1950,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_lib_aiformationservice_aigenerationresult",
-      "community": 1,
+      "community": 20,
       "norm_label": "aigenerationresult"
     },
     {
@@ -1980,7 +1960,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_lib_aiformationservice_snaptogrid",
-      "community": 1,
+      "community": 20,
       "norm_label": "snaptogrid()"
     },
     {
@@ -1990,7 +1970,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_lib_aiformationservice_getauthheader",
-      "community": 1,
+      "community": 20,
       "norm_label": "getauthheader()"
     },
     {
@@ -2000,7 +1980,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_lib_aiformationservice_aiusage",
-      "community": 1,
+      "community": 20,
       "norm_label": "aiusage"
     },
     {
@@ -2010,7 +1990,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_lib_aiformationservice_getcachedaiusage",
-      "community": 1,
+      "community": 20,
       "norm_label": "getcachedaiusage()"
     },
     {
@@ -2020,7 +2000,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "src_lib_aiformationservice_getaiusage",
-      "community": 1,
+      "community": 20,
       "norm_label": "getaiusage()"
     },
     {
@@ -2030,7 +2010,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "src_lib_aiformationservice_generateformation",
-      "community": 1,
+      "community": 20,
       "norm_label": "generateformation()"
     },
     {
@@ -2050,7 +2030,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_colors_app_colors",
-      "community": 2,
+      "community": 1,
       "norm_label": "app_colors"
     },
     {
@@ -2350,7 +2330,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_stageutils",
-      "community": 1,
+      "community": 18,
       "norm_label": "stageutils.ts"
     },
     {
@@ -2630,7 +2610,7 @@
       "source_location": "L139",
       "_origin": "ast",
       "id": "src_lib_types_profile",
-      "community": 2,
+      "community": 1,
       "norm_label": "profile"
     },
     {
@@ -2640,7 +2620,7 @@
       "source_location": "L145",
       "_origin": "ast",
       "id": "src_lib_types_showmemberrole",
-      "community": 2,
+      "community": 1,
       "norm_label": "showmemberrole"
     },
     {
@@ -2650,7 +2630,7 @@
       "source_location": "L147",
       "_origin": "ast",
       "id": "src_lib_types_showmember",
-      "community": 2,
+      "community": 1,
       "norm_label": "showmember"
     },
     {
@@ -2660,7 +2640,7 @@
       "source_location": "L156",
       "_origin": "ast",
       "id": "src_lib_types_invitation",
-      "community": 2,
+      "community": 1,
       "norm_label": "invitation"
     },
     {
@@ -2680,7 +2660,7 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "src_lib_types_showfolder",
-      "community": 2,
+      "community": 1,
       "norm_label": "showfolder"
     },
     {
@@ -2690,7 +2670,7 @@
       "source_location": "L181",
       "_origin": "ast",
       "id": "src_lib_types_showfolderwithrole",
-      "community": 2,
+      "community": 1,
       "norm_label": "showfolderwithrole"
     },
     {
@@ -2700,7 +2680,7 @@
       "source_location": "L187",
       "_origin": "ast",
       "id": "src_lib_types_showpubliclink",
-      "community": 2,
+      "community": 1,
       "norm_label": "showpubliclink"
     },
     {
@@ -2710,7 +2690,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_main",
-      "community": 2,
+      "community": 0,
       "norm_label": "main.tsx"
     },
     {
@@ -2730,7 +2710,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_store_authstore_authstate",
-      "community": 2,
+      "community": 1,
       "norm_label": "authstate"
     },
     {
@@ -2780,7 +2760,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_store_showstore_collaboratorstate",
-      "community": 20,
+      "community": 1,
       "norm_label": "collaboratorstate"
     },
     {
@@ -2930,7 +2910,7 @@
       "source_location": "L476",
       "_origin": "ast",
       "id": "src_store_showstore_useshowstore",
-      "community": 20,
+      "community": 0,
       "norm_label": "useshowstore"
     },
     {
@@ -6306,7 +6286,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/ShortcutsModal.tsx",
-      "source_location": "L36",
+      "source_location": "L34",
       "weight": 1.0,
       "source": "src_components_shortcutsmodal",
       "target": "src_components_shortcutsmodal_shortcutsmodal",
@@ -6595,27 +6575,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/StageCanvas.tsx",
-      "source_location": "L19",
+      "source_location": "L16",
       "weight": 1.0,
       "source": "src_components_stagecanvas",
       "target": "src_components_stagecanvas_canvasprops",
       "confidence_score": 1.0
     },
     {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/components/StageCanvas.tsx",
-      "source_location": "L17",
-      "weight": 1.0,
-      "source": "src_components_stagecanvas",
-      "target": "src_components_stagecanvas_empty_points",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "indirect_call",
       "confidence": "INFERRED",
       "source_file": "src/components/StageCanvas.tsx",
-      "source_location": "L1080",
+      "source_location": "L1037",
       "weight": 1.0,
       "context": "argument",
       "source": "src_components_stagecanvas",
@@ -6848,7 +6818,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/StageCanvas.tsx",
-      "source_location": "L158",
+      "source_location": "L137",
       "weight": 1.0,
       "source": "src_components_stagecanvas_stagecanvas",
       "target": "src_hooks_usestageinteraction_usestageinteraction"
@@ -6859,7 +6829,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/StageCanvas.tsx",
-      "source_location": "L146",
+      "source_location": "L126",
       "weight": 1.0,
       "source": "src_components_stagecanvas_stagecanvas",
       "target": "src_hooks_usezoompan_usezoompan"
@@ -6870,7 +6840,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/StageCanvas.tsx",
-      "source_location": "L135",
+      "source_location": "L115",
       "weight": 1.0,
       "source": "src_components_stagecanvas_stagecanvas",
       "target": "src_lib_stagehelpers_canvastoworld"
@@ -6881,7 +6851,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/StageCanvas.tsx",
-      "source_location": "L445",
+      "source_location": "L424",
       "weight": 1.0,
       "source": "src_components_stagecanvas_stagecanvas",
       "target": "src_lib_stagehelpers_drawshape"
@@ -6892,7 +6862,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/StageCanvas.tsx",
-      "source_location": "L136",
+      "source_location": "L116",
       "weight": 1.0,
       "source": "src_components_stagecanvas_stagecanvas",
       "target": "src_lib_stagehelpers_snapworld"
@@ -6903,7 +6873,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/StageCanvas.tsx",
-      "source_location": "L134",
+      "source_location": "L114",
       "weight": 1.0,
       "source": "src_components_stagecanvas_stagecanvas",
       "target": "src_lib_stagehelpers_worldtocanvas"
@@ -6914,7 +6884,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/StageCanvas.tsx",
-      "source_location": "L36",
+      "source_location": "L33",
       "weight": 1.0,
       "source": "src_components_stagecanvas_stagecanvas",
       "target": "src_store_showstore_useshowstore"
@@ -9821,17 +9791,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hooks/useStageInteraction.ts",
-      "source_location": "L7",
-      "weight": 1.0,
-      "source": "src_hooks_usestageinteraction",
-      "target": "src_hooks_usestageinteraction_pointinpolygon",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hooks/useStageInteraction.ts",
-      "source_location": "L25",
+      "source_location": "L15",
       "weight": 1.0,
       "source": "src_hooks_usestageinteraction",
       "target": "src_hooks_usestageinteraction_usestageinteraction",
@@ -9841,7 +9801,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hooks/useStageInteraction.ts",
-      "source_location": "L16",
+      "source_location": "L6",
       "weight": 1.0,
       "source": "src_hooks_usestageinteraction",
       "target": "src_hooks_usestageinteraction_usestageinteractionparams",
@@ -9875,7 +9835,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/hooks/useStageInteraction.ts",
-      "source_location": "L29",
+      "source_location": "L19",
       "weight": 1.0,
       "source": "src_hooks_usestageinteraction_usestageinteraction",
       "target": "src_store_showstore_useshowstore"
@@ -12359,5 +12319,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "d92d70785c86c8534d6c27bdbf851d192fa8db6b"
+  "built_at_commit": "154ff1e1520d2574067b1f9ffd882c96846b9476"
 }

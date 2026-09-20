@@ -15,7 +15,7 @@
     "semantic_hash": "f8ea390f65984b511eb78a8f9c48b362"
   },
   "src/App.tsx": {
-    "mtime": 1789833561.1179085,
+    "mtime": 1789771791.92301,
     "ast_hash": "42e4c9c550346e152cdf197f4967be18",
     "semantic_hash": ""
   },
@@ -30,7 +30,7 @@
     "semantic_hash": ""
   },
   "src/components/FormationTimeline.tsx": {
-    "mtime": 1789833561.1184227,
+    "mtime": 1789770729.8463573,
     "ast_hash": "c7634ee5915f40956a08a023f9a5ac80",
     "semantic_hash": ""
   },
@@ -45,22 +45,22 @@
     "semantic_hash": "9f719f62db309c430eb92cacb6eed8be"
   },
   "src/components/ShortcutsModal.tsx": {
-    "mtime": 1789871326.681356,
-    "ast_hash": "bfcc248c9236a1e821857676e7f5c660",
+    "mtime": 1789678435.3774993,
+    "ast_hash": "bc2c29b269c231aff62ed9cf0b075483",
     "semantic_hash": ""
   },
   "src/components/Stage3D.tsx": {
-    "mtime": 1789833561.118839,
+    "mtime": 1789770638.158489,
     "ast_hash": "49f8d13b3c51a1e1f340b2cdddc62085",
     "semantic_hash": ""
   },
   "src/components/StageCanvas.tsx": {
-    "mtime": 1789871319.0818815,
-    "ast_hash": "19f3e2e9921645ef991f18c34e477899",
+    "mtime": 1789770613.8177214,
+    "ast_hash": "287f5b3674628642776d315f73399fd1",
     "semantic_hash": ""
   },
   "src/components/TopBar.tsx": {
-    "mtime": 1789833561.1197639,
+    "mtime": 1789771762.1386628,
     "ast_hash": "2d71cfa9b5a499676ff754a26b292434",
     "semantic_hash": ""
   },
@@ -105,7 +105,7 @@
     "semantic_hash": ""
   },
   "src/components/timeline/TimelineRuler.tsx": {
-    "mtime": 1789833561.1201797,
+    "mtime": 1789770663.6749976,
     "ast_hash": "f6952e638e8634056a3576cd11cc7464",
     "semantic_hash": ""
   },
@@ -150,17 +150,17 @@
     "semantic_hash": ""
   },
   "src/hooks/useStageInteraction.ts": {
-    "mtime": 1789871301.2096677,
-    "ast_hash": "8a609a9a87aba0002e9b24c604a22c8a",
-    "semantic_hash": ""
+    "mtime": 1780416714.060239,
+    "ast_hash": "a9245f6c4e7e7351c94cf21f74a51b84",
+    "semantic_hash": "a9245f6c4e7e7351c94cf21f74a51b84"
   },
   "src/hooks/useTimelineGestures.ts": {
-    "mtime": 1789833561.120633,
+    "mtime": 1789770712.9816675,
     "ast_hash": "8f385d4ba715a037a9f62b6aca88286e",
     "semantic_hash": ""
   },
   "src/hooks/useZoomPan.ts": {
-    "mtime": 1789833561.12126,
+    "mtime": 1789770586.61374,
     "ast_hash": "082f81ec7d7adaeaf3fff484983e85f2",
     "semantic_hash": ""
   },
@@ -280,7 +280,7 @@
     "semantic_hash": "85aa65dbf343c9e2a4f95e65c567e8c0"
   },
   "index.html": {
-    "mtime": 1789833561.1175249,
+    "mtime": 1789771567.0086718,
     "ast_hash": "dd42a1858b74e833e14e399caed9fcb3",
     "semantic_hash": ""
   },

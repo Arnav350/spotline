@@ -1,16 +1,16 @@
-# Graph Report - spotline  (2026-09-19)
+# Graph Report - spotline  (2026-09-18)
 
 ## Corpus Check
-- 63 files · ~56,740 words
+- 63 files · ~56,188 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 375 nodes · 800 edges · 42 communities (14 shown, 28 thin omitted)
+- 373 nodes · 798 edges · 42 communities (14 shown, 28 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 7 edges (avg confidence: 0.79)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `d92d7078`
+- Built from commit: `154ff1e1`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -86,16 +86,16 @@
 ## Communities (42 total, 28 thin omitted)
 
 ### Community 0 - "Editor Panels & Modals"
-Cohesion: 0.08
-Nodes (44): Tab, AudioPanel(), AudioPanelProps, CastPanel(), CastPanelProps, dragHandleStyle, deleteButtonStyle, EASING_OPTIONS (+36 more)
+Cohesion: 0.07
+Nodes (56): Tab, ContextMenu, FormationTimeline(), AudioPanel(), AudioPanelProps, SegmentRow(), CastPanel(), CastPanelProps (+48 more)
 
 ### Community 1 - "AI Formation Generation Logic"
 Cohesion: 0.08
-Nodes (34): AIPanel(), AIPanelProps, AudioSegmentBarProps, AIGeneratedPosition, AIGenerationOptions, AIGenerationResult, AIUsage, generateFormation() (+26 more)
+Nodes (38): FolderMember, InviteModalProps, MemberWithProfile, AudioSegmentBarProps, FormationBarProps, AIGenerationOptions, APP_COLORS, hungarian() (+30 more)
 
 ### Community 2 - "Dashboard & App Shell"
-Cohesion: 0.08
-Nodes (44): App(), useSafeAreaInsets(), useWindowSize(), AuthModal(), Dashboard(), DashboardProps, ProjectCard(), ProjectCardProps (+36 more)
+Cohesion: 0.10
+Nodes (33): App(), useSafeAreaInsets(), useWindowSize(), AuthModal(), Dashboard(), DashboardProps, ProjectCard(), ProjectCardProps (+25 more)
 
 ### Community 3 - "Project Documentation"
 Cohesion: 0.15
@@ -106,8 +106,8 @@ Cohesion: 0.12
 Nodes (17): devDependencies, autoprefixer, eslint, @eslint/js, eslint-plugin-react-hooks, eslint-plugin-react-refresh, globals, playwright (+9 more)
 
 ### Community 5 - "3D Stage Canvas"
-Cohesion: 0.13
-Nodes (17): SceneContent(), SceneContentProps, Stage3D(), CanvasProps, EMPTY_POINTS, StageCanvas(), useStageInteraction(), UseStageInteractionParams (+9 more)
+Cohesion: 0.15
+Nodes (16): SceneContent(), SceneContentProps, Stage3D(), CanvasProps, StageCanvas(), useStageInteraction(), UseStageInteractionParams, useZoomPan() (+8 more)
 
 ### Community 6 - "Core Dependencies"
 Cohesion: 0.07
@@ -126,32 +126,32 @@ Cohesion: 0.23
 Nodes (11): client, extractJsonArray(), GenerateRequest, getAuthToken(), getUsageCount(), handler(), PerformerInput, PositionInput (+3 more)
 
 ### Community 18 - "FormationMetrics.tsx"
-Cohesion: 0.23
+Cohesion: 0.21
 Nodes (14): describeBalance(), FormationMetrics(), MetricRow(), MetricStatus, statusIcon(), orientation(), pathCrossingPairs(), PerformerPath (+6 more)
 
 ### Community 20 - "aiFormationService.ts"
-Cohesion: 0.19
-Nodes (15): ContextMenu, FormationTimeline(), SegmentRow(), AudioSegmentBar(), DragState, FormationBar(), FormationBarProps, TimelineControls() (+7 more)
+Cohesion: 0.30
+Nodes (10): AIPanel(), AIPanelProps, AIGeneratedPosition, AIGenerationResult, AIUsage, generateFormation(), getAIUsage(), getAuthHeader() (+2 more)
 
 ## Knowledge Gaps
-- **161 isolated node(s):** `PerformerInput`, `PositionInput`, `GenerateRequest`, `PositionOutput`, `client` (+156 more)
+- **160 isolated node(s):** `PerformerInput`, `PositionInput`, `GenerateRequest`, `PositionOutput`, `client` (+155 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **28 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Dashboard()` connect `Dashboard & App Shell` to `aiFormationService.ts`, `Core Dependencies`?**
+- **Why does `Dashboard()` connect `Dashboard & App Shell` to `Editor Panels & Modals`, `Core Dependencies`?**
   _High betweenness centrality (0.162) - this node is a cross-community bridge._
 - **Why does `react` connect `Core Dependencies` to `Dashboard & App Shell`?**
   _High betweenness centrality (0.159) - this node is a cross-community bridge._
 - **What connects `PerformerInput`, `PositionInput`, `GenerateRequest` to the rest of the system?**
-  _162 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _161 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Editor Panels & Modals` be split into smaller, more focused modules?**
-  _Cohesion score 0.07645687645687646 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06670584778136938 - nodes in this community are weakly interconnected._
 - **Should `AI Formation Generation Logic` be split into smaller, more focused modules?**
-  _Cohesion score 0.08333333333333333 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07607843137254902 - nodes in this community are weakly interconnected._
 - **Should `Dashboard & App Shell` be split into smaller, more focused modules?**
-  _Cohesion score 0.07662337662337662 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.10465116279069768 - nodes in this community are weakly interconnected._
 - **Should `Dev Tooling Config` be split into smaller, more focused modules?**
   _Cohesion score 0.11764705882352941 - nodes in this community are weakly interconnected._

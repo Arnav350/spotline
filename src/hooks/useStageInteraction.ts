@@ -3,6 +3,16 @@ import type Konva from 'konva';
 import type React from 'react';
 import { useShowStore } from '../store/showStore';
 
+// Ray-casting point-in-polygon test.
+function pointInPolygon(x: number, y: number, pts: { x: number; y: number }[]): boolean {
+  let inside = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const xi = pts[i].x, yi = pts[i].y, xj = pts[j].x, yj = pts[j].y;
+    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
 interface UseStageInteractionParams {
   stageRef: React.RefObject<Konva.Stage | null>;
   panRef: React.RefObject<{ x: number; y: number }>;
@@ -41,6 +51,9 @@ export function useStageInteraction({
   const selectionStartRef = useRef<{ x: number; y: number } | null>(null);
   const selectionRectDataRef = useRef<{ x1: number; y1: number; x2: number; y2: number } | null>(null);
   const selectionAdditive = useRef(false);
+  // Which shape the current drag is drawing, and the lasso path so far (stage space).
+  const selectionModeRef = useRef<'rect' | 'lasso'>('rect');
+  const lassoPointsRef = useRef<{ x: number; y: number }[]>([]);
   const [selectionRect, setSelectionRect] = useState<{ x1: number; y1: number; x2: number; y2: number } | null>(null);
 
   // Box selection global mouse handlers
@@ -56,6 +69,26 @@ export function useStageInteraction({
       const stageY = (screenY - panRef.current.y) / zoomRef.current;
       const rect = { x1: selectionStartRef.current.x, y1: selectionStartRef.current.y, x2: stageX, y2: stageY };
       selectionRectDataRef.current = rect;
+
+      if (selectionModeRef.current === 'lasso') {
+        // Skip points within ~3 screen px of the last one to keep the path (and hit-test) small
+        const pts = lassoPointsRef.current;
+        const last = pts[pts.length - 1];
+        const minStep = 3 / zoomRef.current;
+        if (!last || Math.hypot(stageX - last.x, stageY - last.y) >= minStep) {
+          pts.push({ x: stageX, y: stageY });
+          const lassoNode = stage.findOne('#selection-lasso') as Konva.Line | undefined;
+          if (lassoNode) {
+            const zoom = zoomRef.current;
+            lassoNode.points(pts.flatMap(p => [p.x, p.y]));
+            lassoNode.visible(true);
+            lassoNode.strokeWidth(1 / zoom);
+            lassoNode.dash([4 / zoom, 4 / zoom]);
+            lassoNode.getLayer()?.batchDraw();
+          }
+        }
+        return;
+      }
 
       // Update Konva Rect imperatively — no React state update on every move
       const selNode = stage.findOne('#selection-rect') as Konva.Rect | undefined;
@@ -76,9 +109,19 @@ export function useStageInteraction({
       if (!selectionStartRef.current) return;
       const rect = selectionRectDataRef.current;
       if (rect) {
-        const dx = Math.abs(rect.x2 - rect.x1);
-        const dy = Math.abs(rect.y2 - rect.y1);
-        if (dx > 5 || dy > 5) {
+        const isLasso = selectionModeRef.current === 'lasso';
+        const lassoPts = lassoPointsRef.current;
+        // A lasso can loop back near its start, so judge "was this a drag?" by the path's
+        // bounding box rather than start→end distance.
+        let dx = Math.abs(rect.x2 - rect.x1);
+        let dy = Math.abs(rect.y2 - rect.y1);
+        if (isLasso && lassoPts.length > 0) {
+          const xs = lassoPts.map(p => p.x), ys = lassoPts.map(p => p.y);
+          dx = Math.max(...xs) - Math.min(...xs);
+          dy = Math.max(...ys) - Math.min(...ys);
+        }
+        // A polygon needs at least 3 points to enclose anything
+        if ((dx > 5 || dy > 5) && (!isLasso || lassoPts.length >= 3)) {
           const state = useShowStore.getState();
           const { performers: ps, performerPositions: pp, props: prps, propPositions: prpp, activeFormationId: afId } = state;
           const minX = Math.min(rect.x1, rect.x2);
@@ -89,6 +132,7 @@ export function useStageInteraction({
             if (!pos) return false;
             const cx = offsetXRef.current + pos.x * cellScaleRef.current;
             const cy = offsetYRef.current + pos.y * cellScaleRef.current;
+            if (isLasso) return pointInPolygon(cx, cy, lassoPts);
             return cx >= minX && cx <= maxX && cy >= minY && cy <= maxY;
           };
           const performerIds = ps.filter(p => afId && inBox(pp[`${p.id}-${afId}`])).map(p => p.id);
@@ -106,11 +150,18 @@ export function useStageInteraction({
       }
       selectionStartRef.current = null;
       selectionRectDataRef.current = null;
-      // Hide Konva Rect imperatively, then clear React state (one re-render for cursor restore)
+      lassoPointsRef.current = [];
+      // Hide Konva Rect/Line imperatively, then clear React state (one re-render for cursor restore)
       const selNode = stageRef.current?.findOne('#selection-rect') as Konva.Rect | undefined;
       if (selNode) {
         selNode.visible(false);
         selNode.getLayer()?.batchDraw();
+      }
+      const lassoNode = stageRef.current?.findOne('#selection-lasso') as Konva.Line | undefined;
+      if (lassoNode) {
+        lassoNode.visible(false);
+        lassoNode.points([]);
+        lassoNode.getLayer()?.batchDraw();
       }
       setSelectionRect(null);
     }
@@ -194,6 +245,7 @@ export function useStageInteraction({
     rotateState, setRotateState,
     // Box selection state
     selectionStartRef, selectionRectDataRef, selectionAdditive,
+    selectionModeRef, lassoPointsRef,
     selectionRect, setSelectionRect,
   };
 }

@@ -16,6 +16,8 @@ const SHORTCUTS = [
     { keys: ['⌫'], label: 'Delete selected', editOnly: true },
     { keys: ['↑', '↓', '←', '→'], label: 'Nudge by one subdivision', editOnly: true },
     { keys: ['⌘', 'drag'], label: 'Additive box select', editOnly: true },
+    { keys: ['S'], label: 'Toggle rectangle / lasso select', editOnly: true },
+    { keys: ['⌥', 'drag'], label: 'Flip select shape for one drag', editOnly: true },
   ]},
   { group: 'Canvas', items: [
     { keys: ['Scroll'], label: 'Pan' },

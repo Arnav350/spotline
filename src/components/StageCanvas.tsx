@@ -3,7 +3,7 @@ import { Stage, Layer, Rect, Line, Circle, Text, Label, Tag } from 'react-konva'
 import { useShowStore } from '../store/showStore';
 import { useShallow } from 'zustand/shallow';
 import Konva from 'konva';
-import { RotateCw, LocateFixed } from 'lucide-react';
+import { RotateCw, LocateFixed, Lasso } from 'lucide-react';
 import { colors, fontSize, fontWeight, radius, spacing } from '../lib/theme';
 import {
   CANVAS_PADDING, PERFORMER_RADIUS,
@@ -12,6 +12,9 @@ import {
 } from '../lib/stageHelpers.tsx';
 import { useZoomPan } from '../hooks/useZoomPan';
 import { useStageInteraction } from '../hooks/useStageInteraction';
+
+// Stable reference so react-konva doesn't reset the lasso's imperatively-set points on re-render
+const EMPTY_POINTS: number[] = [];
 
 interface CanvasProps {
   width: number;
@@ -66,19 +69,36 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
     });
   }, []);
 
+  // Selection shape — same per-browser-only persistence as showCoords. Holding Option/Alt while
+  // starting a drag flips whichever mode is active for that one selection.
+  const [lassoMode, setLassoMode] = useState(() => {
+    try { return localStorage.getItem('spotline-lasso-select') === '1'; } catch { return false; }
+  });
+  const toggleLassoMode = useCallback(() => {
+    setLassoMode(v => {
+      const next = !v;
+      try { localStorage.setItem('spotline-lasso-select', next ? '1' : '0'); } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
-      if (e.key.toLowerCase() === 'l') {
+      const key = e.key.toLowerCase();
+      if (key === 'l') {
         e.preventDefault();
         toggleShowCoords();
+      } else if (key === 's' && !isViewer) {
+        e.preventDefault();
+        toggleLassoMode();
       }
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [toggleShowCoords]);
+  }, [toggleShowCoords, toggleLassoMode, isViewer]);
 
   const [ctrlHeld, setCtrlHeld] = useState(false);
   useEffect(() => {
@@ -133,6 +153,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
     dragStartPos, dragStartWorldPosRef, lastDragCanvasPosRef,
     rotateState, setRotateState,
     selectionStartRef, selectionRectDataRef, selectionAdditive,
+    selectionModeRef, lassoPointsRef,
     selectionRect, setSelectionRect,
   } = useStageInteraction({ stageRef, panRef, zoomRef, offsetXRef, offsetYRef, cellScaleRef });
 
@@ -567,6 +588,8 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
           if (isViewer) return;
           selectionAdditive.current = e.evt.metaKey || e.evt.ctrlKey;
           const pos = stageRef.current!.getRelativePointerPosition()!;
+          selectionModeRef.current = lassoMode !== e.evt.altKey ? 'lasso' : 'rect';
+          lassoPointsRef.current = [{ x: pos.x, y: pos.y }];
           selectionStartRef.current = pos;
           selectionRectDataRef.current = { x1: pos.x, y1: pos.y, x2: pos.x, y2: pos.y };
           setSelectionRect({ x1: pos.x, y1: pos.y, x2: pos.x, y2: pos.y });
@@ -853,6 +876,17 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
             dash={[4, 4]}
             listening={false}
           />
+          <Line
+            id="selection-lasso"
+            visible={false}
+            closed
+            points={EMPTY_POINTS}
+            fill={`${colors.accent}14`}
+            stroke={`${colors.accent}80`}
+            strokeWidth={1}
+            dash={[4, 4]}
+            listening={false}
+          />
         </Layer>
 
         {/* Coordinate labels — personal view toggle. On-stage performers/props only;
@@ -937,6 +971,15 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
         >
           <LocateFixed size={13} />
         </button>
+        {!isViewer && (
+          <button
+            onClick={toggleLassoMode}
+            title={lassoMode ? 'Lasso select: ON (S) — hold ⌥ for rectangle' : 'Rectangle select (S for lasso) — hold ⌥ for lasso'}
+            style={{ width: 26, height: 26, background: lassoMode ? colors.accent : colors.bgCard, border: `1px solid ${lassoMode ? colors.accent : colors.borderMed}`, borderRadius: radius.sm, color: lassoMode ? colors.text : colors.textFaint, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Lasso size={13} />
+          </button>
+        )}
       </div>
 
       {/* Zoom level indicator — reads from ref, uiTick keeps it current */}
