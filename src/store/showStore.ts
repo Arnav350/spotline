@@ -419,7 +419,12 @@ function isPatchEmpty(patch: HistoryPatch): boolean {
 }
 
 // Broadcast formation/position changes produced by undo/redo so peers see them immediately.
-function broadcastHistoryChanges(prev: ShowState, next: Partial<ShowState>) {
+// Narrow enough that both a full ShowState (undo/redo) and a HistorySnapshot (pushHistory)
+// satisfy it structurally, since this only ever reads these three fields off either.
+function broadcastHistoryChanges(
+  prev: Pick<ShowState, 'formations' | 'performerPositions' | 'propPositions'>,
+  next: Partial<Pick<ShowState, 'formations' | 'performerPositions' | 'propPositions'>>,
+) {
   const nextFormations = next.formations;
   const nextPerfPos = next.performerPositions ?? prev.performerPositions;
   const nextPropPos = next.propPositions ?? prev.propPositions;
@@ -1793,8 +1798,13 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     const postSnapshot = snapshotState(state);
     const forward = computePatch(historyBaseline, postSnapshot);
     const reverse = computePatch(postSnapshot, historyBaseline);
+    const baseline = historyBaseline;
     historyBaseline = null;
     if (isPatchEmpty(forward) && isPatchEmpty(reverse)) return;
+    // Every action that captures a snapshot and pushes history — not just undo/redo — should
+    // broadcast whatever formations/positions it changed, so paste, "reset to previous formation",
+    // arrange/mirror/rotate tools etc. show up live for collaborators too, the same as a drag does.
+    broadcastHistoryChanges(baseline, postSnapshot);
     const newHistory = state.history.slice(0, state.historyIndex + 1);
     newHistory.push({ forward, reverse });
     if (newHistory.length > MAX_HISTORY) newHistory.shift();

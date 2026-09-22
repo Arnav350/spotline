@@ -180,6 +180,18 @@ export function useRealtimeSync(showId: string | null) {
           useShowStore.setState({ props: state.props.filter(p => p.id !== payload.old.id) });
         }
       })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audio_segments', filter: `show_id=eq.${showId}` }, payload => {
+        if (!hasPeers()) return;
+        const state = useShowStore.getState();
+        if (payload.eventType === 'INSERT') {
+          if (!state.audioSegments.find(s => s.id === payload.new.id))
+            useShowStore.setState({ audioSegments: [...state.audioSegments, payload.new as any].sort((a, b) => a.order_index - b.order_index) });
+        } else if (payload.eventType === 'UPDATE') {
+          useShowStore.setState({ audioSegments: state.audioSegments.map(s => s.id === payload.new.id ? { ...s, ...payload.new } : s).sort((a, b) => a.order_index - b.order_index) });
+        } else if (payload.eventType === 'DELETE') {
+          useShowStore.setState({ audioSegments: state.audioSegments.filter(s => s.id !== payload.old.id) });
+        }
+      })
       // Presence: who is currently online in this show
       .on('presence', { event: 'sync' }, () => {
         const presenceState = channel.presenceState<PresencePayload>();
