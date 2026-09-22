@@ -1,11 +1,12 @@
-import { useRef, useMemo, useState } from 'react';
+import { useRef, useMemo, useState, useCallback, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import type { ThreeEvent } from '@react-three/fiber';
 import { OrbitControls, RoundedBox } from '@react-three/drei';
 import * as THREE from 'three';
 import { useShowStore } from '../store/showStore';
 import type { Performer, Prop } from '../lib/types';
-import { colors } from '../lib/theme';
+import { EyeOff } from 'lucide-react';
+import { colors, radius } from '../lib/theme';
 import { interpolatePosition, applyEasing } from '../lib/stageHelpers.tsx';
 
 function PerformerMesh({ performer, x, y, stageWidth, stageHeight, isSelected, onPointerDown }: {
@@ -180,10 +181,11 @@ interface SceneContentProps {
   animating: boolean;
   animationProgress: number;
   previousFormationId: string | null;
+  hideOffstage: boolean;
   onDraggingChange: (dragging: boolean) => void;
 }
 
-function SceneContent({ animating, animationProgress, previousFormationId, onDraggingChange }: SceneContentProps) {
+function SceneContent({ animating, animationProgress, previousFormationId, hideOffstage, onDraggingChange }: SceneContentProps) {
   const {
     show, performers, props, performerPositions, propPositions, performerPaths,
     activeFormationId, selectedItem, selectedItemIds, currentUserRole,
@@ -199,6 +201,10 @@ function SceneContent({ animating, animationProgress, previousFormationId, onDra
       x: Math.max(0, Math.min(stageConfig.width, wx)),
       y: Math.max(0, Math.min(stageConfig.height, wy)),
     };
+  }
+
+  function isOffstage(pos: { x: number; y: number }) {
+    return pos.x < 0 || pos.x > stageConfig.width || pos.y < 0 || pos.y > stageConfig.height;
   }
 
   function getAnimatedPos(entityId: string, isPerformer: boolean) {
@@ -308,6 +314,7 @@ function SceneContent({ animating, animationProgress, previousFormationId, onDra
       {props.map(prop => {
         const pos = getAnimatedPos(prop.id, false);
         if (!pos) return null;
+        if (hideOffstage && isOffstage(pos)) return null;
         return (
           <PropMesh
             key={prop.id}
@@ -324,6 +331,7 @@ function SceneContent({ animating, animationProgress, previousFormationId, onDra
       {performers.map(performer => {
         const pos = getAnimatedPos(performer.id, true);
         if (!pos) return null;
+        if (hideOffstage && isOffstage(pos)) return null;
         return (
           <PerformerMesh
             key={performer.id}
@@ -361,11 +369,37 @@ export default function Stage3D({ width, height }: {
   const cameraZ = Math.max(stageConfig.width, stageConfig.height) * 0.8;
   const [isDragging, setIsDragging] = useState(false);
 
+  // Personal view preference — persisted per-browser only, never synced to the show/DB
+  const [hideOffstage, setHideOffstage] = useState(() => {
+    try { return localStorage.getItem('spotline-hide-offstage-3d') === '1'; } catch { return false; }
+  });
+  const toggleHideOffstage = useCallback(() => {
+    setHideOffstage(v => {
+      const next = !v;
+      try { localStorage.setItem('spotline-hide-offstage-3d', next ? '1' : '0'); } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key.toLowerCase() === 'h') {
+        e.preventDefault();
+        toggleHideOffstage();
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [toggleHideOffstage]);
+
   const activeFormation = formations.find(f => f.id === activeFormationId);
   const animationProgress = applyEasing(rawAnimProgress, activeFormation?.transition_easing);
 
   return (
-    <div style={{ width, height, background: colors.bg, cursor: isDragging ? 'grabbing' : 'default', touchAction: 'none' }}>
+    <div style={{ width, height, background: colors.bg, cursor: isDragging ? 'grabbing' : 'default', touchAction: 'none', position: 'relative' }}>
       <Canvas
         camera={{
           position: [0, cameraZ * 0.6, cameraZ],
@@ -379,9 +413,17 @@ export default function Stage3D({ width, height }: {
           animating={isAnimating}
           animationProgress={animationProgress}
           previousFormationId={animFromFormationId}
+          hideOffstage={hideOffstage}
           onDraggingChange={setIsDragging}
         />
       </Canvas>
+      <button
+        onClick={toggleHideOffstage}
+        title={hideOffstage ? 'Offstage hidden (H)' : 'Offstage shown (H)'}
+        style={{ position: 'absolute', bottom: 14, right: 14, width: 26, height: 26, background: hideOffstage ? colors.accent : colors.bgCard, border: `1px solid ${hideOffstage ? colors.accent : colors.borderMed}`, borderRadius: radius.sm, color: hideOffstage ? colors.text : colors.textFaint, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      >
+        <EyeOff size={13} />
+      </button>
     </div>
   );
 }

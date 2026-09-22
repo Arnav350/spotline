@@ -101,7 +101,7 @@ function OnlineIndicator({ others, selfName, selfColor }: {
   );
 }
 
-function UserMenu({ onSignOut, onShowShortcuts }: { onSignOut: () => void; onShowShortcuts?: () => void }) {
+function UserMenu({ onSignOut }: { onSignOut: () => void }) {
   const { profile } = useAuthStore();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -153,20 +153,6 @@ function UserMenu({ onSignOut, onShowShortcuts }: { onSignOut: () => void; onSho
           <div style={{ padding: `${spacing.md}px ${spacing.md}px ${spacing.sm}px`, borderBottom: `1px solid ${colors.border}` }}>
             <div style={{ fontSize: fontSize.sm, color: colors.text, fontWeight: fontWeight.medium }}>{profile.display_name}</div>
           </div>
-          {onShowShortcuts && (
-            <button
-              onClick={() => { onShowShortcuts(); setOpen(false); }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: spacing.sm, width: '100%',
-                padding: `${spacing.sm}px ${spacing.md}px`, background: 'none', border: 'none', cursor: 'pointer',
-                fontSize: fontSize.sm, color: colors.textSecondary, textAlign: 'left',
-              }}
-              onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = colors.text; el.style.background = colors.bgCard; }}
-              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = colors.textSecondary; el.style.background = 'none'; }}
-            >
-              <Keyboard size={13} /> Keyboard shortcuts
-            </button>
-          )}
           <button
             onClick={() => { onSignOut(); setOpen(false); }}
             style={{
@@ -404,16 +390,12 @@ export default function TopBar({ onShowShortcuts, onBackToDashboard, compact }: 
           </button>
         )}
 
-        {/* Keyboard shortcuts — public viewers have no UserMenu (that's where this lives
-            for everyone else), so give them their own way to see what's available to them */}
-        {isPublicView && (
-          <button className="btn-icon" onClick={onShowShortcuts} title="Keyboard shortcuts (?)">
-            <Keyboard size={17} />
-          </button>
-        )}
+        <button className="btn-icon" onClick={onShowShortcuts} title="Keyboard shortcuts (?)">
+          <Keyboard size={17} />
+        </button>
 
         {/* User menu */}
-        {isSupabaseConfigured() && !isPublicView && <UserMenu onSignOut={signOut} onShowShortcuts={onShowShortcuts} />}
+        {isSupabaseConfigured() && !isPublicView && <UserMenu onSignOut={signOut} />}
       </div>
       </div>
     </>

@@ -1,7 +1,7 @@
 # Graph Report - spotline  (2026-09-21)
 
 ## Corpus Check
-- 63 files · ~56,864 words
+- 63 files · ~56,978 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary

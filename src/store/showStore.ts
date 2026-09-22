@@ -1721,11 +1721,12 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     // Insert right after the selected segment, or at the end if nothing's selected.
     const insertAfterIdx = selIdx >= 0 ? selIdx : sorted.length - 1;
 
-    // Pick a color that doesn't match either neighbor it'll land between.
+    // Random color, excluding either neighbor's so adjacent segments never match.
     const prevColor = sorted[insertAfterIdx]?.color;
     const nextColor = sorted[insertAfterIdx + 1]?.color;
-    const newColor = SEGMENT_COLORS.find(c => c !== prevColor && c !== nextColor)
-      ?? SEGMENT_COLORS[sorted.length % SEGMENT_COLORS.length];
+    const candidates = SEGMENT_COLORS.filter(c => c !== prevColor && c !== nextColor);
+    const pool = candidates.length > 0 ? candidates : SEGMENT_COLORS;
+    const newColor = pool[Math.floor(Math.random() * pool.length)];
 
     const seg: AudioSegment = {
       id: uuidv4(),

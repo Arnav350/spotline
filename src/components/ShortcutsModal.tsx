@@ -24,6 +24,7 @@ const SHORTCUTS = [
     { keys: ['⌃', 'Scroll'], label: 'Zoom' },
     { keys: ['Middle click', 'drag'], label: 'Pan' },
     { keys: ['L'], label: 'Toggle coordinates' },
+    { keys: ['H'], label: 'Hide / show offstage (3D)' },
   ]},
   { group: 'Timeline', items: [
     { keys: ['Space'], label: 'Play / Pause' },

@@ -60,8 +60,8 @@
     "semantic_hash": ""
   },
   "src/components/TopBar.tsx": {
-    "mtime": 1790005838.8464336,
-    "ast_hash": "db0b20c45569f8ee921094053c7f095e",
+    "mtime": 1789833561.1197639,
+    "ast_hash": "2d71cfa9b5a499676ff754a26b292434",
     "semantic_hash": ""
   },
   "src/components/panels/AIPanel.tsx": {
@@ -220,8 +220,8 @@
     "semantic_hash": "a11c87c798f3a99c587f7d4270418c2e"
   },
   "src/store/showStore.ts": {
-    "mtime": 1790005921.2231257,
-    "ast_hash": "db0e5b303af5fa72692d2368d93d5cd0",
+    "mtime": 1789678435.3798106,
+    "ast_hash": "e08cd12d5e06a965151ce8b86dad063b",
     "semantic_hash": ""
   },
   "supabase/drop.sql": {
