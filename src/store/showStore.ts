@@ -1013,6 +1013,9 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     const src = state.formations[srcIdx];
     const newId = uuidv4();
     const halfDuration = Math.max(0.3, src.duration / 2);
+    // Both halves shrink to halfDuration, so the transition carried over from the
+    // source formation can no longer be longer than that — same clamp as updateFormation.
+    const clampedTransition = Math.min(src.transition_duration, halfDuration);
 
     const newFormation: Formation = {
       id: newId,
@@ -1020,7 +1023,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       name: src.name,
       notes: src.notes,
       duration: halfDuration,
-      transition_duration: src.transition_duration,
+      transition_duration: clampedTransition,
       transition_easing: src.transition_easing,
       order_index: srcIdx + 1,
     };
@@ -1050,7 +1053,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     });
 
     const updatedFormations = state.formations.map(f =>
-      f.id === id ? { ...f, duration: halfDuration } : f
+      f.id === id ? { ...f, duration: halfDuration, transition_duration: clampedTransition } : f
     );
     updatedFormations.splice(srcIdx + 1, 0, newFormation);
     const reindexed = updatedFormations.map((f, i) => ({ ...f, order_index: i }));

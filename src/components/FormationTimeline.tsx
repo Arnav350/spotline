@@ -27,20 +27,20 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
   const isViewer = currentUserRole === 'viewer';
   const bpm = show?.bpm;
 
-  const audioRef = useRef<HTMLAudioElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // --- Playback ---
   const {
-    isPlaying, setIsPlaying,
+    isPlaying,
     audioTime,
-    audioDuration, setAudioDuration,
-    animFrameRef,
+    audioDuration,
     formationsRef,
     handlePlay,
     seekToTime,
     formatTime,
-  } = usePlayback(audioRef);
+    loopEnabled, loopRange,
+    setLoopRange, toggleLoopEnabled,
+  } = usePlayback();
 
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [hasSeeked, setHasSeeked] = useState(false);
@@ -78,7 +78,8 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
     handleReorderStart,
     handleSegReorderStart,
     handleRulerPointerDown,
-  } = useTimelineGestures(scrollRef, seek);
+    loopDraft,
+  } = useTimelineGestures(scrollRef, seek, setLoopRange);
 
   const effectivePPS = BASE_PPS * timelineZoom;
 
@@ -155,14 +156,6 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
 
   return (
     <div style={{ height: '100%', background: colors.bgNav, borderTop: `1px solid ${colors.bgCardHover}`, display: 'flex', flexDirection: 'column' }}>
-      <audio
-        ref={audioRef}
-        onLoadedMetadata={() => setAudioDuration(audioRef.current?.duration || 0)}
-        onEnded={() => { setIsPlaying(false); cancelAnimationFrame(animFrameRef.current); }}
-        onPause={() => setIsPlaying(false)}
-        onPlay={() => setIsPlaying(true)}
-      />
-
       <TimelineControls
         isPlaying={isPlaying}
         hasMusic={!!show?.music_url}
@@ -174,6 +167,9 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
         onSeekToTime={seekToTime}
         onZoomChange={setTimelineZoom}
         formatTime={formatTime}
+        loopEnabled={loopEnabled}
+        hasLoopRange={loopRange !== null}
+        onToggleLoop={toggleLoopEnabled}
       />
 
       {/* Scrollable timeline */}
@@ -188,6 +184,9 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
             tickInterval={tickInterval}
             effectiveRulerHeight={effectiveRulerHeight}
             onPointerDown={e => handleRulerPointerDown(e, effectivePPS)}
+            loopRange={loopRange}
+            loopDraft={loopDraft}
+            loopEnabled={loopEnabled}
           />
 
           {/* Playhead */}

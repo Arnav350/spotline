@@ -31,6 +31,7 @@ const SHORTCUTS = [
     { keys: ['←', '→'], label: 'Previous / Next formation' },
     { keys: ['⌃', 'Scroll'], label: 'Zoom timeline' },
     { keys: ['Click ruler'], label: 'Seek' },
+    { keys: ['⇧', 'drag ruler'], label: 'Set loop region' },
   ]},
 ];
 

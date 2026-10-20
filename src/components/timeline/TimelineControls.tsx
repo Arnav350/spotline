@@ -1,4 +1,4 @@
-import { Plus, Play, Pause, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Play, Pause, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Repeat } from 'lucide-react';
 import { useShowStore } from '../../store/showStore';
 import { colors, fontSize, radius, spacing } from '../../lib/theme';
 
@@ -13,6 +13,9 @@ interface TimelineControlsProps {
   onSeekToTime: (t: number) => void;
   onZoomChange: (zoom: number) => void;
   formatTime: (s: number) => string;
+  loopEnabled: boolean;
+  hasLoopRange: boolean;
+  onToggleLoop: () => void;
 }
 
 export function TimelineControls({
@@ -26,6 +29,9 @@ export function TimelineControls({
   onSeekToTime,
   onZoomChange,
   formatTime,
+  loopEnabled,
+  hasLoopRange,
+  onToggleLoop,
 }: TimelineControlsProps) {
   const { formations, activeFormationId, addFormation, addFormationAfter, currentUserRole } = useShowStore();
   const isViewer = currentUserRole === 'viewer';
@@ -166,7 +172,22 @@ export function TimelineControls({
         )}
       </div>
 
-      <div style={{ flex: 1 }} />
+      <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+        <button
+          className="btn-icon"
+          onClick={onToggleLoop}
+          disabled={!hasLoopRange}
+          title={hasLoopRange
+            ? (loopEnabled ? 'Loop: ON — Shift+drag the ruler to redefine' : 'Loop: OFF — Shift+drag the ruler to redefine')
+            : 'Shift+drag the ruler to set a loop region'}
+          style={{
+            color: loopEnabled ? colors.accentLight : undefined,
+            opacity: hasLoopRange ? 1 : 0.35,
+          }}
+        >
+          <Repeat size={15} />
+        </button>
+      </div>
     </div>
   );
 }
