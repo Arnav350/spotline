@@ -10,6 +10,12 @@ interface TimelineRulerProps {
   tickInterval: number;
   effectiveRulerHeight: number;
   onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => void;
+  // GarageBand-style loop region — shift+drag the ruler to set it. loopRange is the
+  // committed region; loopDraft is the live region while a shift-drag is in progress
+  // (shown even when looping is off, so the drag itself has feedback).
+  loopRange?: { start: number; end: number } | null;
+  loopDraft?: { start: number; end: number } | null;
+  loopEnabled?: boolean;
 }
 
 export function TimelineRuler({
@@ -20,7 +26,11 @@ export function TimelineRuler({
   tickInterval,
   effectiveRulerHeight,
   onPointerDown,
+  loopRange,
+  loopDraft,
+  loopEnabled,
 }: TimelineRulerProps) {
+  const loop = loopDraft ?? loopRange;
   const secondTicks: ReactNode[] = [];
   for (let t = 0; t <= maxRulerT; t += tickInterval) {
     const isMajor = Math.abs(t - Math.round(t)) < 0.01;
@@ -97,6 +107,20 @@ export function TimelineRuler({
       }}
       onPointerDown={onPointerDown}
     >
+      {loop && (
+        <div style={{
+          position: 'absolute',
+          left: LEFT_PADDING + loop.start * effectivePPS,
+          top: 0,
+          width: Math.max(1, (loop.end - loop.start) * effectivePPS),
+          height: '100%',
+          background: loopEnabled ? `${colors.accent}33` : `${colors.textGhost}26`,
+          borderLeft: `2px solid ${loopEnabled ? colors.accent : colors.textGhost}`,
+          borderRight: `2px solid ${loopEnabled ? colors.accent : colors.textGhost}`,
+          pointerEvents: 'none',
+          zIndex: 1,
+        }} />
+      )}
       <div style={{
         position: 'absolute',
         top: 0,

@@ -897,7 +897,7 @@
       "label": "ShortcutsModal()",
       "file_type": "code",
       "source_file": "src/components/ShortcutsModal.tsx",
-      "source_location": "L37",
+      "source_location": "L38",
       "_origin": "ast",
       "id": "src_components_shortcutsmodal_shortcutsmodal",
       "community": 0,
@@ -1080,7 +1080,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_panels_aipanel",
-      "community": 1,
+      "community": 0,
       "norm_label": "aipanel.tsx"
     },
     {
@@ -1090,7 +1090,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_components_panels_aipanel_aipanelprops",
-      "community": 1,
+      "community": 0,
       "norm_label": "aipanelprops"
     },
     {
@@ -1497,7 +1497,7 @@
       "label": "TimelineControls()",
       "file_type": "code",
       "source_file": "src/components/timeline/TimelineControls.tsx",
-      "source_location": "L18",
+      "source_location": "L21",
       "_origin": "ast",
       "id": "src_components_timeline_timelinecontrols_timelinecontrols",
       "community": 20,
@@ -1527,7 +1527,7 @@
       "label": "TimelineRuler()",
       "file_type": "code",
       "source_file": "src/components/timeline/TimelineRuler.tsx",
-      "source_location": "L15",
+      "source_location": "L21",
       "_origin": "ast",
       "id": "src_components_timeline_timelineruler_timelineruler",
       "community": 20,
@@ -1764,10 +1764,20 @@
       "norm_label": "useplayback.ts"
     },
     {
-      "label": "usePlayback()",
+      "label": "LoopRange",
       "file_type": "code",
       "source_file": "src/hooks/usePlayback.ts",
       "source_location": "L4",
+      "_origin": "ast",
+      "id": "src_hooks_useplayback_looprange",
+      "community": 20,
+      "norm_label": "looprange"
+    },
+    {
+      "label": "usePlayback()",
+      "file_type": "code",
+      "source_file": "src/hooks/usePlayback.ts",
+      "source_location": "L14",
       "_origin": "ast",
       "id": "src_hooks_useplayback_useplayback",
       "community": 20,
@@ -2530,7 +2540,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_lib_types_formation",
-      "community": 20,
+      "community": 1,
       "norm_label": "formation"
     },
     {
@@ -2670,7 +2680,7 @@
       "source_location": "L169",
       "_origin": "ast",
       "id": "src_lib_types_showwithrole",
-      "community": 2,
+      "community": 1,
       "norm_label": "showwithrole"
     },
     {
@@ -5701,7 +5711,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/FormationTimeline.tsx",
-      "source_location": "L81",
+      "source_location": "L82",
       "weight": 1.0,
       "source": "src_components_formationtimeline_formationtimeline",
       "target": "src_hooks_usetimelinegestures_usetimelinegestures"
@@ -6306,7 +6316,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/ShortcutsModal.tsx",
-      "source_location": "L37",
+      "source_location": "L38",
       "weight": 1.0,
       "source": "src_components_shortcutsmodal",
       "target": "src_components_shortcutsmodal_shortcutsmodal",
@@ -8911,7 +8921,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/timeline/TimelineControls.tsx",
-      "source_location": "L18",
+      "source_location": "L21",
       "weight": 1.0,
       "source": "src_components_timeline_timelinecontrols",
       "target": "src_components_timeline_timelinecontrols_timelinecontrols",
@@ -9010,7 +9020,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/timeline/TimelineControls.tsx",
-      "source_location": "L30",
+      "source_location": "L36",
       "weight": 1.0,
       "source": "src_components_timeline_timelinecontrols_timelinecontrols",
       "target": "src_store_showstore_useshowstore"
@@ -9030,7 +9040,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/timeline/TimelineRuler.tsx",
-      "source_location": "L15",
+      "source_location": "L21",
       "weight": 1.0,
       "source": "src_components_timeline_timelineruler",
       "target": "src_components_timeline_timelineruler_timelineruler",
@@ -9643,6 +9653,16 @@
       "source_location": "L4",
       "weight": 1.0,
       "source": "src_hooks_useplayback",
+      "target": "src_hooks_useplayback_looprange",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hooks/usePlayback.ts",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "src_hooks_useplayback",
       "target": "src_hooks_useplayback_useplayback",
       "confidence_score": 1.0
     },
@@ -9674,7 +9694,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/hooks/usePlayback.ts",
-      "source_location": "L5",
+      "source_location": "L15",
       "weight": 1.0,
       "source": "src_hooks_useplayback_useplayback",
       "target": "src_store_showstore_useshowstore"
@@ -9949,7 +9969,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/hooks/useTimelineGestures.ts",
-      "source_location": "L21",
+      "source_location": "L22",
       "weight": 1.0,
       "source": "src_hooks_usetimelinegestures_usetimelinegestures",
       "target": "src_store_showstore_useshowstore"
@@ -12370,5 +12390,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "d5e533230779df001a8975510fe112e7f938e6e8"
+  "built_at_commit": "1b8542efdfb72126dcdedb7f8433eeaabec8e6b0"
 }

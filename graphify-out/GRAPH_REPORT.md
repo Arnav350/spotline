@@ -1,16 +1,16 @@
-# Graph Report - spotline  (2026-09-22)
+# Graph Report - spotline  (2026-10-20)
 
 ## Corpus Check
-- 63 files · ~57,052 words
+- 63 files · ~58,668 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 375 nodes · 801 edges · 42 communities (14 shown, 28 thin omitted)
+- 376 nodes · 802 edges · 42 communities (14 shown, 28 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 7 edges (avg confidence: 0.79)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `d5e53323`
+- Built from commit: `1b8542ef`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -87,15 +87,15 @@
 
 ### Community 0 - "Editor Panels & Modals"
 Cohesion: 0.08
-Nodes (43): Tab, AudioPanel(), AudioPanelProps, CastPanel(), CastPanelProps, dragHandleStyle, deleteButtonStyle, EASING_OPTIONS (+35 more)
+Nodes (44): Tab, AIPanelProps, AudioPanel(), AudioPanelProps, CastPanel(), CastPanelProps, dragHandleStyle, deleteButtonStyle (+36 more)
 
 ### Community 1 - "AI Formation Generation Logic"
-Cohesion: 0.08
-Nodes (36): AIPanel(), AIPanelProps, AudioSegmentBarProps, AIGeneratedPosition, AIGenerationOptions, AIGenerationResult, AIUsage, generateFormation() (+28 more)
+Cohesion: 0.07
+Nodes (37): AIPanel(), AudioSegmentBarProps, AIGeneratedPosition, AIGenerationOptions, AIGenerationResult, AIUsage, generateFormation(), getAIUsage() (+29 more)
 
 ### Community 2 - "Dashboard & App Shell"
-Cohesion: 0.08
-Nodes (42): App(), useSafeAreaInsets(), useWindowSize(), AuthModal(), Dashboard(), DashboardProps, ProjectCard(), ProjectCardProps (+34 more)
+Cohesion: 0.09
+Nodes (41): App(), useSafeAreaInsets(), useWindowSize(), AuthModal(), Dashboard(), DashboardProps, ProjectCard(), ProjectCardProps (+33 more)
 
 ### Community 3 - "Project Documentation"
 Cohesion: 0.15
@@ -134,7 +134,7 @@ Cohesion: 0.18
 Nodes (16): ContextMenu, FormationTimeline(), SegmentRow(), AudioSegmentBar(), DragState, FormationBar(), FormationBarProps, TimelineControls() (+8 more)
 
 ## Knowledge Gaps
-- **161 isolated node(s):** `PerformerInput`, `PositionInput`, `GenerateRequest`, `PositionOutput`, `client` (+156 more)
+- **162 isolated node(s):** `PerformerInput`, `PositionInput`, `GenerateRequest`, `PositionOutput`, `client` (+157 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **28 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -146,12 +146,12 @@ _Questions this graph is uniquely positioned to answer:_
 - **Why does `react` connect `Core Dependencies` to `Dashboard & App Shell`?**
   _High betweenness centrality (0.159) - this node is a cross-community bridge._
 - **What connects `PerformerInput`, `PositionInput`, `GenerateRequest` to the rest of the system?**
-  _162 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _163 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Editor Panels & Modals` be split into smaller, more focused modules?**
-  _Cohesion score 0.07787698412698413 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07785547785547786 - nodes in this community are weakly interconnected._
 - **Should `AI Formation Generation Logic` be split into smaller, more focused modules?**
-  _Cohesion score 0.07616892911010557 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.0746606334841629 - nodes in this community are weakly interconnected._
 - **Should `Dashboard & App Shell` be split into smaller, more focused modules?**
-  _Cohesion score 0.08455625436757512 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08635703918722787 - nodes in this community are weakly interconnected._
 - **Should `Dev Tooling Config` be split into smaller, more focused modules?**
   _Cohesion score 0.11764705882352941 - nodes in this community are weakly interconnected._

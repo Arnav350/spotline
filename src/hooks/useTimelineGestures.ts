@@ -17,6 +17,7 @@ interface SegReorderDrag {
 export function useTimelineGestures(
   scrollRef: React.RefObject<HTMLDivElement | null>,
   seekToTime: (t: number) => void,
+  onLoopChange: (range: { start: number; end: number } | null) => void,
 ) {
   const { updateFormation, reorderFormations, updateAudioSegment, reorderAudioSegments } = useShowStore();
 
@@ -43,6 +44,14 @@ export function useTimelineGestures(
   const dropIndicatorIdxRef = useRef<number | null>(null);
   const segReorderDragRef = useRef<SegReorderDrag | null>(null);
   const segDropIndicatorIdxRef = useRef<number | null>(null);
+  // Shift+drag on the ruler draws a loop region instead of seeking.
+  const loopDragRef = useRef<{ anchorT: number } | null>(null);
+  const [loopDraft, setLoopDraftRaw] = useState<{ start: number; end: number } | null>(null);
+  const loopDraftRef = useRef<{ start: number; end: number } | null>(null);
+  function setLoopDraft(draft: { start: number; end: number } | null) {
+    loopDraftRef.current = draft;
+    setLoopDraftRaw(draft);
+  }
   const formationsRef = useRef(useShowStore.getState().formations);
   const audioSegmentsRef = useRef(useShowStore.getState().audioSegments);
 
@@ -141,6 +150,17 @@ export function useTimelineGestures(
         seekToTime((x - LEFT_PADDING) / effectivePPSRef.current);
       }
 
+      if (loopDragRef.current) {
+        const rect = scrollRef.current?.getBoundingClientRect();
+        if (rect) {
+          const scrollLeft = scrollRef.current?.scrollLeft || 0;
+          const mouseX = e.clientX - rect.left + scrollLeft;
+          const t = Math.max(0, (mouseX - LEFT_PADDING) / effectivePPSRef.current);
+          const anchor = loopDragRef.current.anchorT;
+          setLoopDraft({ start: Math.min(anchor, t), end: Math.max(anchor, t) });
+        }
+      }
+
       if (reorderDragRef.current) {
         const fs = formationsRef.current;
         const rect = scrollRef.current?.getBoundingClientRect();
@@ -180,6 +200,14 @@ export function useTimelineGestures(
       segDragRef.current = null;
       dragRef.current = null;
       isSeekingRef.current = false;
+      if (loopDragRef.current) {
+        loopDragRef.current = null;
+        const draft = loopDraftRef.current;
+        // A near-zero-width drag (a shift+click) clears the loop instead of setting a
+        // sliver region nobody could have intended.
+        onLoopChange(draft && draft.end - draft.start > 0.05 ? draft : null);
+        setLoopDraft(null);
+      }
       if (reorderDragRef.current) {
         const rd = reorderDragRef.current;
         const dropIdx = dropIndicatorIdxRef.current;
@@ -210,7 +238,7 @@ export function useTimelineGestures(
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
     };
-  }, [updateFormation, reorderFormations, updateAudioSegment, reorderAudioSegments, seekToTime, scrollRef]);
+  }, [updateFormation, reorderFormations, updateAudioSegment, reorderAudioSegments, seekToTime, scrollRef, onLoopChange]);
 
   // --- Bar drag callbacks ---
   function handleDurResizeStart(e: React.MouseEvent, state: DragState) {
@@ -238,11 +266,17 @@ export function useTimelineGestures(
   }
 
   function handleRulerPointerDown(e: React.PointerEvent<HTMLDivElement>, effectivePPS: number) {
-    isSeekingRef.current = true;
     const rect = scrollRef.current?.getBoundingClientRect();
     if (!rect) return;
     const x = e.clientX - rect.left + (scrollRef.current?.scrollLeft || 0);
-    seekToTime((x - LEFT_PADDING) / effectivePPS);
+    const t = Math.max(0, (x - LEFT_PADDING) / effectivePPS);
+    if (e.shiftKey) {
+      loopDragRef.current = { anchorT: t };
+      setLoopDraft({ start: t, end: t });
+      return;
+    }
+    isSeekingRef.current = true;
+    seekToTime(t);
   }
 
   return {
@@ -251,6 +285,7 @@ export function useTimelineGestures(
     dragRef, segDragRef, isSeekingRef, reorderDragRef,
     dropIndicatorIdx, dropIndicatorIdxRef,
     segReorderDragRef, segDropIndicatorIdx, segDropIndicatorIdxRef,
+    loopDraft,
     handleDurResizeStart,
     handleTransResizeStart,
     handleReorderStart,
