@@ -28,6 +28,9 @@ interface FormationBarProps {
   onTransResizeStart?: (e: React.MouseEvent, state: DragState) => void;
   onReorderStart?: (e: React.MouseEvent, formationId: string, origIndex: number) => void;
   onContextMenu?: (e: React.MouseEvent, formationId: string) => void;
+  // Overrides the default left padding — wider when a starting formation (see
+  // addStartFormation) reserves extra gutter space at the very start of the timeline.
+  leftPadding?: number;
 }
 
 export function FormationBar({
@@ -46,9 +49,10 @@ export function FormationBar({
   onTransResizeStart,
   onReorderStart,
   onContextMenu,
+  leftPadding = 12, // LEFT_PADDING
 }: FormationBarProps) {
   const gap = index === 0 ? 0 : BAR_GAP;
-  const left = 12 + startTime * effectivePPS + gap; // LEFT_PADDING = 12; gap is on the left so right edge aligns with beat line
+  const left = leftPadding + startTime * effectivePPS + gap;
   const width = Math.max(20, formation.duration * effectivePPS - gap);
   // transWidth capped at width - HANDLE_WIDTH - 3 so the trans handle never overlaps the dur handle.
   const transWidth = Math.min(width - HANDLE_WIDTH - 3, Math.max(0, formation.transition_duration * effectivePPS - gap));

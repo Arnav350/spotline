@@ -16,14 +16,17 @@ interface AudioSegmentBarProps {
   bpm?: number;
   onResizeStart: (e: React.MouseEvent, segmentId: string, startX: number, startDur: number) => void;
   onReorderStart?: (e: React.MouseEvent, segmentId: string, origIndex: number) => void;
+  // Overrides the default left padding — wider when a starting formation (see
+  // addStartFormation) reserves extra gutter space at the very start of the timeline.
+  leftPadding?: number;
 }
 
-export function AudioSegmentBar({ segment, index, startTime, effectivePPS, isSelected, isEditable, isBeingDragged, bpm, onResizeStart, onReorderStart }: AudioSegmentBarProps) {
+export function AudioSegmentBar({ segment, index, startTime, effectivePPS, isSelected, isEditable, isBeingDragged, bpm, onResizeStart, onReorderStart, leftPadding = LEFT_PADDING }: AudioSegmentBarProps) {
   const { setSelectedAudioSegment } = useShowStore();
   const [hovered, setHovered] = useState(false);
 
   const gap = index === 0 ? 0 : BAR_GAP;
-  const left = LEFT_PADDING + startTime * effectivePPS + gap;
+  const left = leftPadding + startTime * effectivePPS + gap;
   const width = Math.max(HANDLE_WIDTH + 20, segment.duration * effectivePPS - gap);
 
   const durationLabel = bpm && bpm > 0

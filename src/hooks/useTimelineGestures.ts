@@ -18,6 +18,10 @@ export function useTimelineGestures(
   scrollRef: React.RefObject<HTMLDivElement | null>,
   seekToTime: (t: number) => void,
   onLoopChange: (range: { start: number; end: number } | null) => void,
+  // Wider than the constant when a starting formation (see addStartFormation) reserves
+  // extra gutter space at the very start of the timeline — every pixel<->time conversion
+  // below needs to agree with wherever things are actually rendered.
+  leftPadding: number = LEFT_PADDING,
 ) {
   const { updateFormation, reorderFormations, updateAudioSegment, reorderAudioSegments } = useShowStore();
 
@@ -34,8 +38,10 @@ export function useTimelineGestures(
 
   const effectivePPSRef = useRef(BASE_PPS * timelineZoom);
   const timelineZoomRef = useRef(timelineZoom);
+  const leftPaddingRef = useRef(leftPadding);
   effectivePPSRef.current = BASE_PPS * timelineZoom;
   timelineZoomRef.current = timelineZoom;
+  leftPaddingRef.current = leftPadding;
 
   const dragRef = useRef<DragState | null>(null);
   const segDragRef = useRef<{ segmentId: string; startX: number; startDur: number } | null>(null);
@@ -52,11 +58,15 @@ export function useTimelineGestures(
     loopDraftRef.current = draft;
     setLoopDraftRaw(draft);
   }
-  const formationsRef = useRef(useShowStore.getState().formations);
+  // Drives the reorder-drag drop-index math below, which must line up with the indices
+  // reorderFormations expects — those are relative to the real, time-ordered formations
+  // only, so the starting formation (order_index -1, see addStartFormation) is excluded
+  // here too; it has no drag handle to begin a reorder from in the first place.
+  const formationsRef = useRef(useShowStore.getState().formations.filter(f => f.order_index !== -1));
   const audioSegmentsRef = useRef(useShowStore.getState().audioSegments);
 
   // Keep formationsRef / audioSegmentsRef current on each render
-  formationsRef.current = useShowStore.getState().formations;
+  formationsRef.current = useShowStore.getState().formations.filter(f => f.order_index !== -1);
   audioSegmentsRef.current = [...useShowStore.getState().audioSegments].sort((a, b) => a.order_index - b.order_index);
 
   // On mount: restore saved zoom, or auto-fit if no saved value
@@ -74,7 +84,7 @@ export function useTimelineGestures(
     const totalDuration = formations.reduce((a, f) => a + f.duration, 0);
     if (totalDuration === 0) return;
     const contentSeconds = Math.max(totalDuration + 4, 12);
-    const zoom = (containerWidth - LEFT_PADDING * 2) / (contentSeconds * BASE_PPS);
+    const zoom = (containerWidth - leftPaddingRef.current * 2) / (contentSeconds * BASE_PPS);
     setTimelineZoom(Math.max(0.15, Math.min(5, zoom)));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -88,14 +98,14 @@ export function useTimelineGestures(
       e.preventDefault();
       const rect = el.getBoundingClientRect();
       const mouseX = e.clientX - rect.left + el.scrollLeft;
-      const timeAtCursor = (mouseX - LEFT_PADDING) / effectivePPSRef.current;
+      const timeAtCursor = (mouseX - leftPaddingRef.current) / effectivePPSRef.current;
       const factor = 1.04;
       const newZoom = Math.max(0.15, Math.min(5,
         e.deltaY < 0 ? timelineZoomRef.current * factor : timelineZoomRef.current / factor
       ));
       setTimelineZoom(newZoom);
       requestAnimationFrame(() => {
-        el.scrollLeft = LEFT_PADDING + timeAtCursor * BASE_PPS * newZoom - (e.clientX - rect.left);
+        el.scrollLeft = leftPaddingRef.current + timeAtCursor * BASE_PPS * newZoom - (e.clientX - rect.left);
       });
     };
     el.addEventListener('wheel', onWheel, { passive: false });
@@ -147,7 +157,7 @@ export function useTimelineGestures(
         const rect = scrollRef.current?.getBoundingClientRect();
         if (!rect) return;
         const x = e.clientX - rect.left + (scrollRef.current?.scrollLeft || 0);
-        seekToTime((x - LEFT_PADDING) / effectivePPSRef.current);
+        seekToTime((x - leftPaddingRef.current) / effectivePPSRef.current);
       }
 
       if (loopDragRef.current) {
@@ -155,7 +165,7 @@ export function useTimelineGestures(
         if (rect) {
           const scrollLeft = scrollRef.current?.scrollLeft || 0;
           const mouseX = e.clientX - rect.left + scrollLeft;
-          const t = Math.max(0, (mouseX - LEFT_PADDING) / effectivePPSRef.current);
+          const t = Math.max(0, (mouseX - leftPaddingRef.current) / effectivePPSRef.current);
           const anchor = loopDragRef.current.anchorT;
           setLoopDraft({ start: Math.min(anchor, t), end: Math.max(anchor, t) });
         }
@@ -165,7 +175,7 @@ export function useTimelineGestures(
         const fs = formationsRef.current;
         const rect = scrollRef.current?.getBoundingClientRect();
         const scrollLeft = scrollRef.current?.scrollLeft || 0;
-        const mouseX = e.clientX - (rect?.left || 0) + scrollLeft - LEFT_PADDING;
+        const mouseX = e.clientX - (rect?.left || 0) + scrollLeft - leftPaddingRef.current;
         let cum = 0;
         const starts: number[] = [];
         for (const f of fs) { starts.push(cum); cum += f.duration; }
@@ -182,7 +192,7 @@ export function useTimelineGestures(
         const segs = audioSegmentsRef.current;
         const rect = scrollRef.current?.getBoundingClientRect();
         const scrollLeft = scrollRef.current?.scrollLeft || 0;
-        const mouseX = e.clientX - (rect?.left || 0) + scrollLeft - LEFT_PADDING;
+        const mouseX = e.clientX - (rect?.left || 0) + scrollLeft - leftPaddingRef.current;
         let cum = 0;
         const starts: number[] = [];
         for (const s of segs) { starts.push(cum); cum += s.duration; }
@@ -269,7 +279,7 @@ export function useTimelineGestures(
     const rect = scrollRef.current?.getBoundingClientRect();
     if (!rect) return;
     const x = e.clientX - rect.left + (scrollRef.current?.scrollLeft || 0);
-    const t = Math.max(0, (x - LEFT_PADDING) / effectivePPS);
+    const t = Math.max(0, (x - leftPaddingRef.current) / effectivePPS);
     if (e.shiftKey) {
       loopDragRef.current = { anchorT: t };
       setLoopDraft({ start: t, end: t });

@@ -16,6 +16,9 @@ interface TimelineRulerProps {
   loopRange?: { start: number; end: number } | null;
   loopDraft?: { start: number; end: number } | null;
   loopEnabled?: boolean;
+  // Wider than the constant when a starting formation (see addStartFormation) reserves
+  // extra gutter space at the very start of the timeline.
+  leftPadding?: number;
 }
 
 export function TimelineRuler({
@@ -29,12 +32,13 @@ export function TimelineRuler({
   loopRange,
   loopDraft,
   loopEnabled,
+  leftPadding = LEFT_PADDING,
 }: TimelineRulerProps) {
   const loop = loopDraft ?? loopRange;
   const secondTicks: ReactNode[] = [];
   for (let t = 0; t <= maxRulerT; t += tickInterval) {
     const isMajor = Math.abs(t - Math.round(t)) < 0.01;
-    const left = LEFT_PADDING + t * effectivePPS;
+    const left = leftPadding + t * effectivePPS;
     secondTicks.push(
       <div
         key={`s-${t}`}
@@ -65,7 +69,7 @@ export function TimelineRuler({
     for (let b = 0; b <= beatCount; b++) {
       const t = b * beatDur;
       if (t > maxRulerT) break;
-      const left = LEFT_PADDING + t * effectivePPS;
+      const left = leftPadding + t * effectivePPS;
       const isMeasure = b % 4 === 0;
       beatTicks.push(
         <div
@@ -110,7 +114,7 @@ export function TimelineRuler({
       {loop && (
         <div style={{
           position: 'absolute',
-          left: LEFT_PADDING + loop.start * effectivePPS,
+          left: leftPadding + loop.start * effectivePPS,
           top: 0,
           width: Math.max(1, (loop.end - loop.start) * effectivePPS),
           height: '100%',
