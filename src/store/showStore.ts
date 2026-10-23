@@ -97,6 +97,7 @@ interface ShowState {
 
   addFormation: () => void;
   addFormationAfter: (id: string) => void;
+  addStartFormation: () => void;
   duplicateFormation: (id: string) => void;
   deleteFormation: (id: string) => Promise<void>;
   updateFormation: (id: string, updates: Partial<Formation>) => void;
@@ -181,6 +182,15 @@ interface ShowState {
 
 // Sorts by order_index, backfilling it by array position for rows saved before
 // the column existed (order_index undefined) so old shows still get a stable order.
+// Renumbers order_index to match array position — except a starting formation (see
+// addStartFormation), pinned at order_index -1 and never renumbered, no matter how the
+// rest shift around it. Centralized here since duplicate/delete/add-after/reorder all
+// otherwise blindly reindex every formation by position.
+function reindexFormations(formations: Formation[]): Formation[] {
+  let next = 0;
+  return formations.map(f => f.order_index === -1 ? f : { ...f, order_index: next++ });
+}
+
 function withOrderIndex<T extends { order_index?: number }>(items: T[]): (T & { order_index: number })[] {
   return items
     .slice()
@@ -783,7 +793,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     const state = get();
     if (!state.show) return;
     const id = uuidv4();
-    const orderIndex = state.formations.length;
+    const orderIndex = state.formations.filter(f => f.order_index !== -1).length;
     const bpm = state.show.bpm;
     const defaultDuration = bpm && bpm > 0 ? (60 / bpm) * 8 : 8;
     const formation: Formation = {
@@ -841,6 +851,74 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     scheduleAutoSave(get());
   },
 
+  addStartFormation: () => {
+    const state = get();
+    if (!state.show) return;
+    // There's only ever one — it's the pose held at t=0 before the song starts. Pinned
+    // at order_index -1, a dedicated identity entirely outside the normal 0..n sequence
+    // (see reindexFormations), so a second one would have no distinct slot to occupy.
+    if (state.formations.some(f => f.order_index === -1)) return;
+    const id = uuidv4();
+    const formation: Formation = {
+      id,
+      show_id: state.show.id,
+      name: 'Starting Position',
+      notes: '',
+      duration: 0,
+      transition_duration: 0,
+      transition_easing: 'ease',
+      order_index: -1,
+    };
+    // Default to wherever performers currently stand (today's first formation, if any) —
+    // a sensible starting pose to then adjust, same as addFormation does off the active one.
+    const srcFormationId = state.formations[0]?.id ?? state.activeFormationId;
+    const newPerformerPositions = { ...state.performerPositions };
+    state.performers.forEach(p => {
+      const key = `${p.id}-${id}`;
+      const srcPos = srcFormationId ? state.performerPositions[`${p.id}-${srcFormationId}`] : null;
+      newPerformerPositions[key] = {
+        id: uuidv4(),
+        performer_id: p.id,
+        formation_id: id,
+        x: srcPos?.x ?? state.show!.stage_config.width / 2,
+        y: srcPos?.y ?? state.show!.stage_config.height / 2,
+      };
+    });
+    const newPropPositions = { ...state.propPositions };
+    state.props.forEach(p => {
+      const key = `${p.id}-${id}`;
+      const srcPos = srcFormationId ? state.propPositions[`${p.id}-${srcFormationId}`] : null;
+      newPropPositions[key] = {
+        id: uuidv4(),
+        prop_id: p.id,
+        formation_id: id,
+        x: srcPos?.x ?? state.show!.stage_config.width / 2,
+        y: srcPos?.y ?? state.show!.stage_config.height / 2,
+      };
+    });
+    // Nothing else's order_index needs to move — -1 sits entirely outside the rest's
+    // 0..n sequence, unlike inserting a normal formation at the front.
+    const updated = [formation, ...state.formations];
+    get().captureSnapshot();
+    set({
+      formations: updated,
+      activeFormationId: id,
+      performerPositions: newPerformerPositions,
+      propPositions: newPropPositions,
+    });
+    (window as any).__spotlineBroadcastFormationUpsert?.({
+      ...formation,
+      performerPositions: Object.values(newPerformerPositions)
+        .filter(p => p.formation_id === id)
+        .map(p => ({ performerId: p.performer_id, formationId: p.formation_id, x: p.x, y: p.y })),
+      propPositions: Object.values(newPropPositions)
+        .filter(p => p.formation_id === id)
+        .map(p => ({ propId: p.prop_id, formationId: p.formation_id, x: p.x, y: p.y })),
+    });
+    get().pushHistory();
+    scheduleAutoSave(get());
+  },
+
   addFormationAfter: (id: string) => {
     const state = get();
     if (!state.show) return;
@@ -884,7 +962,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     });
     const updated = [...state.formations];
     updated.splice(srcIdx + 1, 0, newFormation);
-    const reindexed = updated.map((f, i) => ({ ...f, order_index: i }));
+    const reindexed = reindexFormations(updated);
     get().captureSnapshot();
     set({ formations: reindexed, activeFormationId: newId, performerPositions: newPerformerPositions, propPositions: newPropPositions });
     get().pushHistory();
@@ -956,10 +1034,13 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     if (idx === -1) return;
     const isLast = idx === state.formations.length - 1;
     const deletedDuration = state.formations[idx].duration;
-    const remaining = state.formations.filter(f => f.id !== id).map((f, i) => ({ ...f, order_index: i }));
+    const remaining = reindexFormations(state.formations.filter(f => f.id !== id));
     if (!isLast && remaining.length > 0) {
       const targetIdx = idx > 0 ? idx - 1 : 0;
-      remaining[targetIdx] = { ...remaining[targetIdx], duration: remaining[targetIdx].duration + deletedDuration };
+      // The starting formation has no real duration to absorb into — leave it alone.
+      if (remaining[targetIdx].order_index !== -1) {
+        remaining[targetIdx] = { ...remaining[targetIdx], duration: remaining[targetIdx].duration + deletedDuration };
+      }
     }
     const newActive = remaining.length > 0 ? remaining[Math.max(0, remaining.findIndex(f => f.id === state.activeFormationId) - 1)].id : null;
     const newPerformerPositions = { ...state.performerPositions };
@@ -994,10 +1075,16 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
 
   reorderFormations: (sourceIndex: number, destIndex: number) => {
     const state = get();
-    const reordered = [...state.formations];
+    // sourceIndex/destIndex come from the timeline UI, which never renders (or lets you
+    // drag) the starting formation — it's excluded from the reorderable list entirely,
+    // so these indices are always relative to the real, time-ordered formations only.
+    const startFormation = state.formations.find(f => f.order_index === -1);
+    const rest = state.formations.filter(f => f.order_index !== -1);
+    const reordered = [...rest];
     const [removed] = reordered.splice(sourceIndex, 1);
     reordered.splice(destIndex, 0, removed);
-    const updated = reordered.map((f, i) => ({ ...f, order_index: i }));
+    const merged = startFormation ? [startFormation, ...reordered] : reordered;
+    const updated = reindexFormations(merged);
     get().captureSnapshot();
     set({ formations: updated });
     (window as any).__spotlineBroadcastFormationsReorder?.(updated.map(f => ({ id: f.id, order_index: f.order_index })));
@@ -1056,7 +1143,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       f.id === id ? { ...f, duration: halfDuration, transition_duration: clampedTransition } : f
     );
     updatedFormations.splice(srcIdx + 1, 0, newFormation);
-    const reindexed = updatedFormations.map((f, i) => ({ ...f, order_index: i }));
+    const reindexed = reindexFormations(updatedFormations);
 
     get().captureSnapshot();
     set({

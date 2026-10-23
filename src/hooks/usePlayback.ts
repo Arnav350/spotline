@@ -204,8 +204,13 @@ export function usePlayback() {
         setActiveFormation(f.id, f.transition_duration);
         const transitionDur = f.transition_duration || 0;
         const timeInFormation = t - cum;
-        if (i > 0 && transitionDur > 0 && timeInFormation < transitionDur) {
-          setAnimationState(fs[i - 1].id, timeInFormation / transitionDur);
+        // formationsRef deliberately excludes the starting formation (see
+        // addStartFormation), so the very first real formation has no "previous" entry
+        // in this array to transition from — it's the starting formation instead, if one
+        // exists, which playback should transition out of exactly like any other formation.
+        const fromId = i > 0 ? fs[i - 1].id : useShowStore.getState().formations.find(sf => sf.order_index === -1)?.id;
+        if (fromId && transitionDur > 0 && timeInFormation < transitionDur) {
+          setAnimationState(fromId, timeInFormation / transitionDur);
         } else {
           endAnimation();
         }

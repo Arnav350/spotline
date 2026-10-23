@@ -1,4 +1,4 @@
-import { Plus, Play, Pause, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Repeat } from 'lucide-react';
+import { Plus, Play, Pause, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Repeat, Flag } from 'lucide-react';
 import { useShowStore } from '../../store/showStore';
 import { colors, fontSize, radius, spacing } from '../../lib/theme';
 
@@ -33,12 +33,18 @@ export function TimelineControls({
   hasLoopRange,
   onToggleLoop,
 }: TimelineControlsProps) {
-  const { formations, activeFormationId, addFormation, addFormationAfter, currentUserRole } = useShowStore();
+  const { formations, activeFormationId, addFormation, addFormationAfter, addStartFormation, deleteFormation, setActiveFormation, currentUserRole } = useShowStore();
   const isViewer = currentUserRole === 'viewer';
 
-  const activeIdx = formations.findIndex(f => f.id === activeFormationId);
-  const canPrev = activeIdx > 0;
-  const canNext = activeIdx < formations.length - 1;
+  // The starting formation (order_index -1, see addStartFormation) is a separate, always-
+  // reachable-by-id pose, not part of the time-ordered sequence startTimes/seeking use —
+  // it has no "time" to seek to, so it needs its own identity here rather than an index.
+  const startFormation = formations.find(f => f.order_index === -1);
+  const timelineFormations = formations.filter(f => f.order_index !== -1);
+  const isOnStart = !!startFormation && activeFormationId === startFormation.id;
+  const activeIdx = timelineFormations.findIndex(f => f.id === activeFormationId);
+  const canPrev = isOnStart ? false : activeIdx > 0 || (activeIdx === 0 && !!startFormation);
+  const canNext = isOnStart ? timelineFormations.length > 0 : activeIdx >= 0 && activeIdx < timelineFormations.length - 1;
 
   function handleAddClick() {
     // Add right after the active formation, or at the end if none is active/selected.
@@ -48,12 +54,16 @@ export function TimelineControls({
 
   function goToPrev() {
     if (!canPrev) return;
-    onSeekToTime(startTimes[activeIdx - 1]);
+    if (activeIdx === 0 && startFormation) {
+      setActiveFormation(startFormation.id, 0.3);
+    } else {
+      onSeekToTime(startTimes[activeIdx - 1]);
+    }
   }
 
   function goToNext() {
     if (!canNext) return;
-    onSeekToTime(startTimes[activeIdx + 1]);
+    onSeekToTime(isOnStart ? 0 : startTimes[activeIdx + 1]);
   }
 
   return (
@@ -75,6 +85,18 @@ export function TimelineControls({
             onClick={handleAddClick}
           >
             <Plus size={14} /> Add
+          </button>
+        )}
+        {!isViewer && (
+          <button
+            className="btn-icon"
+            onClick={() => startFormation ? deleteFormation(startFormation.id) : addStartFormation()}
+            title={startFormation
+              ? 'Remove starting formation'
+              : 'Add starting formation — a no-duration pose held at t=0, before the song starts'}
+            style={{ flexShrink: 0, color: startFormation ? colors.accentLight : undefined }}
+          >
+            <Flag size={14} />
           </button>
         )}
         {!isViewer && <div style={{ width: 1, height: 16, background: colors.borderMed, margin: `0 ${spacing.xxs}px`, flexShrink: 0 }} />}
