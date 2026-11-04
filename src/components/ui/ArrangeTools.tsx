@@ -52,15 +52,21 @@ function SectionLabel({ children }: { children: string }) {
 
 export function ArrangeTools() {
   const {
-    selectedItemIds,
+    selectedItemIds, performers, props,
     arrangeSelectedPerformers,
     mirrorSelectedPerformers,
     rotateSelectedPerformers,
   } = useShowStore();
 
   const sel = selectedItemIds.length;
-  const canArrange = sel >= 2;
-  const canTransform = sel >= 1;
+  // Shapes only ever move performers, so the shape buttons need 2+ performers selected —
+  // a selection of just props (or one performer, one prop) shouldn't look arrangeable. With
+  // nothing selected, the store actions fall back to acting on everyone, so the buttons stay
+  // enabled as long as there's enough in the formation to act on.
+  const performerIdSet = new Set(performers.map(p => p.id));
+  const selectedPerformerCount = selectedItemIds.filter(id => performerIdSet.has(id)).length;
+  const canArrange = sel > 0 ? selectedPerformerCount >= 2 : performers.length >= 2;
+  const canTransform = sel > 0 ? true : (performers.length + props.length) > 0;
 
   const rowStyle = { display: 'flex', gap: spacing.xs, flexWrap: 'wrap' as const };
 

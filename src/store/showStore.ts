@@ -1571,12 +1571,19 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     scheduleAutoSave(get());
   },
 
+  // Shapes only ever move performers — a selected prop sitting in the mix is left alone.
+  // With nothing selected, arranges every performer in the formation instead of no-op'ing.
   arrangeSelectedPerformers: (shape: 'line-h' | 'line-v' | 'circle' | 'grid') => {
     const state = get();
-    const { activeFormationId, selectedItemIds, performerPositions, propPositions, show } = state;
-    if (!activeFormationId || selectedItemIds.length < 2 || !show) return;
-    const getPos = (id: string) => performerPositions[`${id}-${activeFormationId}`] ?? propPositions[`${id}-${activeFormationId}`];
-    const eligible = selectedItemIds.map(id => ({ id, pos: getPos(id) })).filter((x): x is { id: string; pos: typeof performerPositions[string] } => !!x.pos);
+    const { activeFormationId, selectedItemIds, performerPositions, performers, show } = state;
+    if (!activeFormationId || !show) return;
+    const performerIdSet = new Set(performers.map(p => p.id));
+    const targetIds = selectedItemIds.length > 0
+      ? selectedItemIds.filter(id => performerIdSet.has(id))
+      : performers.map(p => p.id);
+    const eligible = targetIds
+      .map(id => ({ id, pos: performerPositions[`${id}-${activeFormationId}`] }))
+      .filter((x): x is { id: string; pos: typeof performerPositions[string] } => !!x.pos);
     if (eligible.length < 2) return;
     const n = eligible.length;
     const cfg = show.stage_config;
@@ -1593,35 +1600,69 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     const gap = n > 1 ? Math.min(cfg.width * 0.7 / (n - 1), 8) : 6;
     let targets: { x: number; y: number }[];
     switch (shape) {
-      case 'line-h': targets = eligible.map((_, i) => snapPos(cx - (n - 1) / 2 * gap + i * gap, cy)); break;
-      case 'line-v': targets = eligible.map((_, i) => snapPos(cx, cy - (n - 1) / 2 * gap + i * gap)); break;
-      case 'circle': targets = eligible.map((_, i) => { const a = (i / n) * 2 * Math.PI - Math.PI / 2; return snapPos(cx + r * Math.cos(a), cy + r * Math.sin(a)); }); break;
+      case 'line-h': targets = Array.from({ length: n }, (_, i) => snapPos(cx - (n - 1) / 2 * gap + i * gap, cy)); break;
+      case 'line-v': targets = Array.from({ length: n }, (_, i) => snapPos(cx, cy - (n - 1) / 2 * gap + i * gap)); break;
+      case 'circle': targets = Array.from({ length: n }, (_, i) => { const a = (i / n) * 2 * Math.PI - Math.PI / 2; return snapPos(cx + r * Math.cos(a), cy + r * Math.sin(a)); }); break;
       case 'grid': default: {
         const cols = Math.ceil(Math.sqrt(n));
         const rows = Math.ceil(n / cols);
         const gGap = Math.min(6, cfg.width * 0.1);
-        targets = eligible.map((_, i) => snapPos(cx - (cols - 1) / 2 * gGap + (i % cols) * gGap, cy - (rows - 1) / 2 * gGap + Math.floor(i / cols) * gGap));
+        targets = Array.from({ length: n }, (_, i) => snapPos(cx - (cols - 1) / 2 * gGap + (i % cols) * gGap, cy - (rows - 1) / 2 * gGap + Math.floor(i / cols) * gGap));
       }
     }
+    // Closest-path assignment: greedily pair whichever (performer, target) is nearest, so
+    // each performer moves to the target closest to it instead of by selection order —
+    // which otherwise made performers needlessly cross paths to reach the shape.
+    const usedPerf = new Set<number>();
+    const usedTarget = new Set<number>();
+    const perfForTarget: number[] = new Array(n).fill(-1);
+    for (let k = 0; k < n; k++) {
+      let bestP = -1, bestT = -1, bestD = Infinity;
+      for (let p = 0; p < n; p++) {
+        if (usedPerf.has(p)) continue;
+        for (let t = 0; t < n; t++) {
+          if (usedTarget.has(t)) continue;
+          const dx = eligible[p].pos.x - targets[t].x;
+          const dy = eligible[p].pos.y - targets[t].y;
+          const d = dx * dx + dy * dy;
+          if (d < bestD) { bestD = d; bestP = p; bestT = t; }
+        }
+      }
+      usedPerf.add(bestP);
+      usedTarget.add(bestT);
+      perfForTarget[bestT] = bestP;
+    }
     const newPerfPositions = { ...performerPositions };
-    const newPropPositions = { ...propPositions };
-    eligible.forEach((item, i) => {
+    for (let t = 0; t < n; t++) {
+      const item = eligible[perfForTarget[t]];
       const key = `${item.id}-${activeFormationId}`;
-      if (newPerfPositions[key]) newPerfPositions[key] = { ...newPerfPositions[key], x: targets[i].x, y: targets[i].y };
-      else if (newPropPositions[key]) newPropPositions[key] = { ...newPropPositions[key], x: targets[i].x, y: targets[i].y };
-    });
+      newPerfPositions[key] = { ...newPerfPositions[key], x: targets[t].x, y: targets[t].y };
+    }
     get().captureSnapshot();
-    set({ performerPositions: newPerfPositions, propPositions: newPropPositions });
+    set({ performerPositions: newPerfPositions });
     get().pushHistory();
     scheduleAutoSave(get());
   },
 
+  // With nothing selected, mirrors every performer and prop in the formation instead of
+  // no-op'ing.
   mirrorSelectedPerformers: (axis: 'horizontal' | 'vertical') => {
     const state = get();
-    const { activeFormationId, selectedItemIds, performerPositions, propPositions, show } = state;
-    if (!activeFormationId || selectedItemIds.length === 0 || !show) return;
+    const { activeFormationId, selectedItemIds, performerPositions, propPositions, performers, props, show } = state;
+    if (!activeFormationId || !show) return;
+    const targetIds = selectedItemIds.length > 0 ? selectedItemIds : [...performers.map(p => p.id), ...props.map(p => p.id)];
+    if (targetIds.length === 0) return;
     const cfg = show.stage_config;
     const { width, height } = cfg;
+    // Pivot around the (selected, or if nothing's selected, every) performers' centroid —
+    // props never count toward it, and if no performer is in play, fall back to stage center.
+    const performerIdSet = new Set(performers.map(p => p.id));
+    const pivotPerformerPos = targetIds
+      .filter(id => performerIdSet.has(id))
+      .map(id => performerPositions[`${id}-${activeFormationId}`])
+      .filter((p): p is NonNullable<typeof p> => !!p);
+    const cx = pivotPerformerPos.length > 0 ? pivotPerformerPos.reduce((s, p) => s + p.x, 0) / pivotPerformerPos.length : width / 2;
+    const cy = pivotPerformerPos.length > 0 ? pivotPerformerPos.reduce((s, p) => s + p.y, 0) / pivotPerformerPos.length : height / 2;
     const snapPos = (x: number, y: number) => {
       if (!cfg.snapToGrid) return { x, y };
       const sx = width / cfg.divisionsX / cfg.subdivisionsX;
@@ -1630,11 +1671,11 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     };
     const newPerfPositions = { ...performerPositions };
     const newPropPositions = { ...propPositions };
-    selectedItemIds.forEach(id => {
+    targetIds.forEach(id => {
       const key = `${id}-${activeFormationId}`;
       const pos = newPerfPositions[key] ?? newPropPositions[key];
       if (!pos) return;
-      const raw = axis === 'horizontal' ? { x: width - pos.x, y: pos.y } : { x: pos.x, y: height - pos.y };
+      const raw = axis === 'horizontal' ? { x: 2 * cx - pos.x, y: pos.y } : { x: pos.x, y: 2 * cy - pos.y };
       const snapped = snapPos(raw.x, raw.y);
       if (newPerfPositions[key]) newPerfPositions[key] = { ...newPerfPositions[key], ...snapped };
       else newPropPositions[key] = { ...newPropPositions[key], ...snapped };
@@ -1645,13 +1686,24 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     scheduleAutoSave(get());
   },
 
+  // With nothing selected, rotates every performer and prop in the formation instead of
+  // no-op'ing.
   rotateSelectedPerformers: (degrees: 90 | 180 | 270) => {
     const state = get();
-    const { activeFormationId, selectedItemIds, performerPositions, propPositions, show } = state;
-    if (!activeFormationId || selectedItemIds.length === 0 || !show) return;
+    const { activeFormationId, selectedItemIds, performerPositions, propPositions, performers, props, show } = state;
+    if (!activeFormationId || !show) return;
+    const targetIds = selectedItemIds.length > 0 ? selectedItemIds : [...performers.map(p => p.id), ...props.map(p => p.id)];
+    if (targetIds.length === 0) return;
     const cfg = show.stage_config;
-    const stageCx = cfg.width / 2;
-    const stageCy = cfg.height / 2;
+    // Pivot around the (selected, or if nothing's selected, every) performers' centroid —
+    // props never count toward it, and if no performer is in play, fall back to stage center.
+    const performerIdSet = new Set(performers.map(p => p.id));
+    const pivotPerformerPos = targetIds
+      .filter(id => performerIdSet.has(id))
+      .map(id => performerPositions[`${id}-${activeFormationId}`])
+      .filter((p): p is NonNullable<typeof p> => !!p);
+    const pivotX = pivotPerformerPos.length > 0 ? pivotPerformerPos.reduce((s, p) => s + p.x, 0) / pivotPerformerPos.length : cfg.width / 2;
+    const pivotY = pivotPerformerPos.length > 0 ? pivotPerformerPos.reduce((s, p) => s + p.y, 0) / pivotPerformerPos.length : cfg.height / 2;
     const snapPos = (x: number, y: number) => {
       if (!cfg.snapToGrid) return { x, y };
       const sx = cfg.width / cfg.divisionsX / cfg.subdivisionsX;
@@ -1660,16 +1712,16 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     };
     const newPerfPositions = { ...performerPositions };
     const newPropPositions = { ...propPositions };
-    selectedItemIds.forEach(id => {
+    targetIds.forEach(id => {
       const key = `${id}-${activeFormationId}`;
       const pos = newPerfPositions[key] ?? newPropPositions[key];
       if (!pos) return;
-      const dx = pos.x - stageCx;
-      const dy = pos.y - stageCy;
+      const dx = pos.x - pivotX;
+      const dy = pos.y - pivotY;
       let nx: number, ny: number;
-      if (degrees === 90)       { nx = stageCx - dy; ny = stageCy + dx; }
-      else if (degrees === 270) { nx = stageCx + dy; ny = stageCy - dx; }
-      else                      { nx = 2 * stageCx - pos.x; ny = 2 * stageCy - pos.y; }
+      if (degrees === 90)       { nx = pivotX - dy; ny = pivotY + dx; }
+      else if (degrees === 270) { nx = pivotX + dy; ny = pivotY - dx; }
+      else                      { nx = 2 * pivotX - pos.x; ny = 2 * pivotY - pos.y; }
       const snapped = snapPos(nx, ny);
       if (newPerfPositions[key]) newPerfPositions[key] = { ...newPerfPositions[key], ...snapped };
       else newPropPositions[key] = { ...newPropPositions[key], ...snapped };
