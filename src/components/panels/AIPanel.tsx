@@ -231,7 +231,6 @@ export function AIPanel({ onClose }: AIPanelProps) {
               background: colors.accent,
               color: colors.text,
               fontSize: fontSize.md,
-              fontWeight: fontWeight.bold,
               cursor: (!activeFormationId || remaining === 0) ? 'not-allowed' : 'pointer',
               opacity: (!activeFormationId || remaining === 0) ? 0.4 : 1,
               width: '100%',

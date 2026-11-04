@@ -18,11 +18,12 @@ interface FormationBarProps {
   startTime: number;
   effectivePPS: number;
   isActive: boolean;
+  isSelected?: boolean;
   isHovered: boolean;
   bpm?: number;
   isBeingDragged: boolean;
   presentCollaborators?: CollaboratorState[];
-  onSetActive: (id: string) => void;
+  onSetActive: (e: React.MouseEvent) => void;
   onHoverChange: (id: string | null) => void;
   onDurResizeStart?: (e: React.MouseEvent, state: DragState) => void;
   onTransResizeStart?: (e: React.MouseEvent, state: DragState) => void;
@@ -39,6 +40,7 @@ export function FormationBar({
   startTime,
   effectivePPS,
   isActive,
+  isSelected = false,
   isHovered,
   bpm,
   isBeingDragged,
@@ -69,15 +71,15 @@ export function FormationBar({
         top: 0,
         width,
         height: BAR_HEIGHT,
-        background: colors.bgCard,
-        border: `2px solid ${isActive ? colors.textSecondary : colors.borderMed}`,
+        background: isSelected ? `${colors.accent}1f` : colors.bgCard,
+        border: `2px solid ${isActive ? colors.textSecondary : isSelected ? colors.accent : colors.borderMed}`,
         borderRadius: radius.sm,
         userSelect: 'none',
         cursor: 'pointer',
         boxSizing: 'border-box',
         opacity: isBeingDragged ? 0.4 : 1,
       }}
-      onClick={() => onSetActive(formation.id)}
+      onClick={onSetActive}
       onContextMenu={onContextMenu ? e => onContextMenu(e, formation.id) : undefined}
       onMouseEnter={() => onHoverChange(formation.id)}
       onMouseLeave={() => onHoverChange(null)}

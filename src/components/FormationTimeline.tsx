@@ -23,6 +23,8 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
     addFormation, addFormationAfter, deleteFormation,
     resetFormationToPrev,
     currentUserRole,
+    selectedFormationIds, setSelectedFormationIds,
+    selectFormationRange,
   } = useShowStore();
   const isViewer = currentUserRole === 'viewer';
   const bpm = show?.bpm;
@@ -58,6 +60,16 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
   const [hasSeeked, setHasSeeked] = useState(false);
   const [contextMenu, setContextMenu] = useState<ContextMenu>(null);
   function seek(t: number) { setHasSeeked(true); seekToTime(t); }
+
+  // Branches a formation-bar click on its modifier key: shift range-selects from
+  // activeFormationId (the anchor); a plain click does the normal single-select-and-seek
+  // behavior, clearing any standing multi-selection first (a plain click always starts a
+  // fresh pick).
+  function handleFormationClick(e: React.MouseEvent, formationId: string, startTime: number) {
+    if (e.shiftKey) { selectFormationRange(formationId); return; }
+    setSelectedFormationIds([]);
+    seek(startTime);
+  }
 
 
   const handleContextMenu = useCallback((e: React.MouseEvent, formationId: string) => {
@@ -329,11 +341,12 @@ export default function FormationTimeline({ showAudioSegments = false }: { showA
                 startTime={startTimes[i]}
                 effectivePPS={effectivePPS}
                 isActive={f.id === activeFormationId}
+                isSelected={selectedFormationIds.includes(f.id)}
                 isHovered={hoveredId === f.id}
                 bpm={bpm}
                 isBeingDragged={reorderDragRef.current?.formationId === f.id}
                 presentCollaborators={collaborators.filter(c => c.user_id !== localUserId && c.active_formation_id === f.id)}
-                onSetActive={() => seek(startTimes[i])}
+                onSetActive={e => handleFormationClick(e, f.id, startTimes[i])}
                 onHoverChange={setHoveredId}
                 onDurResizeStart={isViewer ? undefined : handleDurResizeStart}
                 onTransResizeStart={isViewer ? undefined : handleTransResizeStart}
