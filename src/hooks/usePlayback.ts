@@ -33,6 +33,17 @@ export function usePlayback() {
   // deltas. There's no currentTime readback on a source node like there is on <audio>.
   const startedAtTrackTimeRef = useRef(0);
   const startedAtCtxTimeRef = useRef(0);
+  // True for the whole span the user considers "playing," independent of whether a source
+  // node has actually started yet — resume() is async, so there's a window after pressing
+  // play where this is true but sourceRef.current is still null (see playFrom/tick below).
+  const isPlayingRef = useRef(false);
+  // A silent, endlessly-looping source kept alive for as long as the context exists.
+  // Browsers auto-suspend an AudioContext fairly quickly once it has no active source node
+  // (e.g. right after a pause) — resuming from that costs real, felt latency, which is what
+  // made play-after-pause feel delayed. Giving the context something to "play" at all times
+  // keeps it out of that suspended state between pauses, so a later play press hits the
+  // synchronous already-running path in getCtx()/playFrom instead of an async resume().
+  const keepAliveRef = useRef<AudioBufferSourceNode | null>(null);
 
   function getCtx(): AudioContext {
     if (!audioCtxRef.current) {
@@ -42,6 +53,25 @@ export function usePlayback() {
       gain.connect(ctx.destination);
       audioCtxRef.current = ctx;
       gainNodeRef.current = gain;
+
+      // Verified (headless Chromium + WebKit, via Playwright) that a literally-silent
+      // keep-alive buffer does stop ctx.state itself from ever re-suspending — every play
+      // after a pause takes the synchronous path. The remaining real-hardware lag this was
+      // meant to fix lives a layer below that: macOS can power down the actual output DAC
+      // after it's been fed true digital silence for a while, independent of the Web Audio
+      // context's own state, and waking real hardware back up is what costs the felt delay.
+      // A few samples of amplitude far below audible/noise-floor (not all zeros) keep the
+      // hardware itself "warm" without anyone hearing it.
+      const sr = ctx.sampleRate;
+      const keepAliveBuffer = ctx.createBuffer(1, sr, sr);
+      const data = keepAliveBuffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.00003;
+      const keepAlive = ctx.createBufferSource();
+      keepAlive.buffer = keepAliveBuffer;
+      keepAlive.loop = true;
+      keepAlive.connect(ctx.destination);
+      keepAlive.start(0);
+      keepAliveRef.current = keepAlive;
     }
     return audioCtxRef.current;
   }
@@ -101,6 +131,41 @@ export function usePlayback() {
   // the wall-clock moment it started and the show time it started at.
   const postEndStartRef = useRef<{ perfStart: number; timeStart: number } | null>(null);
 
+  // Safari (macOS/iOS) tears down a backgrounded tab's underlying audio session after it's
+  // sat idle for a while — the AudioContext object keeps reporting "running", but nothing
+  // reaches the speakers. This happens below the page's JS heap, in the tab's underlying
+  // WebKit process, so even a full reload doesn't clear it (same process, same wedged
+  // session). Discarding our reference when the tab resurfaces forces getCtx() to build a
+  // genuinely fresh context next time playback starts, which is Apple's own recommended
+  // workaround (create contexts at gesture time rather than keeping one alive indefinitely).
+  // Gated on an actual idle threshold — tearing it down on every brief tab-blur would force
+  // the async resume() path on far more plays than needed, adding a felt delay each time.
+  const hiddenAtRef = useRef<number | null>(null);
+  useEffect(() => {
+    const IDLE_THRESHOLD_MS = 15000;
+    function handleVisibility() {
+      if (document.visibilityState === 'hidden') {
+        hiddenAtRef.current = performance.now();
+        return;
+      }
+      const hiddenAt = hiddenAtRef.current;
+      hiddenAtRef.current = null;
+      if (
+        hiddenAt !== null &&
+        performance.now() - hiddenAt > IDLE_THRESHOLD_MS &&
+        !isPlayingRef.current &&
+        audioCtxRef.current
+      ) {
+        audioCtxRef.current.close().catch(() => { /* already closing/closed */ });
+        audioCtxRef.current = null;
+        gainNodeRef.current = null;
+        keepAliveRef.current = null;
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
+
   // Sync volume/mute onto the gain node
   useEffect(() => {
     getCtx();
@@ -113,6 +178,7 @@ export function usePlayback() {
   useEffect(() => {
     cancelAnimationFrame(animFrameRef.current);
     stopSource();
+    isPlayingRef.current = false;
     postEndStartRef.current = null;
     setIsPlaying(false);
     setStoreIsPlaying(false);
@@ -148,6 +214,7 @@ export function usePlayback() {
       audioCtxRef.current?.close().catch(() => { /* already closing/closed */ });
       audioCtxRef.current = null;
       gainNodeRef.current = null;
+      keepAliveRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -168,14 +235,12 @@ export function usePlayback() {
     return t;
   }
 
-  // Starts a fresh source node at trackTime — the only way to "play" with Web Audio,
-  // since a node can't be reused once started.
-  function playFrom(trackTime: number) {
+  // Actually creates and starts the source node — split out from playFrom so it can run
+  // either immediately (context already running) or once resume() genuinely completes.
+  function startSourceNode(trackTime: number) {
     const buffer = bufferRef.current;
-    if (!buffer) return;
-    stopSource();
-    const ctx = getCtx();
-    ctx.resume();
+    const ctx = audioCtxRef.current;
+    if (!buffer || !ctx) return;
     const source = ctx.createBufferSource();
     source.buffer = buffer;
     const loop = loopEnabledRef.current ? loopRangeRef.current : null;
@@ -190,6 +255,33 @@ export function usePlayback() {
     sourceRef.current = source;
     startedAtCtxTimeRef.current = ctx.currentTime;
     startedAtTrackTimeRef.current = trackTime;
+  }
+
+  // Starts a fresh source node at trackTime — the only way to "play" with Web Audio,
+  // since a node can't be reused once started. Chrome auto-suspends an AudioContext after
+  // it's had no active source node for a few seconds (e.g. while paused), so resume() here
+  // is often not a no-op — starting the source before it actually resolves can silently
+  // produce no sound even though ctx.state later reads "running". isPlayingRef lets tick()
+  // keep the rAF loop alive (without advancing the clock) during this async gap.
+  function playFrom(trackTime: number) {
+    const buffer = bufferRef.current;
+    if (!buffer) return;
+    stopSource();
+    const ctx = getCtx();
+    isPlayingRef.current = true;
+    if (ctx.state === 'running') {
+      startSourceNode(trackTime);
+      return;
+    }
+    ctx.resume()
+      .then(() => {
+        if (!isPlayingRef.current) return; // paused/stopped again before resume finished
+        if (ctx.state !== 'running') {
+          console.warn('[usePlayback] AudioContext did not reach "running" after resume(); state is', ctx.state);
+        }
+        startSourceNode(trackTime);
+      })
+      .catch(err => console.error('[usePlayback] AudioContext.resume() failed', err));
   }
 
   // Shared by tick() and tickPostEnd(): sets whichever formation owns time t as active,
@@ -234,6 +326,7 @@ export function usePlayback() {
       const fs = formationsRef.current;
       if (fs.length > 0) { setActiveFormation(fs[fs.length - 1].id, 0); endAnimation(); }
       postEndStartRef.current = null;
+      isPlayingRef.current = false;
       setIsPlaying(false);
       setStoreIsPlaying(false);
       cancelAnimationFrame(animFrameRef.current);
@@ -245,7 +338,13 @@ export function usePlayback() {
   }, [applyTimeToFormations, setActiveFormation, endAnimation, setStoreIsPlaying]);
 
   const tick = useCallback(() => {
-    if (!sourceRef.current) return;
+    if (!isPlayingRef.current) return;
+    if (!sourceRef.current) {
+      // Still waiting on an async AudioContext.resume() to land (see playFrom) — keep the
+      // loop alive without advancing the clock so the timeline doesn't run ahead of audio.
+      animFrameRef.current = requestAnimationFrame(tick);
+      return;
+    }
     const t = computeTrackTime();
     setAudioTime(t);
     applyTimeToFormations(t);
@@ -266,6 +365,7 @@ export function usePlayback() {
       return;
     }
     cancelAnimationFrame(animFrameRef.current);
+    isPlayingRef.current = false;
     setIsPlaying(false);
     setStoreIsPlaying(false);
   }
@@ -281,6 +381,7 @@ export function usePlayback() {
         startedAtTrackTimeRef.current = t;
         setAudioTime(t);
       }
+      isPlayingRef.current = false;
       setIsPlaying(false);
       setStoreIsPlaying(false);
       endAnimation();
@@ -295,6 +396,7 @@ export function usePlayback() {
       if (dur > 0 && startAt >= dur) {
         // Resuming (or starting) past where the music ends — nothing to play, just
         // keep advancing through whatever formations remain.
+        isPlayingRef.current = true;
         postEndStartRef.current = { perfStart: performance.now(), timeStart: startAt };
         animFrameRef.current = requestAnimationFrame(tickPostEnd);
       } else {
