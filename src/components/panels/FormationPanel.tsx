@@ -7,6 +7,7 @@ import { PanelHeader } from '../ui/PanelHeader';
 import { ColorPicker } from '../ui/ColorPicker';
 import { SegmentedControl } from '../ui/SegmentedControl';
 import { ArrangeTools } from '../ui/ArrangeTools';
+import { SwapTools } from '../ui/SwapTools';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
 import { FormationMetrics } from './FormationMetrics';
 import type { Shape } from '../../lib/types';
@@ -193,10 +194,12 @@ export function FormationPanel({ onClose }: FormationPanelProps) {
   const {
     formations, activeFormationId, updateFormation, deleteFormation, duplicateFormation,
     setActiveFormation, selectedItem, optimizeFormationTransition,
+    selectedFormationIds, deleteFormations,
   } = useShowStore();
 
   const formation = formations.find(f => f.id === activeFormationId);
   const easing: TransitionEasing = formation?.transition_easing ?? 'ease';
+  const isMultiSelecting = selectedFormationIds.length > 1;
 
   const sortedFormations = [...formations].sort((a, b) => a.order_index - b.order_index);
   const activeIdx = sortedFormations.findIndex(f => f.id === activeFormationId);
@@ -208,6 +211,7 @@ export function FormationPanel({ onClose }: FormationPanelProps) {
   }
 
   function handleDelete() {
+    if (isMultiSelecting) { deleteFormations(selectedFormationIds); return; }
     if (!formation) return;
     const idx = formations.findIndex(f => f.id === formation.id);
     deleteFormation(formation.id);
@@ -262,6 +266,10 @@ export function FormationPanel({ onClose }: FormationPanelProps) {
 
           <CollapsibleSection title="Shape / Transform" persistKey="formation-shape-transform">
             <ArrangeTools />
+          </CollapsibleSection>
+
+          <CollapsibleSection title="Swap Dancers" persistKey="formation-swap-dancers">
+            <SwapTools />
           </CollapsibleSection>
 
           <FormationMetrics />
@@ -323,7 +331,7 @@ export function FormationPanel({ onClose }: FormationPanelProps) {
               onClick={handleDelete}
             >
               <Trash2 size={12} />
-              Delete Formation
+              {isMultiSelecting ? `Delete ${selectedFormationIds.length} Selected Formations` : 'Delete Formation'}
             </button>
           </div>
         </>
