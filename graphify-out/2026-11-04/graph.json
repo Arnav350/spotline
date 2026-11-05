@@ -130,7 +130,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "package",
-      "community": 4,
+      "community": 6,
       "norm_label": "package.json"
     },
     {
@@ -140,7 +140,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "package_name",
-      "community": 4,
+      "community": 6,
       "norm_label": "name"
     },
     {
@@ -150,7 +150,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "package_private",
-      "community": 4,
+      "community": 6,
       "norm_label": "private"
     },
     {
@@ -160,7 +160,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "package_version",
-      "community": 4,
+      "community": 6,
       "norm_label": "version"
     },
     {
@@ -170,7 +170,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "package_type",
-      "community": 4,
+      "community": 6,
       "norm_label": "type"
     },
     {
@@ -180,7 +180,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "package_scripts",
-      "community": 4,
+      "community": 6,
       "norm_label": "scripts"
     },
     {
@@ -190,7 +190,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "package_scripts_dev",
-      "community": 4,
+      "community": 6,
       "norm_label": "dev"
     },
     {
@@ -200,7 +200,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "package_scripts_build",
-      "community": 4,
+      "community": 6,
       "norm_label": "build"
     },
     {
@@ -210,7 +210,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "package_scripts_lint",
-      "community": 4,
+      "community": 6,
       "norm_label": "lint"
     },
     {
@@ -220,7 +220,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "package_scripts_preview",
-      "community": 4,
+      "community": 6,
       "norm_label": "preview"
     },
     {
@@ -1050,7 +1050,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "src_components_topbar_usermenu",
-      "community": 9,
+      "community": 2,
       "norm_label": "usermenu()"
     },
     {
@@ -9707,17 +9707,6 @@
       "weight": 1.0,
       "source": "src_components_ui_swaptools",
       "target": "src_lib_theme_fontsize",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/components/ui/SwapTools.tsx",
-      "source_location": "L3",
-      "weight": 1.0,
-      "source": "src_components_ui_swaptools",
-      "target": "src_lib_theme_fontweight",
       "confidence_score": 1.0
     },
     {

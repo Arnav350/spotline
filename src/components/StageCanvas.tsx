@@ -586,7 +586,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
           if (e.evt.button !== 0) return;
           if (e.target !== e.target.getStage()) return;
           if (isViewer) return;
-          selectionAdditive.current = e.evt.metaKey || e.evt.ctrlKey;
+          selectionAdditive.current = e.evt.metaKey || e.evt.ctrlKey || e.evt.shiftKey;
           const pos = stageRef.current!.getRelativePointerPosition()!;
           selectionModeRef.current = lassoMode !== e.evt.altKey ? 'lasso' : 'rect';
           lassoPointsRef.current = [{ x: pos.x, y: pos.y }];
@@ -689,7 +689,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
 
             function onPropClick(e: Konva.KonvaEventObject<MouseEvent>) {
               e.cancelBubble = true;
-              if (e.evt.metaKey || e.evt.ctrlKey) {
+              if (e.evt.metaKey || e.evt.ctrlKey || e.evt.shiftKey) {
                 toggleItemSelected(prop.id);
               } else {
                 setSelectedItemIds([prop.id]);
@@ -798,7 +798,7 @@ function StageCanvas({ width, height, showStageDimensions }: CanvasProps) {
 
             function onPerformerClick(e: Konva.KonvaEventObject<MouseEvent>) {
               e.cancelBubble = true;
-              if (e.evt.metaKey || e.evt.ctrlKey) {
+              if (e.evt.metaKey || e.evt.ctrlKey || e.evt.shiftKey) {
                 toggleItemSelected(performer.id);
               } else {
                 setSelectedItemIds([performer.id]);

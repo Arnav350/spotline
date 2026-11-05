@@ -36,6 +36,9 @@ interface SpotlineClipboardItem {
   departurePath?: { cpDx: number; cpDy: number };
 }
 let _memClipboard: SpotlineClipboardItem[] | null = null;
+// Stage dimensions the clipboard items were copied from, so paste can rescale
+// proportionally into a differently-sized stage instead of reusing raw coordinates.
+let _memClipboardStage: { width: number; height: number } | null = null;
 
 const DEFAULT_STAGE: StageConfig = {
   width: 60,
@@ -1747,14 +1750,27 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     const hi = Math.max(startIdx, endIdx);
     const rangeIds = new Set(ordered.slice(lo, hi + 1).map(f => f.id));
 
+    // Swap only x/y, keeping each entry's own id/performer_id/formation_id —
+    // swapping the whole object would leave those fields pointing at the wrong
+    // performer, so persistAll (which upserts by performer_id+formation_id from
+    // those embedded fields, not the map key) would write the positions back
+    // unswapped on save.
     const newPositions = { ...state.performerPositions };
     for (const fid of rangeIds) {
       const keyA = `${performerIdA}-${fid}`;
       const keyB = `${performerIdB}-${fid}`;
       const posA = newPositions[keyA];
       const posB = newPositions[keyB];
-      if (posB) newPositions[keyA] = posB; else delete newPositions[keyA];
-      if (posA) newPositions[keyB] = posA; else delete newPositions[keyB];
+      if (posA && posB) {
+        newPositions[keyA] = { ...posA, x: posB.x, y: posB.y };
+        newPositions[keyB] = { ...posB, x: posA.x, y: posA.y };
+      } else if (posA && !posB) {
+        delete newPositions[keyA];
+        newPositions[keyB] = { ...posA, id: uuidv4(), performer_id: performerIdB, formation_id: fid };
+      } else if (posB && !posA) {
+        delete newPositions[keyB];
+        newPositions[keyA] = { ...posB, id: uuidv4(), performer_id: performerIdA, formation_id: fid };
+      }
     }
 
     // Per-transition curve offsets (performerPaths) are keyed to specific from/to geometry.
@@ -1814,7 +1830,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
 
   copySelectedPerformers: () => {
     const state = get();
-    if (!state.activeFormationId) return;
+    if (!state.activeFormationId || !state.show) return;
     const sortedForms = state.formations.slice().sort((a, b) => a.order_index - b.order_index);
     const activeIdx = sortedForms.findIndex(f => f.id === state.activeFormationId);
     const nextFormationId = activeIdx < sortedForms.length - 1 ? sortedForms[activeIdx + 1].id : null;
@@ -1835,8 +1851,11 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         if (pos) items.push({ type: 'prop', name: prop.name, color: prop.color, shape: prop.shape, size: prop.size ?? 2, x: pos.x, y: pos.y });
       }
     });
+    const stageWidth = state.show.stage_config.width;
+    const stageHeight = state.show.stage_config.height;
     _memClipboard = items;
-    navigator.clipboard.writeText(JSON.stringify({ spotlineClipboard: true, version: 1, items })).catch(() => {});
+    _memClipboardStage = { width: stageWidth, height: stageHeight };
+    navigator.clipboard.writeText(JSON.stringify({ spotlineClipboard: true, version: 1, stageWidth, stageHeight, items })).catch(() => {});
   },
 
   pastePerformers: () => {
@@ -1846,17 +1865,36 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
       get().captureSnapshot();
 
       let items: SpotlineClipboardItem[] = [];
+      let srcStage: { width: number; height: number } | null = null;
       try {
         const text = await navigator.clipboard.readText();
         const parsed = JSON.parse(text);
         if (parsed?.spotlineClipboard && Array.isArray(parsed.items)) {
           items = parsed.items;
+          if (typeof parsed.stageWidth === 'number' && typeof parsed.stageHeight === 'number') {
+            srcStage = { width: parsed.stageWidth, height: parsed.stageHeight };
+          }
         }
       } catch { /* permission denied or parse error */ }
-      if (!items.length && _memClipboard) items = _memClipboard;
+      if (!items.length && _memClipboard) { items = _memClipboard; srcStage = _memClipboardStage; }
       if (!items.length) return;
 
       const freshState = get();
+      // Rescale copied positions proportionally when pasting into a differently-sized
+      // stage, instead of reusing the source stage's raw coordinates verbatim.
+      const destCfg = freshState.show!.stage_config;
+      const scaleX = srcStage && srcStage.width > 0 ? destCfg.width / srcStage.width : 1;
+      const scaleY = srcStage && srcStage.height > 0 ? destCfg.height / srcStage.height : 1;
+      if (scaleX !== 1 || scaleY !== 1) {
+        items = items.map(item => ({
+          ...item,
+          x: item.x * scaleX,
+          y: item.y * scaleY,
+          departurePath: item.departurePath
+            ? { cpDx: item.departurePath.cpDx * scaleX, cpDy: item.departurePath.cpDy * scaleY }
+            : undefined,
+        }));
+      }
       const newPerformers: Performer[] = [];
       const newProps: Prop[] = [];
       const posUpdates: { type: 'performer' | 'prop'; id: string; x: number; y: number }[] = [];
