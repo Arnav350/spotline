@@ -55,7 +55,7 @@
     "semantic_hash": ""
   },
   "src/components/StageCanvas.tsx": {
-    "mtime": 1793828914.324427,
+    "mtime": 1794240307.6865284,
     "ast_hash": "b9d7652eed0c10cd47eed86aa231d913",
     "semantic_hash": ""
   },
@@ -220,8 +220,8 @@
     "semantic_hash": "a11c87c798f3a99c587f7d4270418c2e"
   },
   "src/store/showStore.ts": {
-    "mtime": 1793829879.3656538,
-    "ast_hash": "25f3fc15c34cd8daf5a43f829e537e3b",
+    "mtime": 1794240532.9564822,
+    "ast_hash": "00d2289091640ab9648de4e55beb5e31",
     "semantic_hash": ""
   },
   "supabase/drop.sql": {

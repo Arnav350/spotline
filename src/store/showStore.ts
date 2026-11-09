@@ -238,6 +238,26 @@ function schedulePathSave(performerId: string, toFormationId: string, cpDx: numb
   }, 400);
 }
 
+// PostgREST caps rows per request (Supabase's default project setting is 1000). For a show
+// with enough performers/formations that performer_positions or prop_positions exceeds that
+// cap, a plain .select('*').in('formation_id', ids) silently comes back truncated — some rows
+// just missing, with no error — which is what made performers vanish or flicker only on
+// larger shows. Page with .range() so everything actually gets fetched.
+async function fetchAllByFormationIds<T>(table: string, formationIds: string[]): Promise<T[]> {
+  if (formationIds.length === 0) return [];
+  const PAGE_SIZE = 1000;
+  const rows: T[] = [];
+  let from = 0;
+  while (true) {
+    const { data, error } = await supabase.from(table).select('*').in('formation_id', formationIds).range(from, from + PAGE_SIZE - 1);
+    if (error || !data) break;
+    rows.push(...(data as T[]));
+    if (data.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+  return rows;
+}
+
 function scheduleAutoSave(state: ShowState) {
   if (!state.show) return;
   if (saveTimeout) clearTimeout(saveTimeout);
@@ -579,14 +599,39 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
     }
 
     try {
-      const { data: show } = await supabase.from('shows').select('*').eq('id', showId).maybeSingle();
-      const { data: formations } = await supabase.from('formations').select('*').eq('show_id', showId).order('order_index');
-      const { data: performers } = await supabase.from('performers').select('*').eq('show_id', showId);
-      const { data: props } = await supabase.from('props').select('*').eq('show_id', showId);
-      const { data: perfPositions } = await supabase.from('performer_positions').select('*').in('formation_id', (formations || []).map(f => f.id));
-      const { data: propPosData } = await supabase.from('prop_positions').select('*').in('formation_id', (formations || []).map(f => f.id));
-      const { data: audioSegsData } = await supabase.from('audio_segments').select('*').eq('show_id', showId).order('order_index');
-      const { data: performerGroupsData } = await supabase.from('performer_groups').select('*').eq('show_id', showId);
+      // None of these depend on each other, so fire them all at once instead of one
+      // round-trip at a time.
+      const [
+        { data: show },
+        { data: formations },
+        { data: performers },
+        { data: props },
+        { data: audioSegsData },
+        { data: performerGroupsData },
+        { data: { user } },
+      ] = await Promise.all([
+        supabase.from('shows').select('*').eq('id', showId).maybeSingle(),
+        supabase.from('formations').select('*').eq('show_id', showId).order('order_index'),
+        supabase.from('performers').select('*').eq('show_id', showId),
+        supabase.from('props').select('*').eq('show_id', showId),
+        supabase.from('audio_segments').select('*').eq('show_id', showId).order('order_index'),
+        supabase.from('performer_groups').select('*').eq('show_id', showId),
+        supabase.auth.getUser(),
+      ]);
+
+      const formationIds = (formations || []).map(f => f.id);
+      const storagePath = (show as any)?.music_storage_path;
+      const [perfPositions, propPosData, memberRow, signedData] = await Promise.all([
+        fetchAllByFormationIds<PerformerPosition>('performer_positions', formationIds),
+        fetchAllByFormationIds<PropPosition>('prop_positions', formationIds),
+        user
+          ? supabase.from('show_members').select('role').eq('show_id', showId).eq('user_id', user.id).maybeSingle().then(r => r.data)
+          : Promise.resolve(null),
+        storagePath
+          ? supabase.storage.from('audio').createSignedUrl(storagePath, 604800).then(r => r.data)
+          : Promise.resolve(null),
+      ]);
+      const currentUserRole: ShowMemberRole | null = memberRow?.role ?? null;
 
       const sortedFormations = (formations || []).slice().sort((a, b) => a.order_index - b.order_index);
       const performerPositions: Record<string, PerformerPosition> = {};
@@ -607,27 +652,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         propPositions[`${p.prop_id}-${p.formation_id}`] = p;
       });
 
-      const { data: { user } } = await supabase.auth.getUser();
-      let currentUserRole: ShowMemberRole | null = null;
-      if (user) {
-        const { data: memberRow } = await supabase
-          .from('show_members')
-          .select('role')
-          .eq('show_id', showId)
-          .eq('user_id', user.id)
-          .maybeSingle();
-        currentUserRole = memberRow?.role ?? null;
-      }
-
-      // Refresh signed URL for audio if storage path is present
-      let resolvedShow = show;
-      const storagePath = (show as any)?.music_storage_path;
-      if (storagePath) {
-        const { data: signedData } = await supabase.storage.from('audio').createSignedUrl(storagePath, 604800);
-        if (signedData?.signedUrl) {
-          resolvedShow = { ...show, music_url: signedData.signedUrl } as any;
-        }
-      }
+      const resolvedShow = signedData?.signedUrl ? { ...show, music_url: signedData.signedUrl } as any : show;
 
       const priorActiveId = get().activeFormationId;
       const stillValid = silent && priorActiveId && (formations || []).some(f => f.id === priorActiveId);
@@ -663,14 +688,31 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         return;
       }
 
-      const { data: show } = await supabase.from('shows').select('*').eq('id', showId).maybeSingle();
-      const { data: formations } = await supabase.from('formations').select('*').eq('show_id', showId).order('order_index');
-      const { data: performers } = await supabase.from('performers').select('*').eq('show_id', showId);
-      const { data: props } = await supabase.from('props').select('*').eq('show_id', showId);
-      const { data: perfPositions } = await supabase.from('performer_positions').select('*').in('formation_id', (formations || []).map((f: any) => f.id));
-      const { data: propPosData } = await supabase.from('prop_positions').select('*').in('formation_id', (formations || []).map((f: any) => f.id));
-      const { data: audioSegsData } = await supabase.from('audio_segments').select('*').eq('show_id', showId).order('order_index');
-      const { data: performerGroupsData } = await supabase.from('performer_groups').select('*').eq('show_id', showId);
+      const [
+        { data: show },
+        { data: formations },
+        { data: performers },
+        { data: props },
+        { data: audioSegsData },
+        { data: performerGroupsData },
+      ] = await Promise.all([
+        supabase.from('shows').select('*').eq('id', showId).maybeSingle(),
+        supabase.from('formations').select('*').eq('show_id', showId).order('order_index'),
+        supabase.from('performers').select('*').eq('show_id', showId),
+        supabase.from('props').select('*').eq('show_id', showId),
+        supabase.from('audio_segments').select('*').eq('show_id', showId).order('order_index'),
+        supabase.from('performer_groups').select('*').eq('show_id', showId),
+      ]);
+
+      const formationIds = (formations || []).map((f: any) => f.id);
+      const storagePath = (show as any)?.music_storage_path;
+      const [perfPositions, propPosData, signedData] = await Promise.all([
+        fetchAllByFormationIds<PerformerPosition>('performer_positions', formationIds),
+        fetchAllByFormationIds<PropPosition>('prop_positions', formationIds),
+        storagePath
+          ? supabase.storage.from('audio').createSignedUrl(storagePath, 604800).then(r => r.data)
+          : Promise.resolve(null),
+      ]);
 
       const sortedFormations = (formations as any[] || []).slice().sort((a: any, b: any) => a.order_index - b.order_index);
       const performerPositions: Record<string, PerformerPosition> = {};
@@ -691,14 +733,7 @@ export const useShowStore = create<ShowState & { persistAll: () => Promise<void>
         propPositions[`${p.prop_id}-${p.formation_id}`] = p;
       });
 
-      let resolvedShow = show;
-      const storagePath = (show as any)?.music_storage_path;
-      if (storagePath) {
-        const { data: signedData } = await supabase.storage.from('audio').createSignedUrl(storagePath, 604800);
-        if (signedData?.signedUrl) {
-          resolvedShow = { ...show, music_url: signedData.signedUrl } as any;
-        }
-      }
+      const resolvedShow = signedData?.signedUrl ? { ...show, music_url: signedData.signedUrl } as any : show;
 
       set({
         show: resolvedShow,
