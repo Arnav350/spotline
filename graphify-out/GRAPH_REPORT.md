@@ -1,16 +1,16 @@
-# Graph Report - spotline  (2026-11-04)
+# Graph Report - spotline  (2026-11-09)
 
 ## Corpus Check
-- 64 files · ~62,000 words
+- 64 files · ~62,685 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 379 nodes · 815 edges · 42 communities (14 shown, 28 thin omitted)
+- 380 nodes · 816 edges · 42 communities (14 shown, 28 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 7 edges (avg confidence: 0.79)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a88d2fb4`
+- Built from commit: `3e147199`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -95,23 +95,23 @@ Nodes (33): FolderMember, InviteModalProps, MemberWithProfile, AudioSegmentBarPr
 
 ### Community 2 - "Dashboard & App Shell"
 Cohesion: 0.10
-Nodes (34): react, App(), useSafeAreaInsets(), useWindowSize(), AuthModal(), Dashboard(), DashboardProps, ProjectCard() (+26 more)
+Nodes (33): react, App(), useSafeAreaInsets(), useWindowSize(), AuthModal(), Dashboard(), DashboardProps, ProjectCard() (+25 more)
 
 ### Community 3 - "Project Documentation"
 Cohesion: 0.15
 Nodes (12): Google Fonts Inter, index.html (app entry HTML), #root div mount point, Spotline Formations (page title), Features, Keyboard Shortcuts, Quick Start (without Supabase), React 18 (+4 more)
 
 ### Community 4 - "Dev Tooling Config"
-Cohesion: 0.12
-Nodes (17): devDependencies, autoprefixer, eslint, @eslint/js, eslint-plugin-react-hooks, eslint-plugin-react-refresh, globals, playwright (+9 more)
+Cohesion: 0.07
+Nodes (26): devDependencies, autoprefixer, eslint, @eslint/js, eslint-plugin-react-hooks, eslint-plugin-react-refresh, globals, playwright (+18 more)
 
 ### Community 5 - "3D Stage Canvas"
 Cohesion: 0.13
 Nodes (17): SceneContent(), SceneContentProps, Stage3D(), CanvasProps, EMPTY_POINTS, StageCanvas(), useStageInteraction(), UseStageInteractionParams (+9 more)
 
 ### Community 6 - "Core Dependencies"
-Cohesion: 0.07
-Nodes (27): dependencies, @anthropic-ai/sdk, @hello-pangea/dnd, konva, lucide-react, @netlify/functions, react-colorful, react-dom (+19 more)
+Cohesion: 0.11
+Nodes (18): dependencies, @anthropic-ai/sdk, @hello-pangea/dnd, konva, lucide-react, @netlify/functions, react-colorful, react-dom (+10 more)
 
 ### Community 7 - "TS Config (App)"
 Cohesion: 0.11
@@ -122,8 +122,8 @@ Cohesion: 0.11
 Nodes (17): compilerOptions, allowImportingTsExtensions, erasableSyntaxOnly, lib, module, moduleDetection, moduleResolution, noEmit (+9 more)
 
 ### Community 9 - "AI Generation Serverless Function"
-Cohesion: 0.23
-Nodes (11): client, extractJsonArray(), GenerateRequest, getAuthToken(), getUsageCount(), handler(), PerformerInput, PositionInput (+3 more)
+Cohesion: 0.21
+Nodes (12): client, extractJsonArray(), GenerateRequest, getAuthToken(), getUsageCount(), handler(), PerformerInput, PositionInput (+4 more)
 
 ### Community 18 - "FormationMetrics.tsx"
 Cohesion: 0.13
@@ -141,7 +141,7 @@ Nodes (19): ContextMenu, FormationTimeline(), SegmentRow(), AudioSegmentBar(), D
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `dependencies` connect `Core Dependencies` to `Dashboard & App Shell`?**
+- **Why does `dependencies` connect `Core Dependencies` to `Dashboard & App Shell`, `Dev Tooling Config`?**
   _High betweenness centrality (0.163) - this node is a cross-community bridge._
 - **Why does `Dashboard()` connect `Dashboard & App Shell` to `useShowStore`?**
   _High betweenness centrality (0.161) - this node is a cross-community bridge._
@@ -152,6 +152,6 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `Editor Panels & Modals` be split into smaller, more focused modules?**
   _Cohesion score 0.07972027972027972 - nodes in this community are weakly interconnected._
 - **Should `AI Formation Generation Logic` be split into smaller, more focused modules?**
-  _Cohesion score 0.07755102040816327 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07529411764705882 - nodes in this community are weakly interconnected._
 - **Should `Dashboard & App Shell` be split into smaller, more focused modules?**
-  _Cohesion score 0.09639953542392567 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.1 - nodes in this community are weakly interconnected._
